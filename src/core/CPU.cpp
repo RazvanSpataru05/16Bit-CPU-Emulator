@@ -573,11 +573,6 @@ void CPU::Step()
 		break;
 	}
 	}
-
-	if (m_PC == m_memoryUnit.GetEndAddress())
-	{
-		m_HaltFlag = true;
-	}
 }
 
 void CPU::Reset()
@@ -586,7 +581,7 @@ void CPU::Reset()
 	m_B = 0u;
 	m_C = 0u;
 	m_D = 0u;
-	m_PC = 0x0000;
+	m_PC = m_memoryUnit.GetStartAddress();
 	m_SP = 0xFFFF;
 	m_IR = m_memoryUnit[m_PC];
 
@@ -607,7 +602,8 @@ void CPU::HandleInterrupt()
 		const uint8_t hiPC = (m_PC >> 8) & 0xFF;
 		const uint8_t loPC = m_PC & 0xFF;
 
-		m_memoryUnit[m_SP--] = hiPC;
+		// save PC address on the stack
+		m_memoryUnit[m_SP--] = hiPC; 
 		m_memoryUnit[m_SP--] = loPC;
 
 		const uint16_t vectorAddress = line * 2;
@@ -718,6 +714,11 @@ bool CPU::GetNegativeFlag() const noexcept
 bool CPU::GetOverflowFlag() const noexcept
 {
 	return m_OverflowFlag;
+}
+
+void CPU::SetProgramCounter(uint16_t address)
+{
+	m_PC = address;
 }
 
 bool CPU::IsReadingInstruction() const noexcept

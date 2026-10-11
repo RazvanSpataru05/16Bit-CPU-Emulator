@@ -18,10 +18,11 @@ public:
 	MemoryUnit(MemoryUnit&&) = default;
 	MemoryUnit& operator=(MemoryUnit&&) = default;
 
+	const std::optional<uint8_t>& Peek(uint16_t address) const;
+
 	[[nodiscard]] bool IsMemoryEmpty() const noexcept;
 
 	[[nodiscard]] uint16_t GetStartAddress() const noexcept;
-	[[nodiscard]] uint16_t GetEndAddress() const noexcept;
 
 	[[nodiscard]] uint8_t Read(uint16_t address) const noexcept;
 	void				  Write(uint16_t address, uint8_t value) noexcept;
@@ -29,12 +30,9 @@ public:
 	void Clear() noexcept;
 	void RestoreSnapshot();
 
-	void PrintMemoryUntit() const;
-
 	void LoadValuesIntoMemory(const Program& program);
 	void LoadProgramFromFIle(const std::filesystem::path& filename);
 
-	const uint8_t& operator[](uint16_t address) const;
 	uint8_t& operator[](uint16_t address);
 
 private:
@@ -42,11 +40,10 @@ private:
 	MemoryUnit& operator=(const MemoryUnit&) = delete;
 
 private:
-	std::array<uint8_t, MEMORY_SIZE> m_memory{};
+	std::array<std::optional<uint8_t>, MEMORY_SIZE> m_memory{};
 
 	bool m_hasData;
 	std::vector<AddressValue> m_snapshotData;
 	uint16_t m_startAddress{};
-	uint16_t m_endAddress{};
 };
 

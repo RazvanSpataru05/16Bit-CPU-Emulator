@@ -121,19 +121,25 @@ namespace Utils
 			return tab == SelectedTab::CONSOLE;
 		}
 
-		void DisplayInstruction(const InstructionDef& instruction, MemoryUnit& memoryUnit, uint16_t index, uint8_t opcode)
+		void DisplayInstruction(const InstructionDef& instruction, MemoryUnit& memoryUnit, uint16_t index, std::optional<uint8_t> opcode)
 		{
+			if (!opcode.has_value())
+			{
+				ImGui::Text("--");
+				return;
+			}
+
 			switch (instruction.size)
 			{
 			case 1u:
 			{
-				ImGui::Text(std::format("{:#04x}: {}", opcode, instruction.mnemonic).c_str());
+				ImGui::Text(std::format("{:#04x}: {}", opcode.value(), instruction.mnemonic).c_str());
 				break;
 			}
 			case 2u:
 			{
 				uint8_t secondByte = memoryUnit[index + 1];
-				ImGui::Text(std::format("{:#04x}: {} {}", opcode, instruction.mnemonic, secondByte).c_str());
+				ImGui::Text(std::format("{:#04x}: {} {}", opcode.value(), instruction.mnemonic, secondByte).c_str());
 				break;
 			}
 			case 3u:
@@ -141,7 +147,7 @@ namespace Utils
 				uint8_t secondByte = memoryUnit[index + 1];
 				uint8_t thirdByte = memoryUnit[index + 2];
 				uint16_t address = (secondByte << 8) | thirdByte;
-				ImGui::Text(std::format("{:#04x}: {} {:#06X}", opcode, instruction.mnemonic, address).c_str());
+				ImGui::Text(std::format("{:#04x}: {} {:#06X}", opcode.value(), instruction.mnemonic, address).c_str());
 				break;
 			}
 			default:

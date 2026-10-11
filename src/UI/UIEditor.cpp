@@ -121,6 +121,7 @@ namespace UIEditor
 					const Program program = DataLoader::ParseStatements(statements, assembler.GetStartAddress());
 
 					memoryUnit.LoadValuesIntoMemory(program);
+					cpu.SetProgramCounter(memoryUnit.GetStartAddress());
 					tab = SelectedTab::CONSOLE;
 					mode = Mode::DISSASEMBLY;
 				}
@@ -129,14 +130,14 @@ namespace UIEditor
 					tab = SelectedTab::ERROR_LIST;
 				}
 			}
-			DrawOutput(assembler, terminal, interruptController, keyboard, executeAuto);
+			DrawOutput(assembler, cpu, terminal, interruptController, keyboard, executeAuto);
 		}
 
 		else if (mode == Mode::DISSASEMBLY)
 		{
 			if (!memoryUnit.IsMemoryEmpty())
 			{
-				for (size_t index = memoryUnit.GetStartAddress(); index < memoryUnit.GetEndAddress(); ++index)
+				for (size_t index = 0; index < MEMORY_SIZE; ++index)
 				{
 					uint8_t opcode = memoryUnit[index];
 					const InstructionDef& instruction = dissasembler.GetInstructionDef(opcode);
@@ -150,7 +151,7 @@ namespace UIEditor
 						ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 255, 255, 255));
 					}
 						
-					Utils::UI::DisplayInstruction(instruction, memoryUnit, index, opcode);
+					Utils::UI::DisplayInstruction(instruction, memoryUnit, static_cast<uint16_t>(index), opcode);
 
 					index += static_cast<size_t>(instruction.size - 1);
 					ImGui::PopStyleColor();
@@ -206,7 +207,24 @@ namespace UIEditor
 					ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, IM_COL32(255, 0, 0, 255));
 				}
 
-				ImGui::Text("0x%02X", memoryUnit[index]);
+				char cellText[8];
+				if (const auto result = memoryUnit.Peek(static_cast<uint16_t>(index)); result.has_value())
+				{
+					snprintf(cellText, sizeof(cellText), "0x%02X", result.value());
+				}
+				else
+				{
+					snprintf(cellText, sizeof(cellText), "--");
+				}
+
+				const float cellWidth = ImGui::GetContentRegionAvail().x;
+				const float textWidth = ImGui::CalcTextSize(cellText).x;
+
+				if (cellWidth > textWidth)
+				{
+					ImGui::SetCursorPosX(ImGui::GetCursorPosX() + (cellWidth - textWidth) * 0.5f);
+				}
+				ImGui::Text(cellText);
 			}
 			ImGui::EndTable();
 		}
@@ -325,7 +343,7 @@ namespace UIEditor
 		}
 	}
 
-	void DrawOutput(const Assembler& assembler, Terminal& terminal, InterruptController& interruptController,
+	void DrawOutput(const Assembler& assembler, CPU& cpu, Terminal& terminal, InterruptController& interruptController,
 		Keyboard& keyboard, bool& executeAuto)
 	{
 		ImGui::Separator();
@@ -365,7 +383,7 @@ namespace UIEditor
 			switch (tab)
 			{
 			case SelectedTab::ERROR_LIST: { DrawErrorList(assembler.GetErrors(), assembler.GetWarnings()); break; }
-			case SelectedTab::CONSOLE: { DrawConsole(terminal, interruptController, keyboard, executeAuto); break; }
+			case SelectedTab::CONSOLE: { DrawConsole(cpu, terminal, interruptController, keyboard, executeAuto); break; }
 			}
 		}
 	}
@@ -392,7 +410,7 @@ namespace UIEditor
 		ImGui::EndChild();
 	}
 
-	void DrawConsole(Terminal& terminal, InterruptController& interruptController, Keyboard& keyboard,
+	void DrawConsole(CPU& cpu, Terminal& terminal, InterruptController& interruptController, Keyboard& keyboard,
 					bool& executeAuto)
 	{
 		static char consoleBuffer[CONSOLE_BUFFER_SIZE];
@@ -452,7 +470,7 @@ namespace UIEditor
 			const std::string line{ consoleBuffer };
 			if (interruptController.GetInterruptFlag())
 			{
-				executeAuto = false;
+				//executeAuto = false;
 				interruptController.EnableInterrupts(false);
 				interruptController.RaiseInterrupt(KEYBOARD_INTERRUPT_LINE);
 				
@@ -460,6 +478,7 @@ namespace UIEditor
 				{
 					keyboard.AddKey(key);
 				}
+				cpu.HandleInterrupt();
 			}
 			else
 			{

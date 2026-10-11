@@ -41,6 +41,9 @@ public:
 	[[nodiscard]] bool GetNegativeFlag()	const noexcept;
 	[[nodiscard]] bool GetOverflowFlag()	const noexcept;
 
+	// PC setter
+	void SetProgramCounter(uint16_t address);
+
 	bool IsReadingInstruction() const noexcept;
 	bool IsWritingInstruction() const noexcept;
 

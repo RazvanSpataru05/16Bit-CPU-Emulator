@@ -41,10 +41,10 @@ namespace UIEditor
 				  bool& followPC, bool& executeAuto, CPU& cpu);
 	void DrawSpeedSlider(float& speed);
 	void DrawHelpMenu();
-	void DrawOutput(const Assembler& assembler, Terminal& terminal, 
+	void DrawOutput(const Assembler& assembler, CPU& cpu, Terminal& terminal, 
 		InterruptController& interruptController, Keyboard& keyboard, bool& executeAuto);
 
 	void DrawErrorList(std::span<const AssemblerError> errors, std::span<const AssemblerWarning> warnings);
-	void DrawConsole(Terminal& terminal, InterruptController& interruptController, Keyboard& keyboard,
+	void DrawConsole(CPU& cpu, Terminal& terminal, InterruptController& interruptController, Keyboard& keyboard,
 					bool& executeAuto);
 }
