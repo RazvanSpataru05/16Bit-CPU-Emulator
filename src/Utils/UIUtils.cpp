@@ -129,6 +129,12 @@ namespace Utils
 				return;
 			}
 
+			const MemoryCellType cellType = memoryUnit.GetMemoryCellType(index);
+			if (cellType == MemoryCellType::UNKNOWN || cellType == MemoryCellType::DATA)
+			{
+				return;
+			}
+
 			switch (instruction.size)
 			{
 			case 1u:

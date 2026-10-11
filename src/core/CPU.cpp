@@ -583,7 +583,15 @@ void CPU::Reset()
 	m_D = 0u;
 	m_PC = m_memoryUnit.GetStartAddress();
 	m_SP = 0xFFFF;
-	m_IR = m_memoryUnit[m_PC];
+
+	if (const auto result = m_memoryUnit.Peek(m_PC); result.has_value())
+	{
+		m_IR = result.value();
+	}
+	else
+	{
+		m_IR = 0x00;
+	}
 
 	m_ZeroFlag = false;
 	m_CarryFlag = false;

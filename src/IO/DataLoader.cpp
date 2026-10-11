@@ -25,6 +25,8 @@ std::vector<uint8_t> DataLoader::ParseHexValues(const std::filesystem::path& pat
 Program DataLoader::ParseStatements(std::span<const Statement> statements, uint16_t startAddress)
 {
 	std::vector<AddressValue> values;
+	Program program;
+	program.startAddress = startAddress;
 
 	for (const auto& statement : statements)
 	{
@@ -33,18 +35,32 @@ Program DataLoader::ParseStatements(std::span<const Statement> statements, uint1
 		// this is an instruction
 		if (statement.opcode.has_value()) 
 		{
-			values.push_back({ address++, statement.opcode.value() });	
+			program.addrValues.push_back({ address, statement.opcode.value() });
+			program.AddMemoryCellTypes(address, MemoryCellType::OPCODE);
+			++address;
+
+			for (size_t index = 0; index < statement.operatorCount; ++index)
+			{
+				program.addrValues.push_back({ address, statement.operands[index] });
+				program.AddMemoryCellTypes(address, MemoryCellType::OPERAND);
+				++address;
+			}
+		}
+		else
+		{
+			for (size_t index = 0; index < statement.operatorCount; ++index)
+			{
+				program.addrValues.push_back({ address, statement.operands[index] });
+				program.AddMemoryCellTypes(address, MemoryCellType::DATA);
+				++address;
+			}
 		}
 
-		for (size_t index = 0; index < statement.operatorCount; ++index)
-		{
-			values.push_back({ address++, statement.operands[index] });
-		}
 
 	}
 	if (values.size() < std::numeric_limits<uint16_t>::max())
 	{
-		return Program(startAddress, values);
+		return program;
 	}
 	return Program();
 }

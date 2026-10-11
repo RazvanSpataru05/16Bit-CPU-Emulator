@@ -58,6 +58,7 @@ set(HEADERS
     inc/Core/CPU.h
     inc/Core/Emulator.h
     inc/Core/MemoryUnit.h
+    inc/Core/MemoryCellType.h
     inc/Core/Keyboard.h
     inc/Core/InterruptController.h
     inc/Core/Terminal.h

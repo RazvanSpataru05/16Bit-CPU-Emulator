@@ -20,6 +20,8 @@ public:
 
 	const std::optional<uint8_t>& Peek(uint16_t address) const;
 
+	[[nodiscard]] MemoryCellType GetMemoryCellType(uint16_t address) const noexcept;
+
 	[[nodiscard]] bool IsMemoryEmpty() const noexcept;
 
 	[[nodiscard]] uint16_t GetStartAddress() const noexcept;
@@ -41,9 +43,11 @@ private:
 
 private:
 	std::array<std::optional<uint8_t>, MEMORY_SIZE> m_memory{};
+	std::unordered_map<uint16_t, MemoryCellType> m_memoryCellType{};
 
 	bool m_hasData;
 	std::vector<AddressValue> m_snapshotData;
+	std::unordered_map<uint16_t, MemoryCellType> m_snapshotCellType;
 	uint16_t m_startAddress{};
 };
 

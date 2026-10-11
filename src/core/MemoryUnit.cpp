@@ -12,10 +12,16 @@ const std::optional<uint8_t>& MemoryUnit::Peek(uint16_t address) const
 	return m_memory[address];
 }
 
+MemoryCellType MemoryUnit::GetMemoryCellType(uint16_t address) const noexcept
+{
+	return m_memoryCellType.at(address);
+}
+
 bool MemoryUnit::IsMemoryEmpty() const noexcept
 {
 	return !m_hasData;
 }
+
 uint16_t MemoryUnit::GetStartAddress() const noexcept
 {
 	return m_startAddress;
@@ -38,6 +44,7 @@ void MemoryUnit::Write(uint16_t address, uint8_t value) noexcept
 void MemoryUnit::Clear() noexcept
 {
 	std::fill(m_memory.begin(), m_memory.end(), std::nullopt);
+	m_memoryCellType.clear();
 	m_hasData = false;
 }
 
@@ -52,6 +59,7 @@ void MemoryUnit::RestoreSnapshot()
 			m_hasData = true;
 		}
 	}
+	m_memoryCellType = m_snapshotCellType;
 }
 
 void MemoryUnit::LoadValuesIntoMemory(const Program& program)
@@ -59,18 +67,15 @@ void MemoryUnit::LoadValuesIntoMemory(const Program& program)
 	if (program.startAddress + program.addrValues.size() > m_memory.size() || program.addrValues.empty()) return;
 
 	m_snapshotData.assign(program.addrValues.begin(), program.addrValues.end());
+	m_snapshotCellType = program.memoryCellType;
 
 	for (const auto& addrVal : program.addrValues)
 	{
-		m_memory[addrVal.address] = addrVal.value;
-		if (addrVal.value != 0x00)
-		{
-			m_hasData = true;
-		}
+		Write(addrVal.address, addrVal.value);
 	}
 
+	m_memoryCellType = program.memoryCellType;
 	m_startAddress = program.startAddress;
-
 	m_hasData = true;
 }
 

@@ -121,7 +121,9 @@ namespace UIEditor
 					const Program program = DataLoader::ParseStatements(statements, assembler.GetStartAddress());
 
 					memoryUnit.LoadValuesIntoMemory(program);
+					std::cout << "Start address: " << memoryUnit.GetStartAddress() << std::endl;
 					cpu.SetProgramCounter(memoryUnit.GetStartAddress());
+
 					tab = SelectedTab::CONSOLE;
 					mode = Mode::DISSASEMBLY;
 				}
@@ -139,8 +141,13 @@ namespace UIEditor
 			{
 				for (size_t index = 0; index < MEMORY_SIZE; ++index)
 				{
-					uint8_t opcode = memoryUnit[index];
-					const InstructionDef& instruction = dissasembler.GetInstructionDef(opcode);
+					std::optional<uint8_t> opcode = memoryUnit.Peek(static_cast<uint16_t>(index));
+					if (!opcode.has_value())
+					{
+						continue;
+					}
+
+					const InstructionDef& instruction = dissasembler.GetInstructionDef(opcode.value());
 
 					if (index == cpu.GetPC())
 					{
