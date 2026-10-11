@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Core/ALU.h"
 #include "Core/InterruptController.h"
 #include "Core/MemoryUnit.h"
 
@@ -57,8 +58,7 @@ private:
 	[[nodiscard]] uint8_t	ReadRegister(uint8_t selector) const noexcept;
 	void					WriteRegister(uint8_t selector, uint8_t value);
 
-	void UpdateFlags(uint8_t result);
-	void UpdateFlags(uint8_t result, uint8_t a, uint8_t opearand, bool isAdd);
+	void UpdateFlags(Result result);
 
 private:
 	CPU(const CPU&) = delete;

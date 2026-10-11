@@ -20,7 +20,7 @@ void CPU::Step()
 	switch (m_IR)
 	{
 
-	/* Load/Store instructions */
+	/* Load & Store instructions */
 
 	case 0x01: // LDA_IM 2by
 	{
@@ -173,246 +173,243 @@ void CPU::Step()
 	case 0x20: // ADD_IM 2by
 	{
 		uint8_t operand = m_memoryUnit.Read(m_PC++);
-		uint8_t oldA = m_A;
-		uint16_t result = m_A + operand;
-		m_CarryFlag = (result > 0xFF);
+		Result r = ALU::Add(m_A, operand, false);
+		
+		m_A = r.value;
+		UpdateFlags(r);
 
-		m_A = static_cast<uint8_t>(result);
-		UpdateFlags(m_A, oldA, operand, true);
 		break;
 	}
 
 	case 0x21: // ADD_REG 2by
 	{
 		uint8_t selector = m_memoryUnit.Read(m_PC++);
-		uint8_t oldA = m_A;
 		uint8_t reg = ReadRegister(selector);
-		uint16_t result = m_A + reg;
-		m_CarryFlag = (result > 0xFF);
+		Result r = ALU::Add(m_A, reg, false);
 
-		m_A = static_cast<uint8_t>(result);
-		UpdateFlags(m_A, oldA, reg, true);
+		m_A = r.value;
+		UpdateFlags(r);
+
 		break;
 	}
 
 	case 0x22: // ADC_IM 2by
 	{
 		uint8_t operand = m_memoryUnit.Read(m_PC++);
-		uint8_t oldA = m_A;
-		uint16_t result = m_A + operand + (m_CarryFlag ? 1 : 0);
-		m_CarryFlag = (result > 0xFF);
+		Result r = ALU::Add(m_A, operand, true);
 
-		m_A = static_cast<uint8_t>(result);
-		UpdateFlags(m_A, oldA, operand, true);
+		m_A = r.value;
+		UpdateFlags(r);
 		break;
 	}
 
 	case 0x23: // ADC_REG 2by
 	{
 		uint8_t selector = m_memoryUnit.Read(m_PC++);
-		uint8_t oldA = m_A;
 		uint8_t reg = ReadRegister(selector);
-		uint16_t result = m_A + reg + (m_CarryFlag ? 1 : 0);
-		m_CarryFlag = (result > 0xFF);
+		Result r = ALU::Add(m_A, reg, true);
 
-		m_A = static_cast<uint8_t>(result);
-		UpdateFlags(m_A, oldA, reg, true);
+		m_A = r.value;
+		UpdateFlags(r);
 		break;
 	}
 
 	case 0x24: // SUB_IM 2by
 	{
 		uint8_t operand = m_memoryUnit.Read(m_PC++);
-		uint8_t oldA = m_A;
-		m_CarryFlag = (operand > m_A);
-		m_A -= operand;
-		UpdateFlags(m_A, oldA, operand, false);
+		Result r = ALU::Sub(m_A, operand, false);
+
+		m_A = r.value;
+		UpdateFlags(r);
 		break;
 	}
 
 	case 0x25: // SUB_REG 2by
 	{
 		uint8_t selector = m_memoryUnit.Read(m_PC++);
-		uint8_t oldA = m_A;
 		uint8_t reg = ReadRegister(selector);
-		m_CarryFlag = (reg > m_A);
-		m_A -= reg;
-		UpdateFlags(m_A, oldA, reg, false);
+		Result r = ALU::Sub(m_A, reg, false);
+
+		m_A = r.value;
+		UpdateFlags(r);
 		break;
 	}
 
 	case 0x26: // SBC_IM 2by
 	{
 		uint8_t operand = m_memoryUnit.Read(m_PC++);
-		uint8_t oldA = m_A;
-		bool oldCarry = m_CarryFlag;
-		uint16_t result = m_A - operand - (oldCarry ? 1 : 0);
+		Result r = ALU::Sub(m_A, operand, true);
 
-		m_CarryFlag = (m_A < operand + (oldCarry ? 1 : 0));
-		m_A = static_cast<uint8_t>(result);
-		UpdateFlags(m_A, oldA, operand, false);
+		m_A = r.value;
+		UpdateFlags(r);
 		break;
 	}
 
 	case 0x27: // SBC_REG 2by
 	{
 		uint8_t selector = m_memoryUnit.Read(m_PC++);
-		uint8_t oldA = m_A;
-		bool oldCarry = m_CarryFlag;
 		uint8_t reg = ReadRegister(selector);
-		uint16_t result = m_A - reg - (oldCarry ? 1 : 0);
+		Result r = ALU::Sub(m_A, reg, true);
 
-		m_CarryFlag = (m_A < reg + (oldCarry ? 1 : 0));
-		m_A = static_cast<uint8_t>(result);
-		UpdateFlags(m_A, oldA, reg, false);
+		m_A = r.value;
+		UpdateFlags(r);
 		break;
 	}
 
 	case 0x28: // INC 2by
 	{
 		uint8_t selector = m_memoryUnit.Read(m_PC++);
-		uint8_t result = ReadRegister(selector) + 1;
-		WriteRegister(selector, result);
-		UpdateFlags(result);
+		uint8_t reg = ReadRegister(selector);
+		Result r = ALU::Inc(reg);
+
+		WriteRegister(selector, r.value);
+		UpdateFlags(r);
 		break;
 	}
 
 	case 0x29: // DEC 2by
 	{
 		uint8_t selector = m_memoryUnit.Read(m_PC++);
-		uint8_t result = ReadRegister(selector) - 1;
-		WriteRegister(selector, result);
-		UpdateFlags(result);
+		uint8_t reg = ReadRegister(selector);
+		Result r = ALU::Dec(reg);
+
+		WriteRegister(selector, r.value);
+		UpdateFlags(r);
 		break;
 	}
 
 	case 0x2A: //MUL_IM 2by
 	{
-		m_A *= m_memoryUnit.Read(m_PC++);
-		UpdateFlags(m_A);
+		Result r = ALU::Mul(m_A, m_memoryUnit.Read(m_PC++));
+
+		m_A = r.value;
+		UpdateFlags(r);
 		break;
 	}
 
 	case 0x2B: //MUL_REG 2by
 	{
 		uint8_t selector = m_memoryUnit.Read(m_PC++);
-		m_A *= ReadRegister(selector);
-		UpdateFlags(m_A);
+		uint8_t reg = ReadRegister(selector);
+		Result r = ALU::Mul(m_A, reg);
+
+		m_A *= r.value;
+		UpdateFlags(r);
 		break;
 	}
 
 	/* Logical operations*/
 
-	case 0x30: // AND_IM 2by
-	{
-		uint8_t operand = m_memoryUnit.Read(m_PC++);
-		m_A = m_A & operand;
-		UpdateFlags(m_A);
-		m_CarryFlag = false;
-		break;
-	}
+	//case 0x30: // AND_IM 2by
+	//{
+	//	uint8_t operand = m_memoryUnit.Read(m_PC++);
+	//	m_A = m_A & operand;
+	//	UpdateFlags(m_A);
+	//	m_CarryFlag = false;
+	//	break;
+	//}
 
-	case 0x31: // AND_REG 2by
-	{
-		uint8_t selector = m_memoryUnit.Read(m_PC++);
-		uint8_t reg = ReadRegister(selector);
-		m_A = m_A & reg;
-		UpdateFlags(m_A);
-		m_CarryFlag = false;
-		break;
-	}
+	//case 0x31: // AND_REG 2by
+	//{
+	//	uint8_t selector = m_memoryUnit.Read(m_PC++);
+	//	uint8_t reg = ReadRegister(selector);
+	//	m_A = m_A & reg;
+	//	UpdateFlags(m_A);
+	//	m_CarryFlag = false;
+	//	break;
+	//}
 
-	case 0x32: // OR_IM 2by
-	{
-		uint8_t operand = m_memoryUnit.Read(m_PC++);
-		m_A = m_A | operand;
-		UpdateFlags(m_A);
-		m_CarryFlag = false;
-		break;
-	}
+	//case 0x32: // OR_IM 2by
+	//{
+	//	uint8_t operand = m_memoryUnit.Read(m_PC++);
+	//	m_A = m_A | operand;
+	//	UpdateFlags(m_A);
+	//	m_CarryFlag = false;
+	//	break;
+	//}
 
-	case 0x33: // OR_REG 2by
-	{
-		uint8_t selector = m_memoryUnit.Read(m_PC++);
-		uint8_t reg = ReadRegister(selector);
-		m_A = m_A | reg;
-		UpdateFlags(m_A);
-		m_CarryFlag = false;
-		break;
-	}
+	//case 0x33: // OR_REG 2by
+	//{
+	//	uint8_t selector = m_memoryUnit.Read(m_PC++);
+	//	uint8_t reg = ReadRegister(selector);
+	//	m_A = m_A | reg;
+	//	UpdateFlags(m_A);
+	//	m_CarryFlag = false;
+	//	break;
+	//}
 
-	case 0x34: // XOR_IM 2by
-	{
-		uint8_t operand = m_memoryUnit.Read(m_PC++);
-		m_A = m_A ^ operand;
-		UpdateFlags(m_A);
-		m_CarryFlag = false;
-		break;
-	}
+	//case 0x34: // XOR_IM 2by
+	//{
+	//	uint8_t operand = m_memoryUnit.Read(m_PC++);
+	//	m_A = m_A ^ operand;
+	//	UpdateFlags(m_A);
+	//	m_CarryFlag = false;
+	//	break;
+	//}
 
-	case 0x35: // XOR_REG 2by
-	{
-		uint8_t selector = m_memoryUnit.Read(m_PC++);
-		uint8_t reg = ReadRegister(selector);
-		m_A = m_A ^ reg;
-		UpdateFlags(m_A);
-		m_CarryFlag = false;
-		break;
-	}
+	//case 0x35: // XOR_REG 2by
+	//{
+	//	uint8_t selector = m_memoryUnit.Read(m_PC++);
+	//	uint8_t reg = ReadRegister(selector);
+	//	m_A = m_A ^ reg;
+	//	UpdateFlags(m_A);
+	//	m_CarryFlag = false;
+	//	break;
+	//}
 
-	case 0x36: //NOT 2by
-	{
-		uint8_t selector = m_memoryUnit.Read(m_PC++);
-		uint8_t reg = ReadRegister(selector);
-		reg = ~reg;
-		WriteRegister(selector, reg);
-		UpdateFlags(reg);
-		m_CarryFlag = false;
-		break;
-	}
+	//case 0x36: //NOT 2by
+	//{
+	//	uint8_t selector = m_memoryUnit.Read(m_PC++);
+	//	uint8_t reg = ReadRegister(selector);
+	//	reg = ~reg;
+	//	WriteRegister(selector, reg);
+	//	UpdateFlags(reg);
+	//	m_CarryFlag = false;
+	//	break;
+	//}
 
-	case 0x37: //SHL 2by
-	{
-		uint8_t selector = m_memoryUnit.Read(m_PC++);
-		uint8_t reg = ReadRegister(selector);
-		m_CarryFlag = (reg & 0x80) != 0;
-		reg = reg << 1;
-		WriteRegister(selector, reg);
-		UpdateFlags(reg);
-		break;
-	}
+	//case 0x37: //SHL 2by
+	//{
+	//	uint8_t selector = m_memoryUnit.Read(m_PC++);
+	//	uint8_t reg = ReadRegister(selector);
+	//	m_CarryFlag = (reg & 0x80) != 0;
+	//	reg = reg << 1;
+	//	WriteRegister(selector, reg);
+	//	UpdateFlags(reg);
+	//	break;
+	//}
 
-	case 0x38: //SHR 2by
-	{
-		uint8_t selector = m_memoryUnit.Read(m_PC++);
-		uint8_t reg = ReadRegister(selector);
-		m_CarryFlag = (reg & 0x01) != 0;
-		reg = reg >> 1;
-		WriteRegister(selector, reg);
-		UpdateFlags(reg);
-		break;
-	}
+	//case 0x38: //SHR 2by
+	//{
+	//	uint8_t selector = m_memoryUnit.Read(m_PC++);
+	//	uint8_t reg = ReadRegister(selector);
+	//	m_CarryFlag = (reg & 0x01) != 0;
+	//	reg = reg >> 1;
+	//	WriteRegister(selector, reg);
+	//	UpdateFlags(reg);
+	//	break;
+	//}
 
-	/* Compare instructions */
+	///* Compare instructions */
 
-	case 0x40: // CMP_IM 2by
-	{
-		uint8_t operand = m_memoryUnit.Read(m_PC++);
-		uint8_t result = m_A - operand;
-		m_CarryFlag = (operand > m_A);
-		UpdateFlags(result, m_A, operand, false);
-		break;
-	}
+	//case 0x40: // CMP_IM 2by
+	//{
+	//	uint8_t operand = m_memoryUnit.Read(m_PC++);
+	//	uint8_t result = m_A - operand;
+	//	m_CarryFlag = (operand > m_A);
+	//	UpdateFlags(result, m_A, operand, false);
+	//	break;
+	//}
 
-	case 0x41: // CMP_REG 2by
-	{
-		uint8_t selector = m_memoryUnit.Read(m_PC++);
-		uint8_t reg = ReadRegister(selector);
-		uint8_t result = m_A - reg;
-		m_CarryFlag = (reg > m_A);
-		UpdateFlags(result, m_A, reg, false);
-		break;
-	}
+	//case 0x41: // CMP_REG 2by
+	//{
+	//	uint8_t selector = m_memoryUnit.Read(m_PC++);
+	//	uint8_t reg = ReadRegister(selector);
+	//	uint8_t result = m_A - reg;
+	//	m_CarryFlag = (reg > m_A);
+	//	UpdateFlags(result, m_A, reg, false);
+	//	break;
+	//}
 
 	/* Jump/Branch instructions */
 
@@ -563,7 +560,9 @@ void CPU::Step()
 
 	case 0xF9: // RETI 1by
 	{
-		m_PC = m_memoryUnit[m_SP++];
+		const uint8_t hi = m_memoryUnit[m_SP++];
+		const uint8_t lo = m_memoryUnit[m_SP++];
+		m_PC = (hi << 8) | lo;
 		break;
 	}
 
@@ -643,25 +642,12 @@ void CPU::WriteRegister(uint8_t selector, uint8_t value)
 	}
 }
 
-void CPU::UpdateFlags(uint8_t result)
+void CPU::UpdateFlags(Result result)
 {
-	m_ZeroFlag = (result == 0);
-	m_NegativeFlag = (result & 0x80) != 0;
-}
-
-void CPU::UpdateFlags(uint8_t result, uint8_t a, uint8_t operand, bool isAdd)
-{
-	m_ZeroFlag = (result == 0);
-	m_NegativeFlag = (result & 0x80) != 0;
-
-	if (isAdd)
-	{
-		m_OverflowFlag = (~(a ^ operand) & (a ^ result) & 0x80) != 0;
-	}	
-	else
-	{
-		m_OverflowFlag = ((a ^ operand) & (a ^ result) & 0x80) != 0;
-	}
+	m_ZeroFlag = result.zero;
+	m_CarryFlag = result.carry;
+	m_NegativeFlag = result.negative;
+	m_OverflowFlag = result.overflow;
 }
 
 uint8_t CPU::GetA() const noexcept

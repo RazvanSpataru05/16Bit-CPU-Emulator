@@ -21,6 +21,7 @@ set(SOURCES
     src/Assembler/Parser.cpp
     src/Assembler/Assembler.cpp
 
+    src/Core/ALU.cpp
     src/Core/CPU.cpp
     src/Core/Emulator.cpp
     src/Core/Keyboard.cpp
@@ -55,12 +56,14 @@ set(HEADERS
     inc/Assembler/AssemblerWarning.h
     inc/Assembler/Assembler.h
 
+    inc/Core/ALU.h
     inc/Core/CPU.h
     inc/Core/Emulator.h
     inc/Core/MemoryUnit.h
     inc/Core/MemoryCellType.h
     inc/Core/Keyboard.h
     inc/Core/InterruptController.h
+    inc/Core/Result.h
     inc/Core/Terminal.h
     inc/Core/TerminalLine.h
 
