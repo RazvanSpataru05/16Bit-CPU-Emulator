@@ -66,9 +66,9 @@ namespace UIEditor
 	void DrawCPUState(const CPU& cpu)
 	{
 		ImGui::Begin("CPU State");
-		ImGui::Text(std::format("Program Counter: {:#06X}", cpu.GetPC()).c_str());
-		ImGui::Text(std::format("Stack Pointer: {:#06X}", cpu.GetSP()).c_str());
-		ImGui::Text(std::format("Instruction Register: {:#04X}", cpu.GetIR()).c_str());
+		ImGui::Text(std::format("Program Counter: {:#06X}",			cpu.GetPC()).c_str());
+		ImGui::Text(std::format("Stack Pointer: {:#06X}",			cpu.GetSP()).c_str());
+		ImGui::Text(std::format("Instruction Register: {:#04X}",	cpu.GetIR()).c_str());
 		ImGui::Separator();
 
 		ImGui::Text("\nRegistry");
@@ -79,12 +79,12 @@ namespace UIEditor
 		ImGui::Separator();
 
 		ImGui::Text("\nFlags");
-		ImGui::Text(std::format("Interrupt Flag: {}", cpu.GetInterruptController().GetInterruptFlag() ? "True" : "False").c_str());
-		ImGui::Text(std::format("Zero Flag: {}", cpu.GetZeroFlag() ? "True" : "False").c_str());
-		ImGui::Text(std::format("Carry Flag: {}", cpu.GetCarryFlag() ? "True" : "False").c_str());
-		ImGui::Text(std::format("Negative Flag: {}", cpu.GetNegativeFlag() ? "True" : "False").c_str());
-		ImGui::Text(std::format("Overflow Flag: {}", cpu.GetOverflowFlag() ? "True" : "False").c_str());
-		ImGui::Text(std::format("Halt Flag: {}", cpu.GetHaltFlag() ? "True" : "False").c_str());
+		ImGui::Text(std::format("Interrupt Flag: {}",	cpu.GetInterruptController().GetInterruptFlag() ? "True" : "False").c_str());
+		ImGui::Text(std::format("Zero Flag: {}",		cpu.GetStatusRegister().Zero() ? "True" : "False").c_str());
+		ImGui::Text(std::format("Carry Flag: {}",		cpu.GetStatusRegister().Carry() ? "True" : "False").c_str());
+		ImGui::Text(std::format("Negative Flag: {}",	cpu.GetStatusRegister().Negative() ? "True" : "False").c_str());
+		ImGui::Text(std::format("Overflow Flag: {}",	cpu.GetStatusRegister().Overflow() ? "True" : "False").c_str());
+		ImGui::Text(std::format("Halt Flag: {}",		cpu.GetHaltFlag() ? "True" : "False").c_str());
 		ImGui::Separator();
 		ImGui::End();
 	}

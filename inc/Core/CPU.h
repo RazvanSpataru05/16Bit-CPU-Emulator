@@ -3,6 +3,7 @@
 #include "Core/ALU.h"
 #include "Core/InterruptController.h"
 #include "Core/RegisterFile.h"
+#include "Core/StatusRegister.h"
 #include "Core/MemoryUnit.h"
 
 #include <string>
@@ -27,16 +28,11 @@ public:
 	uint16_t ComputeAddress(uint16_t address);
 
 	//Registry getters
-	[[nodiscard]] uint16_t		GetPC()		const noexcept;
-	[[nodiscard]] uint16_t		GetSP()		const noexcept;
-	[[nodiscard]] uint8_t		GetIR()		const noexcept;
+	[[nodiscard]] uint16_t		GetPC()			const noexcept;
+	[[nodiscard]] uint16_t		GetSP()			const noexcept;
+	[[nodiscard]] uint8_t		GetIR()			const noexcept;
 
-	//Flag getters
-	[[nodiscard]] bool GetZeroFlag()		const noexcept;
-	[[nodiscard]] bool GetHaltFlag()		const noexcept;
-	[[nodiscard]] bool GetCarryFlag()		const noexcept;
-	[[nodiscard]] bool GetNegativeFlag()	const noexcept;
-	[[nodiscard]] bool GetOverflowFlag()	const noexcept;
+	[[nodiscard]] bool			GetHaltFlag()	const noexcept;
 
 	// PC setter
 	void SetProgramCounter(uint16_t address);
@@ -51,10 +47,9 @@ public:
 	[[nodiscard]] InterruptController& GetInterruptController()			noexcept;
 
 	[[nodiscard]] const RegisterFile& GetRegisterFile()					const noexcept;
+	[[nodiscard]] const StatusRegister& GetStatusRegister()			const noexcept;
 
 private:
-
-	void UpdateFlags(Result result);
 
 private:
 	CPU(const CPU&) = delete;
@@ -66,15 +61,12 @@ private:
 	InterruptController& m_interruptController;
 
 	RegisterFile m_registerFile;
+	StatusRegister m_statusRegister;
 
 	uint16_t m_SP{};		// Stack Pointer Registry
 	uint16_t m_PC{};		// Program Counter Registry
 	uint8_t m_IR{};			// Instruction Registry
 
-	bool m_ZeroFlag{ false };
-	bool m_CarryFlag{ false };
-	bool m_NegativeFlag{ false };
-	bool m_OverflowFlag{ false };
-	bool m_HaltFlag{ false };
+	bool m_haltFlag{ false };
 };
 

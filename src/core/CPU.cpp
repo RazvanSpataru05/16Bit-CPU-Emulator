@@ -13,7 +13,7 @@ void CPU::Fetch()
 
 void CPU::Step()
 {
-	if (m_HaltFlag || m_memoryUnit.IsMemoryEmpty()) return;
+	if (m_haltFlag || m_memoryUnit.IsMemoryEmpty()) return;
 
 	Fetch();
 
@@ -177,8 +177,7 @@ void CPU::Step()
 		Result r = ALU::Add(m_registerFile.A(), operand, false);
 		
 		m_registerFile.A() = r.value;
-		UpdateFlags(r);
-
+		m_statusRegister.UpdateFrom(r);
 		break;
 	}
 
@@ -189,8 +188,7 @@ void CPU::Step()
 		Result r = ALU::Add(m_registerFile.A(),  reg, false);
 
 		m_registerFile.A() = r.value;
-		UpdateFlags(r);
-
+		m_statusRegister.UpdateFrom(r);
 		break;
 	}
 
@@ -200,7 +198,7 @@ void CPU::Step()
 		Result r = ALU::Add(m_registerFile.A(), operand, true);
 
 		m_registerFile.A() = r.value;
-		UpdateFlags(r);
+		m_statusRegister.UpdateFrom(r);
 		break;
 	}
 
@@ -211,7 +209,7 @@ void CPU::Step()
 		Result r = ALU::Add(m_registerFile.A(), reg, true);
 
 		m_registerFile.A() = r.value;
-		UpdateFlags(r);
+		m_statusRegister.UpdateFrom(r);
 		break;
 	}
 
@@ -221,7 +219,7 @@ void CPU::Step()
 		Result r = ALU::Sub(m_registerFile.A(), operand, false);
 
 		m_registerFile.A() = r.value;
-		UpdateFlags(r);
+		m_statusRegister.UpdateFrom(r);
 		break;
 	}
 
@@ -232,7 +230,7 @@ void CPU::Step()
 		Result r = ALU::Sub(m_registerFile.A(), reg, false);
 
 		m_registerFile.A() = r.value;
-		UpdateFlags(r);
+		m_statusRegister.UpdateFrom(r);
 		break;
 	}
 
@@ -242,7 +240,7 @@ void CPU::Step()
 		Result r = ALU::Sub(m_registerFile.A(), operand, true);
 
 		m_registerFile.A() = r.value;
-		UpdateFlags(r);
+		m_statusRegister.UpdateFrom(r);
 		break;
 	}
 
@@ -253,7 +251,7 @@ void CPU::Step()
 		Result r = ALU::Sub(m_registerFile.A(), reg, true);
 
 		m_registerFile.A() = r.value;
-		UpdateFlags(r);
+		m_statusRegister.UpdateFrom(r);
 		break;
 	}
 
@@ -264,7 +262,7 @@ void CPU::Step()
 		Result r = ALU::Inc(reg);
 
 		m_registerFile.Write(selector, r.value);
-		UpdateFlags(r);
+		m_statusRegister.UpdateFrom(r);
 		break;
 	}
 
@@ -275,7 +273,7 @@ void CPU::Step()
 		Result r = ALU::Dec(reg);
 
 		m_registerFile.Write(selector, r.value);
-		UpdateFlags(r);
+		m_statusRegister.UpdateFrom(r);
 		break;
 	}
 
@@ -284,7 +282,7 @@ void CPU::Step()
 		Result r = ALU::Mul(m_registerFile.A(), m_memoryUnit.Read(m_PC++));
 
 		m_registerFile.A() = r.value;
-		UpdateFlags(r);
+		m_statusRegister.UpdateFrom(r);
 		break;
 	}
 
@@ -295,7 +293,7 @@ void CPU::Step()
 		Result r = ALU::Mul(m_registerFile.A(), reg);
 
 		m_registerFile.A() = r.value;
-		UpdateFlags(r);
+		m_statusRegister.UpdateFrom(r);
 		break;
 	}
 
@@ -307,7 +305,7 @@ void CPU::Step()
 		Result r = ALU::And(m_registerFile.A(), operand);
 
 		m_registerFile.A() = r.value;
-		UpdateFlags(r);
+		m_statusRegister.UpdateFrom(r);
 		break;
 	}
 
@@ -318,7 +316,7 @@ void CPU::Step()
 		Result r = ALU::And(m_registerFile.A(), reg);
 
 		m_registerFile.A() = r.value;
-		UpdateFlags(r);
+		m_statusRegister.UpdateFrom(r);
 		break;
 	}
 
@@ -328,7 +326,7 @@ void CPU::Step()
 		Result r = ALU::Or(m_registerFile.A(), operand);
 
 		m_registerFile.A() = r.value;
-		UpdateFlags(r);
+		m_statusRegister.UpdateFrom(r);
 		break;
 	}
 
@@ -339,7 +337,7 @@ void CPU::Step()
 		Result r = ALU::Or(m_registerFile.A(), reg);
 
 		m_registerFile.A() = r.value;
-		UpdateFlags(r);
+		m_statusRegister.UpdateFrom(r);
 		break;
 	}
 
@@ -349,7 +347,7 @@ void CPU::Step()
 		Result r = ALU::Xor(m_registerFile.A(), operand);
 
 		m_registerFile.A() = r.value;
-		UpdateFlags(r);
+		m_statusRegister.UpdateFrom(r);
 		break;
 	}
 
@@ -360,7 +358,7 @@ void CPU::Step()
 		Result r = ALU::Xor(m_registerFile.A(), reg);
 
 		m_registerFile.A() = r.value;
-		UpdateFlags(r);
+		m_statusRegister.UpdateFrom(r);
 		break;
 	}
 
@@ -372,7 +370,7 @@ void CPU::Step()
 		
 		reg = r.value;
 		m_registerFile.Write(selector, reg);
-		UpdateFlags(r);
+		m_statusRegister.UpdateFrom(r);
 		break;
 	}
 
@@ -384,7 +382,7 @@ void CPU::Step()
 
 		reg = r.value;
 		m_registerFile.Write(selector, reg);
-		UpdateFlags(r);
+		m_statusRegister.UpdateFrom(r);
 		break;
 	}
 
@@ -396,7 +394,7 @@ void CPU::Step()
 
 		reg = r.value;
 		m_registerFile.Write(selector, reg);
-		UpdateFlags(r);
+		m_statusRegister.UpdateFrom(r);
 		break;
 	}
 
@@ -407,7 +405,7 @@ void CPU::Step()
 		uint8_t operand = m_memoryUnit.Read(m_PC++);
 		Result r = ALU::Compare(m_registerFile.A(), operand);
 
-		UpdateFlags(r);
+		m_statusRegister.UpdateFrom(r);
 		break;
 	}
 
@@ -417,7 +415,7 @@ void CPU::Step()
 		uint8_t reg = m_registerFile.Read(selector);
 		Result r = ALU::Compare(m_registerFile.A(), reg);
 
-		UpdateFlags(r);
+		m_statusRegister.UpdateFrom(r);
 		break;
 	}
 
@@ -437,7 +435,7 @@ void CPU::Step()
 		uint16_t address = ComputeAddress(m_PC);
 		m_PC += 2;
 
-		if (m_ZeroFlag) m_PC = address;
+		if (m_statusRegister.Zero()) m_PC = address;
 		break;
 	}
 
@@ -446,7 +444,7 @@ void CPU::Step()
 		uint16_t address = ComputeAddress(m_PC);
 		m_PC += 2;
 
-		if (!m_ZeroFlag) m_PC = address;
+		if (!m_statusRegister.Zero()) m_PC = address;
 		break;
 	}
 
@@ -455,7 +453,7 @@ void CPU::Step()
 		uint16_t address = ComputeAddress(m_PC);
 		m_PC += 2;
 
-		if (m_CarryFlag) m_PC = address;
+		if (m_statusRegister.Carry()) m_PC = address;
 		break;
 	}
 
@@ -464,7 +462,7 @@ void CPU::Step()
 		uint16_t address = ComputeAddress(m_PC);
 		m_PC += 2;
 
-		if (!m_CarryFlag) m_PC = address;
+		if (!m_statusRegister.Carry()) m_PC = address;
 		break;
 	}
 
@@ -473,7 +471,7 @@ void CPU::Step()
 		uint16_t address = ComputeAddress(m_PC);
 		m_PC += 2;
 
-		if (m_NegativeFlag) m_PC = address;
+		if (m_statusRegister.Negative()) m_PC = address;
 		break;
 	}
 
@@ -482,7 +480,7 @@ void CPU::Step()
 		uint16_t address = ComputeAddress(m_PC);
 		m_PC += 2;
 
-		if (!m_NegativeFlag) m_PC = address;
+		if (!m_statusRegister.Negative()) m_PC = address;
 		break;
 	}
 
@@ -491,7 +489,7 @@ void CPU::Step()
 		uint16_t address = ComputeAddress(m_PC);
 		m_PC += 2;
 
-		if (m_OverflowFlag) m_PC = address;
+		if (m_statusRegister.Overflow()) m_PC = address;
 		break;
 	}
 
@@ -500,7 +498,7 @@ void CPU::Step()
 		uint16_t address = ComputeAddress(m_PC);
 		m_PC += 2;
 
-		if (!m_OverflowFlag) m_PC = address;
+		if (!m_statusRegister.Overflow()) m_PC = address;
 		break;
 	}
 
@@ -581,7 +579,7 @@ void CPU::Step()
 
 	case 0xFF: // HLT 1by
 	{
-		m_HaltFlag = true;
+		m_haltFlag = true;
 		break;
 	}
 	}
@@ -602,11 +600,7 @@ void CPU::Reset()
 		m_IR = 0x00;
 	}
 
-	m_ZeroFlag = false;
-	m_CarryFlag = false;
-	m_NegativeFlag = false;
-	m_OverflowFlag = false;
-	m_HaltFlag = false;
+	m_statusRegister.Reset();
 	m_interruptController.EnableInterrupts(false);
 }
 
@@ -628,14 +622,6 @@ void CPU::HandleInterrupt()
 	}
 }
 
-void CPU::UpdateFlags(Result result)
-{
-	m_ZeroFlag = result.zero;
-	m_CarryFlag = result.carry;
-	m_NegativeFlag = result.negative;
-	m_OverflowFlag = result.overflow;
-}
-
 uint16_t CPU::GetPC() const noexcept
 {
 	return m_PC;
@@ -651,29 +637,9 @@ uint8_t CPU::GetIR() const noexcept
 	return m_IR;
 }
 
-bool CPU::GetZeroFlag() const noexcept
-{
-	return m_ZeroFlag;
-}
-
 bool CPU::GetHaltFlag() const noexcept
 {
-	return m_HaltFlag;
-}
-
-bool CPU::GetCarryFlag() const noexcept
-{
-	return m_CarryFlag;
-}
-
-bool CPU::GetNegativeFlag() const noexcept
-{
-	return m_NegativeFlag;
-}
-
-bool CPU::GetOverflowFlag() const noexcept
-{
-	return m_OverflowFlag;
+	return m_haltFlag;
 }
 
 void CPU::SetProgramCounter(uint16_t address)
@@ -714,6 +680,11 @@ InterruptController& CPU::GetInterruptController() noexcept
 const RegisterFile& CPU::GetRegisterFile() const noexcept
 {
 	return m_registerFile;
+}
+
+const StatusRegister& CPU::GetStatusRegister() const noexcept
+{
+	return m_statusRegister;
 }
 
 uint16_t CPU::ComputeAddress(uint16_t address)

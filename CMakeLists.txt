@@ -28,6 +28,7 @@ set(SOURCES
     src/Core/MemoryUnit.cpp
     src/Core/InterruptController.cpp
     src/Core/RegisterFile.cpp
+    src/Core/StatusRegister.cpp
     src/Core/Terminal.cpp
 
     src/Debugger/Dissasembler.cpp
@@ -66,6 +67,7 @@ set(HEADERS
     inc/Core/InterruptController.h
     inc/Core/RegisterFile.h
     inc/Core/Result.h
+    inc/Core/StatusRegister.h
     inc/Core/Terminal.h
     inc/Core/TerminalLine.h
 
