@@ -2,6 +2,7 @@
 
 #include "Core/ALU.h"
 #include "Core/InterruptController.h"
+#include "Core/RegisterFile.h"
 #include "Core/MemoryUnit.h"
 
 #include <string>
@@ -26,11 +27,6 @@ public:
 	uint16_t ComputeAddress(uint16_t address);
 
 	//Registry getters
-	[[nodiscard]] uint8_t		GetA()		const noexcept;
-	[[nodiscard]] uint8_t		GetB()		const noexcept;
-	[[nodiscard]] uint8_t		GetC()		const noexcept;
-	[[nodiscard]] uint8_t		GetD()		const noexcept;
-
 	[[nodiscard]] uint16_t		GetPC()		const noexcept;
 	[[nodiscard]] uint16_t		GetSP()		const noexcept;
 	[[nodiscard]] uint8_t		GetIR()		const noexcept;
@@ -54,9 +50,9 @@ public:
 	[[nodiscard]] const InterruptController& GetInterruptController()	const noexcept;
 	[[nodiscard]] InterruptController& GetInterruptController()			noexcept;
 
+	[[nodiscard]] const RegisterFile& GetRegisterFile()					const noexcept;
+
 private:
-	[[nodiscard]] uint8_t	ReadRegister(uint8_t selector) const noexcept;
-	void					WriteRegister(uint8_t selector, uint8_t value);
 
 	void UpdateFlags(Result result);
 
@@ -69,11 +65,7 @@ private:
 	MemoryUnit m_memoryUnit;
 	InterruptController& m_interruptController;
 
-	// General Registry
-	uint8_t m_A{};
-	uint8_t m_B{};
-	uint8_t m_C{};
-	uint8_t m_D{};
+	RegisterFile m_registerFile;
 
 	uint16_t m_SP{};		// Stack Pointer Registry
 	uint16_t m_PC{};		// Program Counter Registry

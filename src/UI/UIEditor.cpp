@@ -72,10 +72,10 @@ namespace UIEditor
 		ImGui::Separator();
 
 		ImGui::Text("\nRegistry");
-		ImGui::Text(std::format("A: {}", cpu.GetA()).c_str());
-		ImGui::Text(std::format("B: {}", cpu.GetB()).c_str());
-		ImGui::Text(std::format("C: {}", cpu.GetC()).c_str());
-		ImGui::Text(std::format("D: {}", cpu.GetD()).c_str());
+		ImGui::Text(std::format("A: {}", cpu.GetRegisterFile().A()).c_str());
+		ImGui::Text(std::format("B: {}", cpu.GetRegisterFile().B()).c_str());
+		ImGui::Text(std::format("C: {}", cpu.GetRegisterFile().C()).c_str());
+		ImGui::Text(std::format("D: {}", cpu.GetRegisterFile().D()).c_str());
 		ImGui::Separator();
 
 		ImGui::Text("\nFlags");

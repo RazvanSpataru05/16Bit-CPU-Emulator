@@ -27,6 +27,7 @@ set(SOURCES
     src/Core/Keyboard.cpp
     src/Core/MemoryUnit.cpp
     src/Core/InterruptController.cpp
+    src/Core/RegisterFile.cpp
     src/Core/Terminal.cpp
 
     src/Debugger/Dissasembler.cpp
@@ -63,6 +64,7 @@ set(HEADERS
     inc/Core/MemoryCellType.h
     inc/Core/Keyboard.h
     inc/Core/InterruptController.h
+    inc/Core/RegisterFile.h
     inc/Core/Result.h
     inc/Core/Terminal.h
     inc/Core/TerminalLine.h
