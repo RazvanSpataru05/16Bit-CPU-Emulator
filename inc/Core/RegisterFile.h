@@ -11,6 +11,7 @@ public:
 	uint8_t Read(uint8_t selector) const;
 	void Write(uint8_t selector, uint8_t value);
 
+	void UpdateA(uint8_t value);
 	void Reset();
 
 	// const getters

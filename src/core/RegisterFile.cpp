@@ -10,6 +10,11 @@ void RegisterFile::Write(uint8_t selector, uint8_t value)
 	m_registers[selector] = value;
 }
 
+void RegisterFile::UpdateA(uint8_t value)
+{
+	m_registers[0] = value;
+}
+
 void RegisterFile::Reset()
 {
 	std::fill(m_registers.begin(), m_registers.end(), 0x00);

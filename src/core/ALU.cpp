@@ -73,7 +73,7 @@ namespace ALU
 		return r;
 	}
 
-	Result And(uint8_t a, uint8_t operand)
+	Result AND(uint8_t a, uint8_t operand)
 	{
 		uint8_t result = a & operand;
 		Result r;
@@ -84,7 +84,7 @@ namespace ALU
 		return r;
 	}
 
-	Result Or(uint8_t a, uint8_t operand)
+	Result OR(uint8_t a, uint8_t operand)
 	{
 		uint8_t result = a | operand;
 		Result r;
@@ -95,7 +95,7 @@ namespace ALU
 		return r;
 	}
 
-	Result Xor(uint8_t a, uint8_t operand)
+	Result XOR(uint8_t a, uint8_t operand)
 	{
 		uint8_t result = a ^ operand;
 		Result r;
@@ -106,7 +106,7 @@ namespace ALU
 		return r;
 	}
 
-	Result Not(uint8_t a)
+	Result NOT(uint8_t a)
 	{
 		uint8_t result = ~a;
 		Result r;

@@ -121,8 +121,8 @@ namespace UIEditor
 					const Program program = DataLoader::ParseStatements(statements, assembler.GetStartAddress());
 
 					memoryUnit.LoadValuesIntoMemory(program);
-					std::cout << "Start address: " << memoryUnit.GetStartAddress() << std::endl;
 					cpu.SetProgramCounter(memoryUnit.GetStartAddress());
+					cpu.SetInstructionRegister();
 
 					tab = SelectedTab::CONSOLE;
 					mode = Mode::DISSASEMBLY;

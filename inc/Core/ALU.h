@@ -23,10 +23,10 @@ namespace ALU
 	Result Mul(uint8_t a, uint8_t operand);
 
 	/* Logical operations */
-	Result And(uint8_t a, uint8_t operand);
-	Result Or(uint8_t a, uint8_t operand);
-	Result Xor(uint8_t a, uint8_t operand);
-	Result Not(uint8_t a);
+	Result AND(uint8_t a, uint8_t operand);
+	Result OR(uint8_t a, uint8_t operand);
+	Result XOR(uint8_t a, uint8_t operand);
+	Result NOT(uint8_t a);
 	Result ShiftLeft(uint8_t a);
 	Result ShiftRight(uint8_t a);
 

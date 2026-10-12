@@ -36,6 +36,7 @@ public:
 
 	// PC setter
 	void SetProgramCounter(uint16_t address);
+	void SetInstructionRegister();
 
 	bool IsReadingInstruction() const noexcept;
 	bool IsWritingInstruction() const noexcept;
@@ -47,7 +48,7 @@ public:
 	[[nodiscard]] InterruptController& GetInterruptController()			noexcept;
 
 	[[nodiscard]] const RegisterFile& GetRegisterFile()					const noexcept;
-	[[nodiscard]] const StatusRegister& GetStatusRegister()			const noexcept;
+	[[nodiscard]] const StatusRegister& GetStatusRegister()				const noexcept;
 
 private:
 

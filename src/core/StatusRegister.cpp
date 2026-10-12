@@ -10,10 +10,10 @@ void StatusRegister::Reset()
 
 void StatusRegister::UpdateFrom(const Result& result)
 {
-	bool m_zeroFlag = result.zero;
-	bool m_negativeFlag = result.negative;
-	bool m_carryFlag = result.carry;
-	bool m_overflowFlag = result.overflow;
+	m_zeroFlag = result.zero;
+	m_negativeFlag = result.negative;
+	m_carryFlag = result.carry;
+	m_overflowFlag = result.overflow;
 }
 
 bool StatusRegister::Zero() const noexcept
