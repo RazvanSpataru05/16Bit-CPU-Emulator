@@ -72,4 +72,59 @@ namespace ALU
 
 		return r;
 	}
+
+	Result And(uint8_t a, uint8_t operand)
+	{
+		uint8_t result = a & operand;
+		Result r;
+		ComputeFlagsLogicalOperation(r, result);
+
+		return r;
+	}
+
+	Result Or(uint8_t a, uint8_t operand)
+	{
+		uint8_t result = a | operand;
+		Result r;
+		ComputeFlagsLogicalOperation(r, result);
+
+		return r;
+	}
+
+	Result Xor(uint8_t a, uint8_t operand)
+	{
+		uint8_t result = a ^ operand;
+		Result r;
+		ComputeFlagsLogicalOperation(r, result);
+
+		return r;
+	}
+
+	Result Not(uint8_t a)
+	{
+		uint8_t result = ~a;
+		Result r;
+		ComputeFlagsLogicalOperation(r, result);
+
+		return r;
+	}
+
+	Result ShiftLeft(uint8_t a)
+	{
+		uint8_t result = a << 1;
+		Result r;
+		ComputeFlagsLogicalOperation(r, result);
+		r.carry = (a & 0x80) != 0;
+
+		return r;
+	}
+	Result ShiftRight(uint8_t a)
+	{
+		uint8_t result = a >> 1;
+		Result r;
+		ComputeFlagsLogicalOperation(r, result);
+		r.carry = (a & 0x01) != 0;
+
+		return r;
+	}
 }
