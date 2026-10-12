@@ -77,6 +77,8 @@ namespace ALU
 	{
 		uint8_t result = a & operand;
 		Result r;
+
+		r.value = result;
 		ComputeFlagsLogicalOperation(r, result);
 
 		return r;
@@ -86,6 +88,8 @@ namespace ALU
 	{
 		uint8_t result = a | operand;
 		Result r;
+
+		r.value = result;
 		ComputeFlagsLogicalOperation(r, result);
 
 		return r;
@@ -95,6 +99,8 @@ namespace ALU
 	{
 		uint8_t result = a ^ operand;
 		Result r;
+
+		r.value = result;
 		ComputeFlagsLogicalOperation(r, result);
 
 		return r;
@@ -104,6 +110,8 @@ namespace ALU
 	{
 		uint8_t result = ~a;
 		Result r;
+
+		r.value = result;
 		ComputeFlagsLogicalOperation(r, result);
 
 		return r;
@@ -113,17 +121,36 @@ namespace ALU
 	{
 		uint8_t result = a << 1;
 		Result r;
+
+		r.value = result;
 		ComputeFlagsLogicalOperation(r, result);
 		r.carry = (a & 0x80) != 0;
 
 		return r;
 	}
+
 	Result ShiftRight(uint8_t a)
 	{
 		uint8_t result = a >> 1;
 		Result r;
+
+		r.value = result;
 		ComputeFlagsLogicalOperation(r, result);
 		r.carry = (a & 0x01) != 0;
+
+		return r;
+	}
+
+	Result Compare(uint8_t a, uint8_t operand)
+	{
+		uint8_t result = a - operand;
+		Result r;
+
+		r.value = result;
+		r.carry = operand > a;
+		r.zero = (result == 0);
+		r.negative = (result & 0x80) != 0;
+		r.overflow = ((a ^ operand) & (a ^ result) & 0x80) != 0;
 
 		return r;
 	}

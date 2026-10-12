@@ -8,7 +8,6 @@ namespace ALU
 	{
 		void ComputeFlagsLogicalOperation(Result& r, uint8_t result)
 		{
-			r.value = result;
 			r.carry = false;
 			r.zero = (result == 0);
 			r.negative = false;
@@ -23,11 +22,14 @@ namespace ALU
 	Result Dec(uint8_t a);
 	Result Mul(uint8_t a, uint8_t operand);
 
-	/* Logical operations*/
+	/* Logical operations */
 	Result And(uint8_t a, uint8_t operand);
 	Result Or(uint8_t a, uint8_t operand);
 	Result Xor(uint8_t a, uint8_t operand);
 	Result Not(uint8_t a);
 	Result ShiftLeft(uint8_t a);
 	Result ShiftRight(uint8_t a);
+
+	/* Compare operation */
+	Result Compare(uint8_t a, uint8_t operand);
 }

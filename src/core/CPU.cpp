@@ -404,9 +404,9 @@ void CPU::Step()
 	case 0x40: // CMP_IM 2by
 	{
 		uint8_t operand = m_memoryUnit.Read(m_PC++);
-		uint8_t result = m_A - operand;
-		m_CarryFlag = (operand > m_A);
-		UpdateFlags(result, m_A, operand, false);
+		Result r = ALU::Compare(m_A, operand);
+
+		UpdateFlags(r);
 		break;
 	}
 
@@ -414,9 +414,9 @@ void CPU::Step()
 	{
 		uint8_t selector = m_memoryUnit.Read(m_PC++);
 		uint8_t reg = ReadRegister(selector);
-		uint8_t result = m_A - reg;
-		m_CarryFlag = (reg > m_A);
-		UpdateFlags(result, m_A, reg, false);
+		Result r = ALU::Compare(m_A, reg);
+
+		UpdateFlags(r);
 		break;
 	}
 
