@@ -437,7 +437,12 @@ void CPU::Step()
 		uint16_t address = ComputeAddress(m_PC);
 		m_PC += 2;
 
-		if (m_statusRegister.Zero()) m_PC = address;
+		if (m_statusRegister.Zero())
+		{
+			m_PC = address;
+			SetInstructionRegister();
+			return;
+		}
 		break;
 	}
 
@@ -460,7 +465,12 @@ void CPU::Step()
 		uint16_t address = ComputeAddress(m_PC);
 		m_PC += 2;
 
-		if (m_statusRegister.Carry()) m_PC = address;
+		if (m_statusRegister.Carry())
+		{
+			m_PC = address;
+			SetInstructionRegister();
+			return;
+		}
 		break;
 	}
 
@@ -469,7 +479,12 @@ void CPU::Step()
 		uint16_t address = ComputeAddress(m_PC);
 		m_PC += 2;
 
-		if (!m_statusRegister.Carry()) m_PC = address;
+		if (!m_statusRegister.Carry())
+		{
+			m_PC = address;
+			SetInstructionRegister();
+			return;
+		}
 		break;
 	}
 
@@ -478,7 +493,12 @@ void CPU::Step()
 		uint16_t address = ComputeAddress(m_PC);
 		m_PC += 2;
 
-		if (m_statusRegister.Negative()) m_PC = address;
+		if (m_statusRegister.Negative())
+		{
+			m_PC = address;
+			SetInstructionRegister();
+			return;
+		}
 		break;
 	}
 
@@ -487,7 +507,12 @@ void CPU::Step()
 		uint16_t address = ComputeAddress(m_PC);
 		m_PC += 2;
 
-		if (!m_statusRegister.Negative()) m_PC = address;
+		if (!m_statusRegister.Negative())
+		{
+			m_PC = address;
+			SetInstructionRegister();
+			return;
+		}
 		break;
 	}
 
@@ -496,7 +521,12 @@ void CPU::Step()
 		uint16_t address = ComputeAddress(m_PC);
 		m_PC += 2;
 
-		if (m_statusRegister.Overflow()) m_PC = address;
+		if (m_statusRegister.Overflow())
+		{
+			m_PC = address;
+			SetInstructionRegister();
+			return;
+		}
 		break;
 	}
 
@@ -505,7 +535,12 @@ void CPU::Step()
 		uint16_t address = ComputeAddress(m_PC);
 		m_PC += 2;
 
-		if (!m_statusRegister.Overflow()) m_PC = address;
+		if (!m_statusRegister.Overflow())
+		{
+			m_PC = address;
+			SetInstructionRegister();
+			return;
+		}
 		break;
 	}
 
