@@ -66,7 +66,7 @@ void CPU::Step()
 
 	case 0x07: // LDB_REG 2by
 	{
-		uint8_t selector = m_memoryUnit.Read(m_PC++);
+		uint8_t selector = m_memoryUnit.Read(++m_PC);
 		m_registerFile.B() = m_registerFile.Read(selector);
 		break;
 	}
@@ -81,7 +81,7 @@ void CPU::Step()
 
 	case 0x09: // LDC_IM 2by
 	{
-		m_registerFile.C() = m_memoryUnit.Read(m_PC++);
+		m_registerFile.C() = m_memoryUnit.Read(++m_PC);
 		break;
 	}
 
@@ -95,7 +95,7 @@ void CPU::Step()
 
 	case 0x0B: // LDC_REG 2by
 	{
-		uint8_t selector = m_memoryUnit.Read(m_PC++);
+		uint8_t selector = m_memoryUnit.Read(++m_PC);
 		m_registerFile.C() = m_registerFile.Read(selector);
 		break;
 	}
@@ -110,7 +110,7 @@ void CPU::Step()
 
 	case 0x0D: // LDD_IM 2by
 	{
-		m_registerFile.D() = m_memoryUnit.Read(m_PC++);
+		m_registerFile.D() = m_memoryUnit.Read(++m_PC);
 		break;
 	}
 
@@ -124,7 +124,7 @@ void CPU::Step()
 
 	case 0x0F: // LDD_REG 2by
 	{
-		uint8_t selector = m_memoryUnit.Read(m_PC++);
+		uint8_t selector = m_memoryUnit.Read(++m_PC);
 		m_registerFile.D() = m_registerFile.Read(selector);
 		break;
 	}
@@ -153,8 +153,8 @@ void CPU::Step()
 
 	case 0x13: // LDW_IM 3by
 	{
-		m_registerFile.B() = m_memoryUnit.Read(m_PC++);
-		m_registerFile.C() = m_memoryUnit.Read(m_PC++);
+		m_registerFile.B() = m_memoryUnit.Read(++m_PC);
+		m_registerFile.C() = m_memoryUnit.Read(++m_PC);
 		break;
 	}
 
@@ -172,7 +172,7 @@ void CPU::Step()
 
 	case 0x20: // ADD_IM 2by
 	{
-		uint8_t operand = m_memoryUnit.Read(m_PC++);
+		uint8_t operand = m_memoryUnit.Read(++m_PC);
 		Result r = ALU::Add(m_registerFile.A(), operand, false);
 		
 		m_registerFile.A() = r.value;
@@ -193,7 +193,7 @@ void CPU::Step()
 
 	case 0x22: // ADC_IM 2by
 	{
-		uint8_t operand = m_memoryUnit.Read(m_PC++);
+		uint8_t operand = m_memoryUnit.Read(++m_PC);
 		Result r = ALU::Add(m_registerFile.A(), operand, true);
 
 		m_registerFile.A() = r.value;
@@ -203,7 +203,7 @@ void CPU::Step()
 
 	case 0x23: // ADC_REG 2by
 	{
-		uint8_t selector = m_memoryUnit.Read(m_PC++);
+		uint8_t selector = m_memoryUnit.Read(++m_PC);
 		uint8_t reg = m_registerFile.Read(selector);
 		Result r = ALU::Add(m_registerFile.A(), reg, true);
 
@@ -214,7 +214,7 @@ void CPU::Step()
 
 	case 0x24: // SUB_IM 2by
 	{
-		uint8_t operand = m_memoryUnit.Read(m_PC++);
+		uint8_t operand = m_memoryUnit.Read(++m_PC);
 		Result r = ALU::Sub(m_registerFile.A(), operand, false);
 
 		m_registerFile.A() = r.value;
@@ -224,7 +224,7 @@ void CPU::Step()
 
 	case 0x25: // SUB_REG 2by
 	{
-		uint8_t selector = m_memoryUnit.Read(m_PC++);
+		uint8_t selector = m_memoryUnit.Read(++m_PC);
 		uint8_t reg = m_registerFile.Read(selector);
 		Result r = ALU::Sub(m_registerFile.A(), reg, false);
 
@@ -235,7 +235,7 @@ void CPU::Step()
 
 	case 0x26: // SBC_IM 2by
 	{
-		uint8_t operand = m_memoryUnit.Read(m_PC++);
+		uint8_t operand = m_memoryUnit.Read(++m_PC);
 		Result r = ALU::Sub(m_registerFile.A(), operand, true);
 
 		m_registerFile.A() = r.value;
@@ -245,7 +245,7 @@ void CPU::Step()
 
 	case 0x27: // SBC_REG 2by
 	{
-		uint8_t selector = m_memoryUnit.Read(m_PC++);
+		uint8_t selector = m_memoryUnit.Read(++m_PC);
 		uint8_t reg = m_registerFile.Read(selector);
 		Result r = ALU::Sub(m_registerFile.A(), reg, true);
 
@@ -278,7 +278,8 @@ void CPU::Step()
 
 	case 0x2A: //MUL_IM 2by
 	{
-		Result r = ALU::Mul(m_registerFile.A(), m_memoryUnit.Read(m_PC++));
+		uint8_t operand = m_memoryUnit.Read(++m_PC);
+		Result r = ALU::Mul(m_registerFile.A(), operand);
 
 		m_registerFile.A() = r.value;
 		m_statusRegister.UpdateFrom(r);
@@ -287,7 +288,7 @@ void CPU::Step()
 
 	case 0x2B: //MUL_REG 2by
 	{
-		uint8_t selector = m_memoryUnit.Read(m_PC++);
+		uint8_t selector = m_memoryUnit.Read(++m_PC);
 		uint8_t reg = m_registerFile.Read(selector);
 		Result r = ALU::Mul(m_registerFile.A(), reg);
 
@@ -300,7 +301,7 @@ void CPU::Step()
 
 	case 0x30: // AND_IM 2by
 	{
-		uint8_t operand = m_memoryUnit.Read(m_PC++);
+		uint8_t operand = m_memoryUnit.Read(++m_PC);
 		Result r = ALU::AND(m_registerFile.A(), operand);
 
 		m_registerFile.A() = r.value;
@@ -310,7 +311,7 @@ void CPU::Step()
 
 	case 0x31: // AND_REG 2by
 	{
-		uint8_t selector = m_memoryUnit.Read(m_PC++);
+		uint8_t selector = m_memoryUnit.Read(++m_PC);
 		uint8_t reg = m_registerFile.Read(selector);
 		Result r = ALU::AND(m_registerFile.A(), reg);
 
@@ -321,7 +322,7 @@ void CPU::Step()
 
 	case 0x32: // OR_IM 2by
 	{
-		uint8_t operand = m_memoryUnit.Read(m_PC++);
+		uint8_t operand = m_memoryUnit.Read(++m_PC);
 		Result r = ALU::OR(m_registerFile.A(), operand);
 
 		m_registerFile.A() = r.value;
@@ -331,7 +332,7 @@ void CPU::Step()
 
 	case 0x33: // OR_REG 2by
 	{
-		uint8_t selector = m_memoryUnit.Read(m_PC++);
+		uint8_t selector = m_memoryUnit.Read(++m_PC);
 		uint8_t reg = m_registerFile.Read(selector);
 		Result r = ALU::OR(m_registerFile.A(), reg);
 
@@ -342,7 +343,7 @@ void CPU::Step()
 
 	case 0x34: // XOR_IM 2by
 	{
-		uint8_t operand = m_memoryUnit.Read(m_PC++);
+		uint8_t operand = m_memoryUnit.Read(++m_PC);
 		Result r = ALU::XOR(m_registerFile.A(), operand);
 
 		m_registerFile.A() = r.value;
@@ -352,7 +353,7 @@ void CPU::Step()
 
 	case 0x35: // XOR_REG 2by
 	{
-		uint8_t selector = m_memoryUnit.Read(m_PC++);
+		uint8_t selector = m_memoryUnit.Read(++m_PC);
 		uint8_t reg = m_registerFile.Read(selector);
 		Result r = ALU::XOR(m_registerFile.A(), reg);
 
@@ -363,7 +364,7 @@ void CPU::Step()
 
 	case 0x36: //NOT 2by
 	{
-		uint8_t selector = m_memoryUnit.Read(m_PC++);
+		uint8_t selector = m_memoryUnit.Read(++m_PC);
 		uint8_t reg = m_registerFile.Read(selector);
 		Result r = ALU::NOT(reg);
 		
@@ -375,7 +376,7 @@ void CPU::Step()
 
 	case 0x37: //SHL 2by
 	{
-		uint8_t selector = m_memoryUnit.Read(m_PC++);
+		uint8_t selector = m_memoryUnit.Read(++m_PC);
 		uint8_t reg = m_registerFile.Read(selector);
 		Result r = ALU::ShiftLeft(reg);
 
@@ -387,7 +388,7 @@ void CPU::Step()
 
 	case 0x38: //SHR 2by
 	{
-		uint8_t selector = m_memoryUnit.Read(m_PC++);
+		uint8_t selector = m_memoryUnit.Read(++m_PC);
 		uint8_t reg = m_registerFile.Read(selector);
 		Result r = ALU::ShiftLeft(reg);
 
@@ -403,7 +404,6 @@ void CPU::Step()
 	{
 		uint8_t operand = m_memoryUnit.Read(++m_PC);
 		Result r = ALU::Compare(m_registerFile.A(), operand);
-		std::cout << "Zero flag: " << r.zero << std::endl;
 
 		m_statusRegister.UpdateFrom(r);
 		break;
@@ -411,7 +411,7 @@ void CPU::Step()
 
 	case 0x41: // CMP_REG 2by
 	{
-		uint8_t selector = m_memoryUnit.Read(m_PC++);
+		uint8_t selector = m_memoryUnit.Read(++m_PC);
 		uint8_t reg = m_registerFile.Read(selector);
 		Result r = ALU::Compare(m_registerFile.A(), reg);
 
@@ -548,7 +548,7 @@ void CPU::Step()
 
 	case 0x60: // PUSH 2by
 	{
-		uint8_t selector = m_memoryUnit.Read(m_PC++);
+		uint8_t selector = m_memoryUnit.Read(++m_PC);
 		uint8_t reg = m_registerFile.Read(selector);
 		m_memoryUnit.Write(m_SP--, reg);
 		break;
@@ -556,7 +556,7 @@ void CPU::Step()
 
 	case 0x61: // POP 2by
 	{
-		uint8_t selector = m_memoryUnit.Read(m_PC++);
+		uint8_t selector = m_memoryUnit.Read(++m_PC);
 		uint8_t reg = m_registerFile.Read(selector);
 
 		reg = m_memoryUnit.Read(++m_SP);
@@ -568,6 +568,7 @@ void CPU::Step()
 	{
 		uint16_t address = ComputeAddress(m_PC);
 		m_PC += 2;
+
 		m_memoryUnit.Write(m_SP--, (m_PC >> 8) & 0xFF);
 		m_memoryUnit.Write(m_SP--, m_PC & 0xFF);
 		m_PC = address;
@@ -591,8 +592,8 @@ void CPU::Step()
 
 	case 0x70: // MOV 3by
 	{
-		uint8_t destination = m_memoryUnit.Read(m_PC++);
-		uint8_t source = m_memoryUnit.Read(m_PC++);
+		uint8_t destination = m_memoryUnit.Read(++m_PC);
+		uint8_t source = m_memoryUnit.Read(++m_PC);
 		uint8_t reg = m_registerFile.Read(source);
 
 		m_registerFile.Write(destination, reg);
