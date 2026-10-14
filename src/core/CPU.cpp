@@ -8,7 +8,12 @@ CPU::CPU(InterruptController& interruptController) :
 
 void CPU::Fetch()
 {
-	m_IR = m_memoryUnit.Read(++m_PC);
+	if (!m_memoryUnit[m_PC + 1].has_value())
+	{
+		m_haltFlag = true;
+		return;
+	}
+	m_IR = m_memoryUnit[++m_PC].value();
 }
 
 void CPU::Step()
@@ -22,7 +27,7 @@ void CPU::Step()
 
 	case 0x01: // LDA_IM 2by
 	{
-		m_registerFile.A() = m_memoryUnit.Read(++m_PC);
+		m_registerFile.A() = m_memoryUnit[++m_PC].value();
 		break;
 	}
 
@@ -614,8 +619,8 @@ void CPU::Step()
 
 	case 0xF9: // RETI 1by
 	{
-		const uint8_t hi = m_memoryUnit[m_SP++];
-		const uint8_t lo = m_memoryUnit[m_SP++];
+		const uint8_t hi = m_memoryUnit[m_SP++].value();
+		const uint8_t lo = m_memoryUnit[m_SP++].value();
 		m_PC = (hi << 8) | lo;
 		break;
 	}
@@ -633,20 +638,22 @@ void CPU::Step()
 void CPU::Reset()
 {
 	m_registerFile.Reset();
+	m_statusRegister.Reset();
+	m_interruptController.EnableInterrupts(false);
+	m_haltFlag = false;
+
 	m_PC = m_memoryUnit.GetStartAddress();
 	m_SP = 0xFFFF;
 
-	if (const auto result = m_memoryUnit.Peek(m_PC); result.has_value())
+	if (m_memoryUnit[m_PC].has_value())
 	{
-		m_IR = result.value();
+		m_IR = m_memoryUnit[m_PC].value();
 	}
 	else
 	{
 		m_IR = 0x00;
 	}
 
-	m_statusRegister.Reset();
-	m_interruptController.EnableInterrupts(false);
 }
 
 void CPU::HandleInterrupt()
@@ -694,7 +701,12 @@ void CPU::SetProgramCounter(uint16_t address)
 
 void CPU::SetInstructionRegister()
 {
-	m_IR = m_memoryUnit[m_PC];
+	if (!m_memoryUnit[m_PC].has_value())
+	{
+		m_haltFlag = true;
+		return;
+	}
+	m_IR = m_memoryUnit[m_PC].value();
 }
 
 bool CPU::IsReadingInstruction() const noexcept
@@ -739,7 +751,7 @@ const StatusRegister& CPU::GetStatusRegister() const noexcept
 
 uint16_t CPU::ComputeAddress(uint16_t address)
 {
-	uint8_t high = m_memoryUnit[++address];
-	uint8_t low = m_memoryUnit[++address];
+	uint8_t high = m_memoryUnit[++address].value();
+	uint8_t low = m_memoryUnit[++address].value();
 	return (high << 8) | low;
 }

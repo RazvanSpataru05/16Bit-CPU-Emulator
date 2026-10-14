@@ -144,14 +144,14 @@ namespace Utils
 			}
 			case 2u:
 			{
-				uint8_t secondByte = memoryUnit[index + 1];
+				uint8_t secondByte = memoryUnit[index + 1].value();
 				ImGui::Text(std::format("{:#04x}: {} {}", opcode.value(), instruction.mnemonic, secondByte).c_str());
 				break;
 			}
 			case 3u:
 			{
-				uint8_t secondByte = memoryUnit[index + 1];
-				uint8_t thirdByte = memoryUnit[index + 2];
+				uint8_t secondByte = memoryUnit[index + 1].value();
+				uint8_t thirdByte = memoryUnit[index + 2].value();
 				uint16_t address = (secondByte << 8) | thirdByte;
 				ImGui::Text(std::format("{:#04x}: {} {:#06X}", opcode.value(), instruction.mnemonic, address).c_str());
 				break;

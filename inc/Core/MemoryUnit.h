@@ -35,7 +35,7 @@ public:
 	void LoadValuesIntoMemory(const Program& program);
 	void LoadProgramFromFIle(const std::filesystem::path& filename);
 
-	uint8_t& operator[](uint16_t address);
+	std::optional<uint8_t>& operator[](uint16_t address);
 
 private:
 	MemoryUnit(const MemoryUnit&) = delete;

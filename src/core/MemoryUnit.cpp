@@ -85,12 +85,7 @@ void MemoryUnit::LoadProgramFromFIle(const std::filesystem::path& filename)
 	//LoadValuesIntoMemory(DataLoader::ParseHexValues(fullPath, m_hasData), 0x0000);
 }
 
-uint8_t& MemoryUnit::operator[](uint16_t address) 
+std::optional<uint8_t>& MemoryUnit::operator[](uint16_t address) 
 {
-	if (!m_memory[address].has_value())
-	{
-		m_memory[address] = 0x00;
-	}
-
-	return m_memory[address].value();
+	return m_memory[address];
 }
