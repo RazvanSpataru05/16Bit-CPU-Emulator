@@ -8,7 +8,7 @@
 #include <fstream>
 #include <span>
 
-const size_t MEMORY_SIZE{ 65536 };
+const size_t MEMORY_SIZE{ std::numeric_limits<uint16_t>::max() + 1};
 
 class MemoryUnit
 {
@@ -27,7 +27,7 @@ public:
 	[[nodiscard]] uint16_t GetStartAddress() const noexcept;
 
 	[[nodiscard]] uint8_t Read(uint16_t address) const noexcept;
-	void				  Write(uint16_t address, uint8_t value) noexcept;
+	void Write(uint16_t address, uint8_t value);
 
 	void Clear() noexcept;
 	void RestoreSnapshot();
@@ -35,6 +35,7 @@ public:
 	void LoadValuesIntoMemory(const Program& program);
 	void LoadProgramFromFIle(const std::filesystem::path& filename);
 
+	const std::optional<uint8_t>& operator[](uint16_t address) const;
 	std::optional<uint8_t>& operator[](uint16_t address);
 
 private:

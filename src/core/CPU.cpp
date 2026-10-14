@@ -80,7 +80,7 @@ void CPU::Step()
 	{
 		uint16_t address = ComputeAddress(m_PC);
 		m_PC += 2;
-		m_memoryUnit.Write(address, m_registerFile.B());
+		m_memoryUnit[address] = m_registerFile.B();
 		break;
 	}
 
@@ -109,7 +109,7 @@ void CPU::Step()
 	{
 		uint16_t address = ComputeAddress(m_PC);
 		m_PC += 2;
-		m_memoryUnit.Write(address, m_registerFile.C());
+		m_memoryUnit[address] = m_registerFile.C();
 		break;
 	}
 
@@ -138,7 +138,7 @@ void CPU::Step()
 	{
 		uint16_t address = ComputeAddress(m_PC);
 		m_PC += 2;
-		m_memoryUnit.Write(address, m_registerFile.D());
+		m_memoryUnit[address] = m_registerFile.D();
 		break;
 	}
 
@@ -152,7 +152,7 @@ void CPU::Step()
 	case 0x12: // STA_IND 1by
 	{
 		uint16_t BC = (m_registerFile.B() << 8) | m_registerFile.C();
-		m_memoryUnit.Write(BC, m_registerFile.A());
+		m_memoryUnit[BC] = m_registerFile.A();
 		break;
 	}
 
@@ -191,7 +191,7 @@ void CPU::Step()
 		uint8_t reg = m_registerFile.Read(selector);
 		Result r = ALU::Add(m_registerFile.A(), reg, false);
 
-		m_registerFile.UpdateA(r.value);
+		m_registerFile.A() = r.value;
 		m_statusRegister.UpdateFrom(r);
 		break;
 	}
@@ -553,8 +553,9 @@ void CPU::Step()
 
 	case 0x60: // PUSH 2by
 	{
-		uint8_t selector = m_memoryUnit.Read(++m_PC);
-		uint8_t reg = m_registerFile.Read(selector);
+		const uint8_t selector = m_memoryUnit[++m_PC].value();
+		const uint8_t reg = m_registerFile.Read(selector);
+
 		m_memoryUnit.Write(m_SP--, reg);
 		break;
 	}
@@ -643,7 +644,7 @@ void CPU::Reset()
 	m_haltFlag = false;
 
 	m_PC = m_memoryUnit.GetStartAddress();
-	m_SP = 0xFFFF;
+	m_SP = 0x1000;
 
 	if (m_memoryUnit[m_PC].has_value())
 	{

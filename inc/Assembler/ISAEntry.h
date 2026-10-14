@@ -92,8 +92,8 @@ namespace ISA
             {"JNO",     0x58,   OperatorKind::ADDR_16,  3, "Computes 16-bit address. Assigns the address to PC if Overflow Flag is NOT true"},
 
             /* Stack operations (4 total) */
-            {"PUSH",    0x60,   OperatorKind::REG,      2, "Assigns the value of a specified register to the memory address the SP points to. Decrements SP"},
-            {"POP",     0x61,   OperatorKind::REG,      2, "Assigns to a specified register the value of the memory address the SP points to. Increments SP"},
+            {"PUSH",    0x60,   OperatorKind::REG,      2, "Pushes the value of a register on the stack"},
+            {"POP",     0x61,   OperatorKind::REG,      2, "Pops the value from the top of the stack and assigns it to a register"},
             {"CALL",    0x62,   OperatorKind::ADDR_16,  3, "Jumps to subroutines at given address, saving return address on the stack"},
             {"RET",     0x63,   OperatorKind::NONE,     1, "Assigns the return address to PC register"},
 

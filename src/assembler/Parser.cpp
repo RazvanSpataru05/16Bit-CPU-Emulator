@@ -200,10 +200,10 @@ void Parser::HandleMnemonicToken_Emit()
 	switch (entry->operatorKind)
 	{
 	case OperatorKind::NONE: { Next(); break; }
-	case OperatorKind::IMM_8: { m_currentStatement.operands = ConsumeImm8();		break; }
-	case OperatorKind::ADDR_16: { m_currentStatement.operands = ConsumeAddr16();	break; }
-	case OperatorKind::REG: { m_currentStatement.operands = ConsumeReg();			break; }
-	case OperatorKind::REG_REG: { m_currentStatement.operands = ConsumeRegReg();	break; }
+	case OperatorKind::IMM_8: {		m_currentStatement.operands = ConsumeImm8();		break; }
+	case OperatorKind::ADDR_16: {	m_currentStatement.operands = ConsumeAddr16();		break; }
+	case OperatorKind::REG: {		m_currentStatement.operands = ConsumeReg();			break; }
+	case OperatorKind::REG_REG: {	m_currentStatement.operands = ConsumeRegReg();		break; }
 	default: break;
 	}
 

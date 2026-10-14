@@ -121,8 +121,7 @@ namespace UIEditor
 					const Program program = DataLoader::ParseStatements(statements, assembler.GetStartAddress());
 
 					memoryUnit.LoadValuesIntoMemory(program);
-					cpu.SetProgramCounter(memoryUnit.GetStartAddress());
-					cpu.SetInstructionRegister();
+					cpu.Reset();
 
 					tab = SelectedTab::CONSOLE;
 					mode = Mode::DISSASEMBLY;
@@ -215,7 +214,7 @@ namespace UIEditor
 				}
 
 				char cellText[8];
-				if (const auto result = memoryUnit.Peek(static_cast<uint16_t>(index)); result.has_value())
+				if (const auto result = memoryUnit[static_cast<uint16_t>(index)]; result.has_value())
 				{
 					snprintf(cellText, sizeof(cellText), "0x%02X", result.value());
 				}
