@@ -7,9 +7,9 @@ class RegisterFile
 {
 public:
 	const size_t A_SELECTOR = 0;
-	const size_t B_SELECTOR = 0;
-	const size_t C_SELECTOR = 0;
-	const size_t D_SELECTOR = 0;
+	const size_t B_SELECTOR = 1;
+	const size_t C_SELECTOR = 2;
+	const size_t D_SELECTOR = 3;
 
 public:
 	RegisterFile() = default;
