@@ -51,7 +51,6 @@ void Parser::AddLabels()
 	Logger::AddInfoMessage("In First Pass\n");
 	while (m_pos < m_tokens.size() && Peek().type != TokenType::END_OF_FILE)
 	{
-
 		const Token& currentToken = Peek();
 		auto it = std::find_if(m_scanHandlers.begin(), m_scanHandlers.end(), [currentToken](const auto& handler) {
 			return handler.first(currentToken);

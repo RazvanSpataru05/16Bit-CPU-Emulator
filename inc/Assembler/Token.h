@@ -1,28 +1,6 @@
 #pragma once
 
-enum class TokenType : uint8_t
-{
-	NONE=0,
-
-	MNEMONIC,
-	REGISTER, // A-D or a-d
-	NUMBER,
-	NEW_LINE,
-	IDENTIFIER,
-
-	LEFT_PARAN,
-	RIGHT_PARAN,
-	LEFT_BRACKET,
-	RIGHT_BRACKET,
-
-	COLON,
-	COMMA,
-	DOT,
-
-	DW, // define word
-
-	END_OF_FILE
-};
+#include "Assembler/TokenType.h"
 
 struct Token
 {

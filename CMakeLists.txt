@@ -45,18 +45,19 @@ set(SOURCES
 )
 
 set(HEADERS
+    inc/Assembler/AssemblerStage.h
+    inc/Assembler/AssemblerError.h
+    inc/Assembler/AssemblerWarning.h
+    inc/Assembler/Assembler.h
     inc/Assembler/InstructionDef.h
     inc/Assembler/ISAEntry.h
     inc/Assembler/Lexer.h
     inc/Assembler/ParsedNumber.h
     inc/Assembler/Parser.h
     inc/Assembler/LabelInfo.h
-    inc/Assembler/Token.h
     inc/Assembler/Statement.h
-    inc/Assembler/AssemblerStage.h
-    inc/Assembler/AssemblerError.h
-    inc/Assembler/AssemblerWarning.h
-    inc/Assembler/Assembler.h
+    inc/Assembler/Token.h
+    inc/Assembler/TokenType.h
 
     inc/Core/ALU.h
     inc/Core/CPU.h

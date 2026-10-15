@@ -41,13 +41,20 @@ private:
 	void ConsumeWhiteSpace();
 	void ConsumeComment();
 	void ConsumeNewLine();
-	void ConsumeColon();
-	void ConsumeComma();
-	void ConsumeDot();
+
+	void ConsumePlus();
+	void ConsumeMinus();
+	void ConsumeStar();
+	void ConsumeSlash();
+
 	void ConsumeLeftParanthesis();
 	void ConsumeRightParanthesis();
 	void ConsumeLeftBracket();
 	void ConsumeRightBracket();
+
+	void ConsumeColon();
+	void ConsumeComma();
+	void ConsumeDot();
 
 	// Helper for other tokens
 	void ConsumeSymbol(TokenType tokenType, std::string_view symbol);
@@ -67,7 +74,7 @@ private:
 	std::string m_sourceCode;
 	uint32_t m_lineNumber{};
 	uint32_t m_columnNumber{};
-	size_t m_currentIndex{};
+	size_t m_pos{};
 
 	std::vector<Token> m_tokens;
 	std::vector<AssemblerError> m_errors;
@@ -82,6 +89,14 @@ private:
 		{[](unsigned char c) {return c == ' ' || c == '\t';}, [this] {ConsumeWhiteSpace();}},
 
 		{[](unsigned char c) {return c == '\n';}, [this] {ConsumeNewLine();}},
+
+		{[](unsigned char c) {return c == '+';}, [this] {ConsumePlus();}},
+
+		{[](unsigned char c) {return c == '-';}, [this] {ConsumeMinus();}},
+
+		{[](unsigned char c) {return c == '*';}, [this] {ConsumeStar();}},
+
+		{[](unsigned char c) {return c == '\\';}, [this] {ConsumeSlash();}},
 
 		{[](unsigned char c) {return c == ':';}, [this] {ConsumeColon();}},
 

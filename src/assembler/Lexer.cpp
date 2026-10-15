@@ -4,7 +4,7 @@ Lexer::Lexer(std::string_view sourceCode) :
 	m_sourceCode{ sourceCode },
 	m_lineNumber{ 1u },
 	m_columnNumber{ 1u },
-	m_currentIndex{ 0 }
+	m_pos{ 0 }
 {
 }
 
@@ -13,13 +13,13 @@ void Lexer::Tokenize()
 	m_tokens.clear();
 	m_errors.clear();
 	m_warnings.clear();
-	m_currentIndex = 0;
+	m_pos = 0;
 	m_lineNumber = 1u;
 	m_columnNumber = 1u;
 
-	while (m_currentIndex < m_sourceCode.size())
+	while (m_pos < m_sourceCode.size())
 	{
-		const unsigned char currentChar = m_sourceCode[m_currentIndex];
+		const unsigned char currentChar = m_sourceCode[m_pos];
 		auto it = std::find_if(m_handlers.begin(), m_handlers.end(), [currentChar](const auto& handler)
 			{
 				return handler.first(currentChar);
@@ -33,6 +33,7 @@ void Lexer::Tokenize()
 		{
 			AddError(std::format("Error at line {}, column {}: unexpected character '{}'.",
 				m_lineNumber, m_columnNumber, currentChar), m_columnNumber);
+			++m_pos;
 		}
 	}
 	m_tokens.emplace_back(TokenType::END_OF_FILE, "END_OF_FILE", ++m_lineNumber, 1u);
@@ -77,12 +78,12 @@ std::span<const Token> Lexer::GetTokens() const noexcept
 void Lexer::ConsumeWord()
 {
 	std::string word{};
-	while (m_currentIndex < m_sourceCode.size() &&
-		(isalnum(m_sourceCode[m_currentIndex]) || m_sourceCode[m_currentIndex] == '_'))
+	while (m_pos < m_sourceCode.size() &&
+		(isalnum(m_sourceCode[m_pos]) || m_sourceCode[m_pos] == '_'))
 	{
-		word += m_sourceCode[m_currentIndex];
+		word += m_sourceCode[m_pos];
 		++m_columnNumber;
-		++m_currentIndex;
+		++m_pos;
 	}
 	
 	const Token& token = BuildToken(word);
@@ -92,20 +93,20 @@ void Lexer::ConsumeWord()
 
 void Lexer::ConsumeWhiteSpace()
 {
-	while (m_currentIndex < m_sourceCode.size() &&
-		(m_sourceCode[m_currentIndex] == ' ' ||
-			m_sourceCode[m_currentIndex] == '\t'))
+	while (m_pos < m_sourceCode.size() &&
+		(m_sourceCode[m_pos] == ' ' ||
+			m_sourceCode[m_pos] == '\t'))
 	{
-		++m_currentIndex;
+		++m_pos;
 		++m_columnNumber;
 	}
 }
 
 void Lexer::ConsumeComment()
 {
-	while (m_currentIndex < m_sourceCode.size() && m_sourceCode[m_currentIndex] != '\n')
+	while (m_pos < m_sourceCode.size() && m_sourceCode[m_pos] != '\n')
 	{
-		++m_currentIndex;
+		++m_pos;
 		++m_columnNumber;
 	}
 }
@@ -115,6 +116,26 @@ void Lexer::ConsumeNewLine()
 	ConsumeSymbol(TokenType::NEW_LINE, "\n");
 	++m_lineNumber;
 	m_columnNumber = 1u;
+}
+
+void Lexer::ConsumePlus()
+{
+	ConsumeSymbol(TokenType::PLUS, "+");
+}
+
+void Lexer::ConsumeMinus()
+{
+	ConsumeSymbol(TokenType::MINUS, "-");
+}
+
+void Lexer::ConsumeStar()
+{
+	ConsumeSymbol(TokenType::STAR, "*");
+}
+
+void Lexer::ConsumeSlash()
+{
+	ConsumeSymbol(TokenType::SLASH, "\\");
 }
 
 void Lexer::ConsumeColon()
@@ -155,8 +176,8 @@ void Lexer::ConsumeRightBracket()
 void Lexer::ConsumeSymbol(TokenType tokenType, std::string_view symbol)
 {
 	m_tokens.emplace_back(tokenType, symbol, m_lineNumber, m_columnNumber);
-	++m_currentIndex;
-	++m_columnNumber;
+	++m_pos;
+	++m_columnNumber; 
 }
 
 void Lexer::CheckMixedCase(const Token& token)
