@@ -71,11 +71,26 @@ namespace UIEditor
 		ImGui::Text(std::format("Instruction Register: {:#04X}",		cpu.GetIR()).c_str());
 		ImGui::Separator();
 
-		ImGui::Text("\nRegistry");
+		ImGui::Text("General Purpose Registry");
+		ImGui::SameLine(250.0f); 
+		ImGui::Text("Segment Registry");
+
 		ImGui::Text(std::format("AX: {}", cpu.GetRegisterFile().AX()).c_str());
+		ImGui::SameLine(250.0f);
+		ImGui::Text(std::format("ES: {}", cpu.GetRegisterFile().ES()).c_str());
+
 		ImGui::Text(std::format("BX: {}", cpu.GetRegisterFile().BX()).c_str());
+		ImGui::SameLine(250.0f);
+		ImGui::Text(std::format("CS: {}", cpu.GetRegisterFile().CS()).c_str());
+
 		ImGui::Text(std::format("CX: {}", cpu.GetRegisterFile().CX()).c_str());
+		ImGui::SameLine(250.0f);
+		ImGui::Text(std::format("SS: {}", cpu.GetRegisterFile().SS()).c_str());
+		
 		ImGui::Text(std::format("DX: {}", cpu.GetRegisterFile().DX()).c_str());
+		ImGui::SameLine(250.0f);
+		ImGui::Text(std::format("DS: {}", cpu.GetRegisterFile().DS()).c_str());
+
 		ImGui::Separator();
 
 		ImGui::Text("\nFlags");
