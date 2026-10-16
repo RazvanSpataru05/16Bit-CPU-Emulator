@@ -3,10 +3,10 @@
 namespace ALU
 {
 
-	Result Add(uint8_t a, uint8_t operand, bool carry)
+	Result Add(uint16_t a, uint16_t operand, bool carry)
 	{
 		uint16_t sum = a + operand + (carry ? 1 : 0);
-		uint8_t result = static_cast<uint8_t>(sum);
+		uint16_t result = static_cast<uint16_t>(sum);
 
 		Result r;
 		r.value = result;
@@ -17,10 +17,10 @@ namespace ALU
 
 		return r;
 	}
-	Result Sub(uint8_t a, uint8_t operand, bool borrow)
+	Result Sub(uint16_t a, uint16_t operand, bool borrow)
 	{
 		uint16_t diff = a - operand - (borrow ? 1 : 0);
-		uint8_t result = static_cast<uint8_t>(diff);
+		uint16_t result = static_cast<uint16_t>(diff);
 
 		Result r;
 		r.value = result;
@@ -32,9 +32,9 @@ namespace ALU
 		return r;
 	}
 
-	Result Inc(uint8_t a)
+	Result Inc(uint16_t a)
 	{
-		uint8_t result = static_cast<uint8_t>(a + 1);
+		uint16_t result = static_cast<uint16_t>(a + 1);
 
 		Result r;
 		r.value = result;
@@ -45,9 +45,9 @@ namespace ALU
 		return r;
 	}
 
-	Result Dec(uint8_t a)
+	Result Dec(uint16_t a)
 	{
-		uint8_t result = static_cast<uint8_t>(a - 1);
+		uint16_t result = static_cast<uint16_t>(a - 1);
 
 		Result r;
 		r.value = result;
@@ -58,10 +58,10 @@ namespace ALU
 		return r;
 	}
 
-	Result Mul(uint8_t a, uint8_t operand)
+	Result Mul(uint16_t a, uint16_t operand)
 	{
 		uint16_t prod = a * operand;
-		uint8_t result = static_cast<uint8_t>(prod);
+		uint16_t result = static_cast<uint16_t>(prod);
 
 		Result r;
 		r.value = result;
@@ -73,9 +73,9 @@ namespace ALU
 		return r;
 	}
 
-	Result AND(uint8_t a, uint8_t operand)
+	Result AND(uint16_t a, uint16_t operand)
 	{
-		uint8_t result = a & operand;
+		uint16_t result = a & operand;
 		Result r;
 
 		r.value = result;
@@ -84,9 +84,9 @@ namespace ALU
 		return r;
 	}
 
-	Result OR(uint8_t a, uint8_t operand)
+	Result OR(uint16_t a, uint16_t operand)
 	{
-		uint8_t result = a | operand;
+		uint16_t result = a | operand;
 		Result r;
 
 		r.value = result;
@@ -95,9 +95,9 @@ namespace ALU
 		return r;
 	}
 
-	Result XOR(uint8_t a, uint8_t operand)
+	Result XOR(uint16_t a, uint16_t operand)
 	{
-		uint8_t result = a ^ operand;
+		uint16_t result = a ^ operand;
 		Result r;
 
 		r.value = result;
@@ -106,9 +106,9 @@ namespace ALU
 		return r;
 	}
 
-	Result NOT(uint8_t a)
+	Result NOT(uint16_t a)
 	{
-		uint8_t result = ~a;
+		uint16_t result = ~a;
 		Result r;
 
 		r.value = result;
@@ -117,9 +117,9 @@ namespace ALU
 		return r;
 	}
 
-	Result ShiftLeft(uint8_t a)
+	Result ShiftLeft(uint16_t a)
 	{
-		uint8_t result = a << 1;
+		uint16_t result = a << 1;
 		Result r;
 
 		r.value = result;
@@ -129,9 +129,9 @@ namespace ALU
 		return r;
 	}
 
-	Result ShiftRight(uint8_t a)
+	Result ShiftRight(uint16_t a)
 	{
-		uint8_t result = a >> 1;
+		uint16_t result = a >> 1;
 		Result r;
 
 		r.value = result;
@@ -141,9 +141,9 @@ namespace ALU
 		return r;
 	}
 
-	Result Compare(uint8_t a, uint8_t operand)
+	Result Compare(uint16_t a, uint16_t operand)
 	{
-		uint8_t result = a - operand;
+		uint16_t result = a - operand;
 		Result r;
 
 		r.value = result;

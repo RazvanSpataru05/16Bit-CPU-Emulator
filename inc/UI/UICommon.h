@@ -4,20 +4,20 @@
 
 namespace UIEditor
 {
-	enum class SelectedTab : uint8_t
+	enum class SelectedTab : uint16_t
 	{
 		NONE = 0u,
 		ERROR_LIST,
 		CONSOLE
 	};
 
-	enum class Mode : uint8_t
+	enum class Mode : uint16_t
 	{
 		EDIT = 1u,
 		DISSASEMBLY
 	};
 
-	enum class PageType : uint8_t
+	enum class PageType : uint16_t
 	{
 		GLOSSARY_PAGE = 1u,
 		LOAD_STORE_PAGE,

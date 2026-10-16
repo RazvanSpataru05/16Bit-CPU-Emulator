@@ -6,11 +6,11 @@ struct InstructionTableInfo
 {
 	const char* title = nullptr;
 	const char* tableId = nullptr;
-	uint8_t firstInstruction{};
-	uint8_t lastInstruction{};
+	uint16_t firstInstruction{};
+	uint16_t lastInstruction{};
 
 
-	constexpr InstructionTableInfo(const char* t, const char* id, uint8_t first, uint8_t last) :
+	constexpr InstructionTableInfo(const char* t, const char* id, uint16_t first, uint16_t last) :
 		title{ t }, tableId{ id }, firstInstruction{ first }, lastInstruction{ last }
 	{
 

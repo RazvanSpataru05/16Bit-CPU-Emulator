@@ -15,7 +15,7 @@ namespace Utils
 			{"D", ""}
 		};
 
-		constexpr uint8_t HELP_TABLE_COLUMN_SIZE = 5u;
+		constexpr uint16_t HELP_TABLE_COLUMN_SIZE = 5u;
 
 		void SetupInstructionsTableColumn()
 		{
@@ -71,14 +71,14 @@ namespace Utils
 			ImGui::TextWrapped("%s", ISA::Table[index].description);
 		}
 
-		void DisplayMnemonicList(std::initializer_list<uint8_t> opcodes)
+		void DisplayMnemonicList(std::initializer_list<uint16_t> opcodes)
 		{
 			SetupInstructionsTableColumn();
 
 			const size_t tableSize = ISA::GetISATableSize();
 			for (size_t index = 0; index < tableSize; ++index)
 			{
-				for (uint8_t opcode : opcodes)
+				for (uint16_t opcode : opcodes)
 				{
 					if (ISA::Table[index].opcode == opcode)
 					{
@@ -88,7 +88,7 @@ namespace Utils
 			}
 		}
 
-		void DisplayPageInstructions(uint8_t firstInstruction, uint8_t lastInstruction)
+		void DisplayPageInstructions(uint16_t firstInstruction, uint16_t lastInstruction)
 		{
 			SetupInstructionsTableColumn();
 
@@ -121,7 +121,7 @@ namespace Utils
 			return tab == SelectedTab::CONSOLE;
 		}
 
-		void DisplayInstruction(const InstructionDef& instruction, MemoryUnit& memoryUnit, uint16_t index, std::optional<uint8_t> opcode)
+		void DisplayInstruction(const InstructionDef& instruction, MemoryUnit& memoryUnit, uint16_t index, std::optional<uint16_t> opcode)
 		{
 			if (!opcode.has_value())
 			{
@@ -144,14 +144,14 @@ namespace Utils
 			}
 			case 2u:
 			{
-				uint8_t secondByte = memoryUnit[index + 1].value();
+				uint16_t secondByte = memoryUnit[index + 1].value();
 				ImGui::Text(std::format("{:#04x}: {} {}", opcode.value(), instruction.mnemonic, secondByte).c_str());
 				break;
 			}
 			case 3u:
 			{
-				uint8_t secondByte = memoryUnit[index + 1].value();
-				uint8_t thirdByte = memoryUnit[index + 2].value();
+				uint16_t secondByte = memoryUnit[index + 1].value();
+				uint16_t thirdByte = memoryUnit[index + 2].value();
 				uint16_t address = (secondByte << 8) | thirdByte;
 				ImGui::Text(std::format("{:#04x}: {} {:#06X}", opcode.value(), instruction.mnemonic, address).c_str());
 				break;
@@ -193,7 +193,7 @@ namespace Utils
 			}
 		}
 
-		void DisplayMiscPage(const char* title, const char* tableId, std::initializer_list<uint8_t> opcodes)
+		void DisplayMiscPage(const char* title, const char* tableId, std::initializer_list<uint16_t> opcodes)
 		{
 			const float titleWidth = ImGui::CalcTextSize(title).x;
 			const float windowWidth = ImGui::GetWindowSize().x;

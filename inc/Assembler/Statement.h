@@ -8,10 +8,10 @@
 
 struct Statement
 {
-	std::optional<uint8_t> opcode = std::nullopt;
+	std::optional<uint16_t> opcode = std::nullopt;
 	uint16_t address{};
-	uint8_t operatorCount{};
-	std::array<uint8_t, 2> operands{};
+	uint16_t operatorCount{};
+	std::array<uint16_t, 2> operands{};
 	const ISA::ISAEntry* ISAEntry = nullptr; 
 
 	Statement() = default;

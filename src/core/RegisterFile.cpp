@@ -1,83 +1,112 @@
 #include "Core/RegisterFile.h"
 
-uint8_t RegisterFile::Read(uint8_t selector) const
+uint16_t RegisterFile::Read(uint16_t selector) const
 {
 	return m_registers[selector];
 }
 
-void RegisterFile::Write(uint8_t selector, uint8_t value)
+void RegisterFile::Write(uint16_t selector, uint16_t value)
 {
 	m_registers[selector] = value;
 }
 
-void RegisterFile::UpdateA(uint8_t value)
+void RegisterFile::UpdateA(uint16_t value)
 {
-	m_registers[A_SELECTOR] += value;
+	m_registers[AX_SELECTOR] += value;
 }
 
 void RegisterFile::Reset()
 {
-	std::fill(m_registers.begin(), m_registers.end(), 0x00);
-	m_IX = 0x0000;
-	m_IY = 0x0000;
+	std::fill(m_registers.begin(), m_registers.begin() + 3, 0x00);
+	m_registers[SP_SELECTOR] = 0xFFFF;
 }
 
-uint8_t RegisterFile::A() const noexcept
+uint16_t RegisterFile::GetHi(size_t index) const
 {
-	return m_registers[A_SELECTOR];
+	return (m_registers[index] >> 8);
 }
 
-uint8_t RegisterFile::B() const noexcept
+uint16_t RegisterFile::GetLo(size_t index) const
 {
-	return m_registers[B_SELECTOR];
+	return (m_registers[index] & 0xFF);
 }
 
-uint8_t RegisterFile::C() const noexcept
+uint16_t RegisterFile::AX() const noexcept
 {
-	return m_registers[C_SELECTOR];
+	return m_registers[AX_SELECTOR];
 }
 
-uint8_t RegisterFile::D() const noexcept
+uint16_t RegisterFile::BX() const noexcept
 {
-	return m_registers[D_SELECTOR];
+	return m_registers[BX_SELECTOR];
 }
 
-uint8_t& RegisterFile::A() noexcept
+uint16_t RegisterFile::CX() const noexcept
 {
-	return m_registers[A_SELECTOR];
+	return m_registers[CX_SELECTOR];
 }
 
-uint8_t& RegisterFile::B() noexcept
+uint16_t RegisterFile::DX() const noexcept
 {
-	return m_registers[B_SELECTOR];
+	return m_registers[DX_SELECTOR];
 }
 
-uint8_t& RegisterFile::C() noexcept
+uint16_t RegisterFile::SP() const noexcept
 {
-	return m_registers[C_SELECTOR];
+	return m_registers[SP_SELECTOR];
 }
 
-uint8_t& RegisterFile::D() noexcept
+uint16_t RegisterFile::BP() const noexcept
 {
-	return m_registers[D_SELECTOR];
+	return m_registers[BP_SELECTOR];
 }
 
-uint16_t RegisterFile::IX() const noexcept
+uint16_t RegisterFile::SI() const noexcept
 {
-	return m_IX;
+	return m_registers[SI_SELECTOR];
 }
 
-uint16_t RegisterFile::IY() const noexcept
+uint16_t RegisterFile::DI() const noexcept
 {
-	return m_IY;
+	return m_registers[DI_SELECTOR];
 }
 
-uint16_t& RegisterFile::IX() noexcept
+uint16_t& RegisterFile::AX() noexcept
 {
-	return m_IX;
+	return m_registers[AX_SELECTOR];
 }
 
-uint16_t& RegisterFile::IY() noexcept
+uint16_t& RegisterFile::BX() noexcept
 {
-	return m_IY;
+	return m_registers[BX_SELECTOR];
+}
+
+uint16_t& RegisterFile::CX() noexcept
+{
+	return m_registers[CX_SELECTOR];
+}
+
+uint16_t& RegisterFile::DX() noexcept
+{
+	return m_registers[DX_SELECTOR];
+}
+
+uint16_t& RegisterFile::SP() noexcept
+{
+	return m_registers[SP_SELECTOR];
+}
+
+uint16_t& RegisterFile::BP() noexcept
+{
+	return m_registers[BP_SELECTOR];
+}
+
+uint16_t& RegisterFile::SI() noexcept
+{
+	return m_registers[SI_SELECTOR];
+}
+
+uint16_t& RegisterFile::DI() noexcept
+{
+	return m_registers[DI_SELECTOR];
 }

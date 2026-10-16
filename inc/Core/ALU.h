@@ -6,7 +6,7 @@ namespace ALU
 {
 	namespace
 	{
-		void ComputeFlagsLogicalOperation(Result& r, uint8_t result)
+		void ComputeFlagsLogicalOperation(Result& r, uint16_t result)
 		{
 			r.carry = false;
 			r.zero = (result == 0);
@@ -16,20 +16,20 @@ namespace ALU
 	}
 
 	/* Arithmetic operations */
-	Result Add(uint8_t a, uint8_t operand, bool carry);
-	Result Sub(uint8_t a, uint8_t operand, bool borrow);
-	Result Inc(uint8_t a);
-	Result Dec(uint8_t a);
-	Result Mul(uint8_t a, uint8_t operand);
+	Result Add(uint16_t a, uint16_t operand, bool carry);
+	Result Sub(uint16_t a, uint16_t operand, bool borrow);
+	Result Inc(uint16_t a);
+	Result Dec(uint16_t a);
+	Result Mul(uint16_t a, uint16_t operand);
 
 	/* Logical operations */
-	Result AND(uint8_t a, uint8_t operand);
-	Result OR(uint8_t a, uint8_t operand);
-	Result XOR(uint8_t a, uint8_t operand);
-	Result NOT(uint8_t a);
-	Result ShiftLeft(uint8_t a);
-	Result ShiftRight(uint8_t a);
+	Result AND(uint16_t a, uint16_t operand);
+	Result OR(uint16_t a, uint16_t operand);
+	Result XOR(uint16_t a, uint16_t operand);
+	Result NOT(uint16_t a);
+	Result ShiftLeft(uint16_t a);
+	Result ShiftRight(uint16_t a);
 
 	/* Compare operation */
-	Result Compare(uint8_t a, uint8_t operand);
+	Result Compare(uint16_t a, uint16_t operand);
 }

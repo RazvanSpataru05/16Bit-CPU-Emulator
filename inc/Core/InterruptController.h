@@ -4,8 +4,8 @@
 #include <array>
 #include <optional>
 
-constexpr uint8_t INTERRUPT_LINE_COUNT{ 8u };
-constexpr uint8_t KEYBOARD_INTERRUPT_LINE{ 0x00 };
+constexpr uint16_t INTERRUPT_LINE_COUNT{ 8u };
+constexpr uint16_t KEYBOARD_INTERRUPT_LINE{ 0x00 };
 
 class InterruptController
 {
@@ -16,8 +16,8 @@ public:
 	InterruptController(InterruptController&&) = default;
 	InterruptController& operator=(InterruptController&&) = default;
 
-	std::optional<uint8_t> PollPendingInterrupt();
-	void RaiseInterrupt(uint8_t line);
+	std::optional<uint16_t> PollPendingInterrupt();
+	void RaiseInterrupt(uint16_t line);
 
 	bool GetInterruptFlag()				const noexcept;
 	void EnableInterrupts(bool enabled) noexcept;

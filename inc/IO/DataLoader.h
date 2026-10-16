@@ -13,6 +13,6 @@
 
 namespace DataLoader
 {
-	std::vector<uint8_t> ParseHexValues(const std::filesystem::path& path, bool& hasData);
+	std::vector<uint16_t> ParseHexValues(const std::filesystem::path& path, bool& hasData);
 	Program ParseStatements(std::span<const Statement> statements, uint16_t startAddress);
 };

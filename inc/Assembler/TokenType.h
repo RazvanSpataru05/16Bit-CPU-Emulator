@@ -2,7 +2,7 @@
 
 #include <cstdint>
 
-enum class TokenType : uint8_t
+enum class TokenType : uint16_t
 {
 	NONE = 0u,
 

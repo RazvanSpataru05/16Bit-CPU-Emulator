@@ -1,6 +1,6 @@
 #include "IO/DataLoader.h"
 
-std::vector<uint8_t> DataLoader::ParseHexValues(const std::filesystem::path& path, bool& hasData)
+std::vector<uint16_t> DataLoader::ParseHexValues(const std::filesystem::path& path, bool& hasData)
 {
 	std::ifstream file(path);
 	if (!file.is_open())
@@ -8,11 +8,11 @@ std::vector<uint8_t> DataLoader::ParseHexValues(const std::filesystem::path& pat
 		throw std::runtime_error("Error: could not open file " + path.string());
 	}
 
-	std::vector<uint8_t> values;
+	std::vector<uint16_t> values;
 	unsigned hexValue{};
 	while (file >> std::hex >> hexValue)
 	{
-		values.emplace_back(static_cast<uint8_t>(hexValue));
+		values.emplace_back(static_cast<uint16_t>(hexValue));
 		if (hexValue != 0x00)
 		{
 			hasData = true;

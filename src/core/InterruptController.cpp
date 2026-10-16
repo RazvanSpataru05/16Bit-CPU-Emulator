@@ -1,13 +1,13 @@
 #include "Core/InterruptController.h"
 
-void InterruptController::RaiseInterrupt(uint8_t line)
+void InterruptController::RaiseInterrupt(uint16_t line)
 {
 	m_pending[line] = true;
 }
 
-std::optional<uint8_t> InterruptController::PollPendingInterrupt()
+std::optional<uint16_t> InterruptController::PollPendingInterrupt()
 {
-	for (uint8_t line = 0; line < INTERRUPT_LINE_COUNT; ++line)
+	for (uint16_t line = 0; line < INTERRUPT_LINE_COUNT; ++line)
 	{
 		if (m_pending[line])
 		{

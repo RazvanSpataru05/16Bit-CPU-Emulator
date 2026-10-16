@@ -2,7 +2,7 @@
 
 #include <cstdint>
 
-enum class MemoryCellType : uint8_t
+enum class MemoryCellType : uint16_t
 {
 	UNKNOWN = 0u,
 	OPCODE,

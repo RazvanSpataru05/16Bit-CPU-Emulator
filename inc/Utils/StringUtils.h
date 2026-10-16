@@ -19,7 +19,7 @@ namespace Utils
 		std::string ToLower(std::string_view word);
 		std::string RemoveWhiteSpace(std::string_view word);
 
-		void CheckBase(std::string_view prefix, uint8_t& base);
+		void CheckBase(std::string_view prefix, uint16_t& base);
 
 		bool HasPrefix(std::string_view word);
 		bool StartsLikeNumber(std::string_view word);

@@ -58,10 +58,10 @@ private:
 	void HandleOrgDirective();
 	void HandleStartDirective();
 
-	std::array<uint8_t, 2> ConsumeImm8();
-	std::array<uint8_t, 2> ConsumeAddr16();
-	std::array<uint8_t, 2> ConsumeReg();
-	std::array<uint8_t, 2> ConsumeRegReg();
+	std::array<uint16_t, 2> ConsumeImm8();
+	std::array<uint16_t, 2> ConsumeAddr16();
+	std::array<uint16_t, 2> ConsumeReg();
+	std::array<uint16_t, 2> ConsumeRegReg();
 
 	void AddStatement();
 	void AddError(std::string_view message);
@@ -79,7 +79,7 @@ private:
 	const Token& Peek() const;
 	const Token& Next();
 	ParsedNumber ConsumeNumber();
-	uint8_t ConsumeSelector();
+	uint16_t ConsumeSelector();
 	void ConsumeLine();
 
 	template <typename T>
@@ -154,7 +154,7 @@ inline bool Parser::CheckNumericLimit(const ParsedNumber& parsedNumber)
 		return false;
 	}
 
-	const std::string size = std::is_same_v<T, uint8_t> ? "8" : "16";
+	const std::string size = std::is_same_v<T, uint16_t> ? "8" : "16";
 	if (parsedNumber.value > std::numeric_limits<T>::max())
 	{
 		AddWarning(std::format("Warning at line {}, column {}: value '{}' exceeds {} bits and will be truncated.",

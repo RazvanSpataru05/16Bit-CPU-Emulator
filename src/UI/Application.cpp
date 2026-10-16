@@ -17,7 +17,7 @@ Assembler& Application::GetAssembler()
 void Application::Init()
 {
 	const sf::VideoMode desktop = sf::VideoMode::getDesktopMode();
-	m_window = sf::RenderWindow(sf::VideoMode(desktop), "8-Bit CPU Emulator", sf::Style::Default);
+	m_window = sf::RenderWindow(sf::VideoMode(desktop), "16-Bit CPU Emulator", sf::Style::Default);
 	m_window.setFramerateLimit(60);
 	ImGui::SFML::Init(m_window);
 }

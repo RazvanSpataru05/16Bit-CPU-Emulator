@@ -7,7 +7,7 @@
 
 namespace ISA
 {
-    enum class OperatorKind : uint8_t
+    enum class OperatorKind : uint16_t
     {
         NONE,
         IMM_8,
@@ -19,9 +19,9 @@ namespace ISA
     struct ISAEntry
     {
         const char* mnemonic = nullptr;
-        uint8_t opcode{};
+        uint16_t opcode{};
         OperatorKind operatorKind{};
-        uint8_t size{};
+        uint16_t size{};
         const char* description = nullptr;
     };
 

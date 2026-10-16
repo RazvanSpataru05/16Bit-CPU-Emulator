@@ -11,8 +11,8 @@ class Keyboard
 public:
 	explicit Keyboard(InterruptController& interruptController);
 
-	void AddKey(uint8_t key);
-	std::optional<uint8_t> ConsumeKey();
+	void AddKey(uint16_t key);
+	std::optional<uint16_t> ConsumeKey();
 
 private:
 	Keyboard(const Keyboard&) = delete;
@@ -23,5 +23,5 @@ private:
 
 private:
 	InterruptController& m_interruptController;
-	std::queue<uint8_t> m_buffer;
+	std::queue<uint16_t> m_buffer;
 };

@@ -7,7 +7,7 @@ MemoryUnit::MemoryUnit() :
 	std::fill(m_memory.begin(), m_memory.end(), std::nullopt);
 }
 
-const std::optional<uint8_t>& MemoryUnit::Peek(uint16_t address) const
+const std::optional<uint16_t>& MemoryUnit::Peek(uint16_t address) const
 {
 	return m_memory[address];
 }
@@ -33,12 +33,12 @@ uint16_t MemoryUnit::GetStartAddress() const noexcept
 	return m_startAddress;
 }
 
-uint8_t MemoryUnit::Read(uint16_t address) const noexcept
+uint16_t MemoryUnit::Read(uint16_t address) const noexcept
 {
 	return m_memory[address].value_or(0x00);
 }
 
-void MemoryUnit::Write(uint16_t address, uint8_t value)
+void MemoryUnit::Write(uint16_t address, uint16_t value)
 {
 	std::cout << std::hex
 		<< "address = " << address
@@ -95,12 +95,12 @@ void MemoryUnit::LoadProgramFromFIle(const std::filesystem::path& filename)
 	//LoadValuesIntoMemory(DataLoader::ParseHexValues(fullPath, m_hasData), 0x0000);
 }
 
-const std::optional<uint8_t>& MemoryUnit::operator[](uint16_t address) const
+const std::optional<uint16_t>& MemoryUnit::operator[](uint16_t address) const
 {
 	return m_memory[address];
 }
 
-std::optional<uint8_t>& MemoryUnit::operator[](uint16_t address)
+std::optional<uint16_t>& MemoryUnit::operator[](uint16_t address)
 {
 	return m_memory[address];
 }

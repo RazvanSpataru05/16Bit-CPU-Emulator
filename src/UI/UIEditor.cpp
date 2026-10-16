@@ -11,23 +11,23 @@ namespace UIEditor
 
 		constexpr uint16_t PAGE_SIZE = 256u;
 
-		constexpr uint8_t FIRST_LOAD_INSTRUCTION = 0x01;
-		constexpr uint8_t LAST_LOAD_INSTRUCTION = 0x14;
+		constexpr uint16_t FIRST_LOAD_INSTRUCTION = 0x01;
+		constexpr uint16_t LAST_LOAD_INSTRUCTION = 0x14;
 
-		constexpr uint8_t FIRST_ARITHMETIC_INSTRUCTION = 0x20;
-		constexpr uint8_t LAST_ARITHMETIC_INSTRUCTION = 0x2B;
+		constexpr uint16_t FIRST_ARITHMETIC_INSTRUCTION = 0x20;
+		constexpr uint16_t LAST_ARITHMETIC_INSTRUCTION = 0x2B;
 
-		constexpr uint8_t FIRST_LOGIC_INSTRUCTION = 0x30;
-		constexpr uint8_t LAST_LOGIC_INSTRUCTION = 0x38;
+		constexpr uint16_t FIRST_LOGIC_INSTRUCTION = 0x30;
+		constexpr uint16_t LAST_LOGIC_INSTRUCTION = 0x38;
 
-		constexpr uint8_t FIRST_COMPARE_INSTRUCTION = 0x40;
-		constexpr uint8_t LAST_COMPARE_INSTRUCTION = 0x41;
+		constexpr uint16_t FIRST_COMPARE_INSTRUCTION = 0x40;
+		constexpr uint16_t LAST_COMPARE_INSTRUCTION = 0x41;
 
-		constexpr uint8_t FIRST_JUMP_INSTRUCTION = 0x50;
-		constexpr uint8_t LAST_JUMP_INSTRUCTION = 0x58;
+		constexpr uint16_t FIRST_JUMP_INSTRUCTION = 0x50;
+		constexpr uint16_t LAST_JUMP_INSTRUCTION = 0x58;
 
-		constexpr uint8_t FIRST_STACK_INSTRUCTION = 0x60;
-		constexpr uint8_t LAST_STACK_INSTRUCTION = 0x63;
+		constexpr uint16_t FIRST_STACK_INSTRUCTION = 0x60;
+		constexpr uint16_t LAST_STACK_INSTRUCTION = 0x63;
 
 		constexpr InstructionTableInfo INSTRUCTION_TABLES[] =
 		{
@@ -42,7 +42,7 @@ namespace UIEditor
 		const size_t BUFFER_SIZE{ 8192 };
 		const size_t CONSOLE_BUFFER_SIZE{ 256 };
 
-		uint8_t currentPage{};
+		uint16_t currentPage{};
 
 		bool helpMenuVisibility{ false };
 
@@ -50,7 +50,7 @@ namespace UIEditor
 		{
 			if (currentHelperPage != PageType::MISC_PAGE)
 			{
-				currentHelperPage = static_cast<PageType>(static_cast<uint8_t>(currentHelperPage) + 1);
+				currentHelperPage = static_cast<PageType>(static_cast<uint16_t>(currentHelperPage) + 1);
 			}
 		}
 
@@ -58,7 +58,7 @@ namespace UIEditor
 		{
 			if (currentHelperPage != PageType::GLOSSARY_PAGE)
 			{
-				currentHelperPage = static_cast<PageType>(static_cast<uint8_t>(currentHelperPage) - 1);
+				currentHelperPage = static_cast<PageType>(static_cast<uint16_t>(currentHelperPage) - 1);
 			}
 		}
 	}
@@ -66,16 +66,16 @@ namespace UIEditor
 	void DrawCPUState(const CPU& cpu)
 	{
 		ImGui::Begin("CPU State");
-		ImGui::Text(std::format("Program Counter: {:#06X}",			cpu.GetPC()).c_str());
-		ImGui::Text(std::format("Stack Pointer: {:#06X}",			cpu.GetSP()).c_str());
-		ImGui::Text(std::format("Instruction Register: {:#04X}",	cpu.GetIR()).c_str());
+		ImGui::Text(std::format("Instruction Pointer: {:#06X}",			cpu.GetIP()).c_str());
+		ImGui::Text(std::format("Stack Pointer: {:#06X}",				cpu.GetSP()).c_str());
+		ImGui::Text(std::format("Instruction Register: {:#04X}",		cpu.GetIR()).c_str());
 		ImGui::Separator();
 
 		ImGui::Text("\nRegistry");
-		ImGui::Text(std::format("A: {}", cpu.GetRegisterFile().A()).c_str());
-		ImGui::Text(std::format("B: {}", cpu.GetRegisterFile().B()).c_str());
-		ImGui::Text(std::format("C: {}", cpu.GetRegisterFile().C()).c_str());
-		ImGui::Text(std::format("D: {}", cpu.GetRegisterFile().D()).c_str());
+		ImGui::Text(std::format("AX: {}", cpu.GetRegisterFile().AX()).c_str());
+		ImGui::Text(std::format("BX: {}", cpu.GetRegisterFile().BX()).c_str());
+		ImGui::Text(std::format("CX: {}", cpu.GetRegisterFile().CX()).c_str());
+		ImGui::Text(std::format("DX: {}", cpu.GetRegisterFile().DX()).c_str());
 		ImGui::Separator();
 
 		ImGui::Text("\nFlags");
@@ -140,7 +140,7 @@ namespace UIEditor
 			{
 				for (size_t index = 0; index < MEMORY_SIZE; ++index)
 				{
-					std::optional<uint8_t> opcode = memoryUnit.Peek(static_cast<uint16_t>(index));
+					std::optional<uint16_t> opcode = memoryUnit.Peek(static_cast<uint16_t>(index));
 					if (!opcode.has_value())
 					{
 						continue;
@@ -148,7 +148,7 @@ namespace UIEditor
 
 					const InstructionDef& instruction = dissasembler.GetInstructionDef(opcode.value());
 
-					if (index == cpu.GetPC())
+					if (index == cpu.GetIP())
 					{
 						ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(0, 255, 0, 255));
 					}
@@ -171,7 +171,7 @@ namespace UIEditor
 	{
 		if (followPC)
 		{
-			currentPage = static_cast<uint8_t>(cpu.GetPC() / PAGE_SIZE);
+			currentPage = static_cast<uint16_t>(cpu.GetIP() / PAGE_SIZE);
 		}
 
 		ImGui::Begin(std::format("Memory View (Page {}/{})", currentPage, PAGE_SIZE-1).c_str());
@@ -198,17 +198,17 @@ namespace UIEditor
 			for (size_t index = startAddress; index < endAddress; ++index)
 			{
 				ImGui::TableNextColumn();
-				if (index == cpu.GetPC())
+				if (index == cpu.GetIP())
 				{
 					ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, IM_COL32(0, 0, 255, 255));
 				}
 
-				if (cpu.IsReadingInstruction() && index == cpu.ComputeAddress(cpu.GetPC() + 1))
+				if (cpu.IsReadingInstruction() && index == cpu.ComputeAddress(cpu.GetIP() + 1))
 				{
 					ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, IM_COL32(0, 255, 0, 255));
 				}
 				else if (cpu.IsWritingInstruction() &&
-					index == cpu.ComputeAddress(cpu.GetPC() + 1))
+					index == cpu.ComputeAddress(cpu.GetIP() + 1))
 				{
 					ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, IM_COL32(255, 0, 0, 255));
 				}
@@ -287,7 +287,7 @@ namespace UIEditor
 		{
 			ImGui::Begin("Help Menu");
 
-			const std::string pageText = std::format("Page {}/8", static_cast<uint8_t>(currentHelperPage));
+			const std::string pageText = std::format("Page {}/8", static_cast<uint16_t>(currentHelperPage));
 
 			const float windowWidth = ImGui::GetWindowSize().x;
 			const float textWidth = ImGui::CalcTextSize(pageText.c_str()).x;
@@ -334,8 +334,8 @@ namespace UIEditor
 			case PageType::STACK_PAGE:
 			{
 				Utils::UI::DisplayTable(INSTRUCTION_TABLES[
-					static_cast<uint8_t>(currentHelperPage) -
-					static_cast<uint8_t>(PageType::LOAD_STORE_PAGE)
+					static_cast<uint16_t>(currentHelperPage) -
+					static_cast<uint16_t>(PageType::LOAD_STORE_PAGE)
 				]);
 				break;
 			}
@@ -480,7 +480,7 @@ namespace UIEditor
 				interruptController.EnableInterrupts(false);
 				interruptController.RaiseInterrupt(KEYBOARD_INTERRUPT_LINE);
 				
-				for (uint8_t key : line)
+				for (uint16_t key : line)
 				{
 					keyboard.AddKey(key);
 				}

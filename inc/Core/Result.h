@@ -4,7 +4,7 @@
 
 struct Result
 {
-	uint8_t value{};
+	uint16_t value{};
 	bool zero{};
 	bool carry{};
 	bool negative{};

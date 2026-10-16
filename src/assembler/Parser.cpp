@@ -228,7 +228,7 @@ void Parser::HandleDWToken_Emit()
 		const uint16_t address = m_labels.at(label).address;
 
 		m_currentStatement.address = m_currentAddress;
-		m_currentStatement.operatorCount = static_cast<uint8_t>(m_currentStatement.operands.size()); // the address of the word
+		m_currentStatement.operatorCount = static_cast<uint16_t>(m_currentStatement.operands.size()); // the address of the word
 		m_currentStatement.operands[0] = (address >> 8) & 0xFF; // hi
 		m_currentStatement.operands[1] = address & 0xFF; // lo
 		AddStatement();
@@ -423,23 +423,23 @@ void Parser::HandleIdentifierToken_Scan()
 	}
 }
 
-std::array<uint8_t, 2> Parser::ConsumeImm8()
+std::array<uint16_t, 2> Parser::ConsumeImm8()
 {
-	std::array<uint8_t, 2> operand{};
+	std::array<uint16_t, 2> operand{};
 	Next(); // go to imm8 value
 
 	ParsedNumber parsedNumber = ConsumeNumber();
-	if (!CheckNumericLimit<uint8_t>(parsedNumber)) return {};
+	if (!CheckNumericLimit<uint16_t>(parsedNumber)) return {};
 
-	operand[0] = static_cast<uint8_t>(parsedNumber.value);
+	operand[0] = static_cast<uint16_t>(parsedNumber.value);
 	Next(); // go to newline or end of file
 
 	return operand;
 }
 
-std::array<uint8_t, 2> Parser::ConsumeAddr16()
+std::array<uint16_t, 2> Parser::ConsumeAddr16()
 {
-	std::array<uint8_t, 2> operands{};
+	std::array<uint16_t, 2> operands{};
 	uint16_t address{};
 	const Token& token = Next(); // go to addr
 
@@ -479,23 +479,23 @@ std::array<uint8_t, 2> Parser::ConsumeAddr16()
 		return {};
 	}
 
-	operands[0] = static_cast<uint8_t>(address >> 8); // hi part
-	operands[1] = static_cast<uint8_t>(address & 0xFF); // lo part
+	operands[0] = static_cast<uint16_t>(address >> 8); // hi part
+	operands[1] = static_cast<uint16_t>(address & 0xFF); // lo part
 
 	return operands;
 }
 
-std::array<uint8_t, 2> Parser::ConsumeReg()
+std::array<uint16_t, 2> Parser::ConsumeReg()
 {
-	std::array<uint8_t, 2> operands{};
+	std::array<uint16_t, 2> operands{};
 	operands[0] = ConsumeSelector();
 
 	return operands;
 }
 
-std::array<uint8_t, 2> Parser::ConsumeRegReg()
+std::array<uint16_t, 2> Parser::ConsumeRegReg()
 {
-	std::array<uint8_t, 2> operands{};
+	std::array<uint16_t, 2> operands{};
 
 	operands[0] = ConsumeSelector();
 	if (m_currentStatementHasError) return operands;
@@ -595,7 +595,7 @@ ParsedNumber Parser::ConsumeNumber()
 	return Utils::String::ParseNumber(Peek().value);
 }
 
-uint8_t Parser::ConsumeSelector()
+uint16_t Parser::ConsumeSelector()
 {
 	const Token& token = Next();
 
@@ -617,9 +617,9 @@ uint8_t Parser::ConsumeSelector()
 	else if (token.type == TokenType::NUMBER)
 	{
 		ParsedNumber parsedNumber = ConsumeNumber();
-		if (!CheckNumericLimit<uint8_t>(parsedNumber)) return 0u;
+		if (!CheckNumericLimit<uint16_t>(parsedNumber)) return 0u;
 
-		if (!selectorToName.contains(static_cast<uint8_t>(parsedNumber.value)))
+		if (!selectorToName.contains(static_cast<uint16_t>(parsedNumber.value)))
 		{
 			m_currentStatementHasError = true;
 
@@ -631,7 +631,7 @@ uint8_t Parser::ConsumeSelector()
 		}
 
 		Next();
-		return static_cast<uint8_t>(parsedNumber.value);
+		return static_cast<uint16_t>(parsedNumber.value);
 	}
 	else
 	{

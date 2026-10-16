@@ -3,7 +3,7 @@
 #include <string>
 #include <cstdint>
 
-enum class LineType : uint8_t
+enum class LineType : uint16_t
 {
 	INFO = 1u,
 	ERROR

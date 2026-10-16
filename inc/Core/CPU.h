@@ -28,11 +28,11 @@ public:
 	uint16_t ComputeAddress(uint16_t address);
 
 	//Registry getters
-	[[nodiscard]] uint16_t		GetPC()			const noexcept;
-	[[nodiscard]] uint16_t		GetSP()			const noexcept;
-	[[nodiscard]] uint8_t		GetIR()			const noexcept;
+	uint16_t		GetIP()			const noexcept;
+	uint16_t		GetSP()			const noexcept;
+	uint16_t		GetIR()			const noexcept;
 
-	[[nodiscard]] bool			GetHaltFlag()	const noexcept;
+	bool			GetHaltFlag()	const noexcept;
 
 	// PC setter
 	void SetProgramCounter(uint16_t address);
@@ -65,8 +65,8 @@ private:
 	StatusRegister m_statusRegister;
 
 	uint16_t m_SP{};		// Stack Pointer Registry
-	uint16_t m_PC{};		// Program Counter Registry
-	uint8_t m_IR{};			// Instruction Registry
+	uint16_t m_IP{};		// Instruction Pointer Registry
+	uint16_t m_IR{};		// Instruction Registry
 
 	bool m_haltFlag{ false };
 };

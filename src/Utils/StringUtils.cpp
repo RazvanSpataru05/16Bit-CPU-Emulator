@@ -27,7 +27,7 @@ namespace Utils
 			return s;
 		}
 
-		void CheckBase(std::string_view prefix, uint8_t& base)
+		void CheckBase(std::string_view prefix, uint16_t& base)
 		{
 			if (prefix == "0b" || prefix == "0B") base = 2u;
 			else if (prefix == "0x" || prefix == "0X") base = 16u;
@@ -48,7 +48,7 @@ namespace Utils
 		bool IsNumber(std::string_view word)
 		{
 			std::string prefix;
-			uint8_t base = 10u;
+			uint16_t base = 10u;
 			size_t startingPosition{};
 
 			if (HasPrefix(word))
@@ -65,7 +65,7 @@ namespace Utils
 
 		ParsedNumber ParseNumber(const std::string& word)
 		{
-			uint8_t base = 10u;
+			uint16_t base = 10u;
 			std::string_view digits = word;
 
 			if (HasPrefix(word))
