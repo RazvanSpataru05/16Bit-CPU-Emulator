@@ -86,17 +86,22 @@ namespace Utils
 			return { value, false };
 		}
 
-		std::string_view OperatorKindToString(ISA::OperatorKind operatorKind)
+		std::string_view OperatorKindToString(ISA::OperandKind operatorKind)
 		{
 			switch (operatorKind)
 			{
-			case ISA::OperatorKind::NONE:					return "None";
-			case ISA::OperatorKind::IMM_8:					return "Immediate 8-bit value";
-			case ISA::OperatorKind::ADDR_16:				return "16-bit Address";
-			case ISA::OperatorKind::REG:					return "Registry or Selector Code";
-			case ISA::OperatorKind::REG_REG:				return "Two Registries";
+			case ISA::OperandKind::NONE:						return "None";
+			case ISA::OperandKind::REG_8:						return "8-bit Register";
+			case ISA::OperandKind::REG_16:						return "16-bit Register";
+			case ISA::OperandKind::SEG:							return "Segment Register";
+			case ISA::OperandKind::IMM_8:						return "Immediate 8-bit value";
+			case ISA::OperandKind::IMM_16:						return "Immediate 16-bit value";
+			case ISA::OperandKind::MEM:							return "Memeory Address";
+			case ISA::OperandKind::REL_8:						return "Relative 8-bit Address";
+			case ISA::OperandKind::REL_16:						return "Relative 16-bit Address";
+			case ISA::OperandKind::REG_REG:						return "Two Registries";
+			default:											return "Error";
 			}
-			return "Error";
 		}
 
 		std::string TokenTypeToString(const Token& token)

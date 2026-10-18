@@ -153,7 +153,7 @@ namespace UIEditor
 		{
 			if (!memoryUnit.IsMemoryEmpty())
 			{
-				for (size_t index = 0; index < MEMORY_SIZE; ++index)
+				for (size_t index = 0; index < Utils::MEMORY_SIZE; ++index)
 				{
 					std::optional<uint16_t> opcode = memoryUnit.Peek(static_cast<uint16_t>(index));
 					if (!opcode.has_value())

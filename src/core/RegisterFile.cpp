@@ -21,6 +21,8 @@ void RegisterFile::Reset()
 	std::fill(m_segmentReg.begin(), m_segmentReg.end(), 0x00);
 
 	m_generalPurproseReg[SP_SELECTOR] = 0xFFFF;
+
+	m_segmentReg[CS_SELECTOR] = 0xFFFF;
 }
 
 uint16_t RegisterFile::GetHi(size_t index) const

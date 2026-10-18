@@ -52,11 +52,14 @@ set(HEADERS
     inc/Assembler/Assembler.h
     inc/Assembler/InstructionDef.h
     inc/Assembler/ISAEntry.h
+    inc/Assembler/Operand.h
+    inc/Assembler/OperandKind.h
     inc/Assembler/Lexer.h
     inc/Assembler/ParsedNumber.h
     inc/Assembler/Parser.h
     inc/Assembler/LabelInfo.h
     inc/Assembler/Statement.h
+    inc/Assembler/Slot.h
     inc/Assembler/Token.h
     inc/Assembler/TokenType.h
 
@@ -88,6 +91,7 @@ set(HEADERS
     inc/UI/AppDefaults.h
 
     inc/Utils/CharacterUtils.h
+    inc/Utils/Constants.h
     inc/Utils/StringUtils.h
     inc/Utils/Logger.h
     inc/Utils/UIUtils.h

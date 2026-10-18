@@ -137,9 +137,12 @@ void Parser::AddWarning(std::string_view message)
 void Parser::ResetStatement()
 {
 	m_currentStatement.opcode = std::nullopt;
-	m_currentStatement.address = 0x0000;
-	m_currentStatement.operatorCount = 0u;
-	m_currentStatement.operands.fill(0x00);
+	m_currentStatement.modRM = std::nullopt;
+
+	m_currentStatement.length = 0u;
+	m_currentStatement.operandCount = 0u;
+	m_currentStatement.address = 0x00000;
+	m_currentStatement.operands.fill(Operand());
 	m_currentStatement.ISAEntry = nullptr;
 }
 
@@ -158,10 +161,10 @@ void Parser::PrintStatements() const noexcept
 		}
 		Logger::AddInfoMessage("VALUE(S): ");
 
-		for (size_t index = 0; index < statement.operatorCount; ++index)
-		{
-			Logger::AddInfoMessage(std::format("0x{}, ", static_cast<int>(statement.operands[index])));
-		}
+		//for (size_t index = 0; index < statement.operandCount; ++index)
+		//{
+		//	Logger::AddInfoMessage(std::format("0x{}, ", static_cast<int>(statement.operands[index])));
+		//}
 
 		Logger::AddInfoMessage("\n\n");
 	}
@@ -186,7 +189,7 @@ void Parser::HandleMnemonicToken_Emit()
 
 	m_currentStatement.opcode = entry->opcode;
 	m_currentStatement.ISAEntry = entry;
-	m_currentStatement.operatorCount = entry->size - 1;
+	m_currentStatement.operandCount = entry->size - 1;
 	m_currentStatement.address = m_currentAddress;
 
 	m_currentAddress += entry->size;
@@ -198,11 +201,11 @@ void Parser::HandleMnemonicToken_Emit()
 
 	switch (entry->operatorKind)
 	{
-	case OperatorKind::NONE: { Next(); break; }
-	case OperatorKind::IMM_8: {		m_currentStatement.operands = ConsumeImm8();		break; }
-	case OperatorKind::ADDR_16: {	m_currentStatement.operands = ConsumeAddr16();		break; }
-	case OperatorKind::REG: {		m_currentStatement.operands = ConsumeReg();			break; }
-	case OperatorKind::REG_REG: {	m_currentStatement.operands = ConsumeRegReg();		break; }
+	case OperandKind::NONE: { Next(); break; }
+	case OperandKind::IMM_8: {		m_currentStatement.operands = ConsumeImm8();		break; }
+	case OperandKind::MEM: {		m_currentStatement.operands = ConsumeAddr16();		break; }
+	case OperandKind::REG_16: {		m_currentStatement.operands = ConsumeReg();			break; }
+	case OperandKind::REG_REG: {	m_currentStatement.operands = ConsumeRegReg();		break; }
 	default: break;
 	}
 
@@ -228,9 +231,9 @@ void Parser::HandleDWToken_Emit()
 		const uint16_t address = m_labels.at(label).address;
 
 		m_currentStatement.address = m_currentAddress;
-		m_currentStatement.operatorCount = static_cast<uint16_t>(m_currentStatement.operands.size()); // the address of the word
-		m_currentStatement.operands[0] = (address >> 8) & 0xFF; // hi
-		m_currentStatement.operands[1] = address & 0xFF; // lo
+		m_currentStatement.operandCount = static_cast<uint8_t>(m_currentStatement.operands.size()); // the address of the word
+		m_currentStatement.operands[0] = Operand();   // hi
+		m_currentStatement.operands[1] = Operand(); // lo
 		AddStatement();
 	}
 	else if (Peek().type == TokenType::NUMBER)
@@ -241,8 +244,8 @@ void Parser::HandleDWToken_Emit()
 			const uint16_t address = static_cast<uint16_t>(parsedNumber.value);
 
 			m_currentStatement.address = address;
-			m_currentStatement.operands[0] = (address >> 8) & 0xFF; // hi byte
-			m_currentStatement.operands[1] = address & 0xFF; // lo byte
+			m_currentStatement.operands[0] = Operand(); // hi byte
+			m_currentStatement.operands[1] = Operand(); // lo byte
 			AddStatement();
 		}
 	}
@@ -423,23 +426,23 @@ void Parser::HandleIdentifierToken_Scan()
 	}
 }
 
-std::array<uint16_t, 2> Parser::ConsumeImm8()
+std::array<Operand, 2> Parser::ConsumeImm8()
 {
-	std::array<uint16_t, 2> operand{};
+	std::array<Operand, 2> operand{};
 	Next(); // go to imm8 value
 
 	ParsedNumber parsedNumber = ConsumeNumber();
 	if (!CheckNumericLimit<uint16_t>(parsedNumber)) return {};
 
-	operand[0] = static_cast<uint16_t>(parsedNumber.value);
+	operand[0] = Operand();   //static_cast<uint16_t>(parsedNumber.value);
 	Next(); // go to newline or end of file
 
 	return operand;
 }
 
-std::array<uint16_t, 2> Parser::ConsumeAddr16()
+std::array<Operand, 2> Parser::ConsumeAddr16()
 {
-	std::array<uint16_t, 2> operands{};
+	std::array<Operand, 2> operands{};
 	uint16_t address{};
 	const Token& token = Next(); // go to addr
 
@@ -479,31 +482,31 @@ std::array<uint16_t, 2> Parser::ConsumeAddr16()
 		return {};
 	}
 
-	operands[0] = static_cast<uint16_t>(address >> 8); // hi part
-	operands[1] = static_cast<uint16_t>(address & 0xFF); // lo part
+	operands[0] = Operand(); //static_cast<uint16_t>(address >> 8); // hi part
+	operands[1] = Operand(); //static_cast<uint16_t>(address & 0xFF); // lo part
 
 	return operands;
 }
 
-std::array<uint16_t, 2> Parser::ConsumeReg()
+std::array<Operand, 2> Parser::ConsumeReg()
 {
-	std::array<uint16_t, 2> operands{};
-	operands[0] = ConsumeSelector();
+	std::array<Operand, 2> operands{};
+	operands[0] = Operand(); //ConsumeSelector();
 
 	return operands;
 }
 
-std::array<uint16_t, 2> Parser::ConsumeRegReg()
+std::array<Operand, 2> Parser::ConsumeRegReg()
 {
-	std::array<uint16_t, 2> operands{};
+	std::array<Operand, 2> operands{};
 
-	operands[0] = ConsumeSelector();
+	operands[0] = Operand(); //ConsumeSelector();
 	if (m_currentStatementHasError) return operands;
 
 	ExpectComma();
 	if (m_currentStatementHasError) return operands;
 
-	operands[1] = ConsumeSelector();
+	operands[1] = Operand(); //ConsumeSelector();
 
 	return operands;
 }

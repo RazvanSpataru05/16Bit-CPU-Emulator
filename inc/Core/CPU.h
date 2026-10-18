@@ -65,7 +65,7 @@ private:
 	StatusRegister m_statusRegister;
 
 	uint16_t m_SP{};		// Stack Pointer Registry
-	uint16_t m_IP{};		// Instruction Pointer Registry
+	uint16_t m_IP{};		// Instruction Pointer Registry (offset, 16 bits) 
 	uint16_t m_IR{};		// Instruction Registry
 
 	bool m_haltFlag{ false };

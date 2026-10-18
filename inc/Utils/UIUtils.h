@@ -2,6 +2,8 @@
 
 #include "Assembler/ISAEntry.h"
 
+#include "Core/MemoryUnit.h"
+
 #include "UI/UICommon.h"
 #include "UI/InstructionTableInfo.h"
 

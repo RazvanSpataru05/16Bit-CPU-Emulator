@@ -8,12 +8,13 @@ CPU::CPU(InterruptController& interruptController) :
 
 void CPU::Fetch()
 {
-	if (!m_memoryUnit[m_IP + 1].has_value())
+	uint20_t address = m_IP + 1;
+	if (!m_memoryUnit[address.index()].has_value())
 	{
 		m_haltFlag = true;
 		return;
 	}
-	m_IR = m_memoryUnit[++m_IP].value();
+	m_IR = m_memoryUnit[++address].value();
 }
 
 void CPU::Step()
@@ -632,6 +633,8 @@ void CPU::Step()
 	//	break;
 	//}
 	//
+	// 
+	// 
 	//}
 	//Fetch();
 }

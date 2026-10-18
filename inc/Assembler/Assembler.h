@@ -2,6 +2,9 @@
 
 #include "Assembler/AssemblerError.h"
 #include "Assembler/Parser.h"
+#include "Assembler/Lexer.h"
+
+#include <span>
 
 class Assembler
 {
@@ -20,6 +23,8 @@ public:
 
 	void SortErrors()	noexcept;
 	void SortWarnings() noexcept;
+
+	static std::vector<uint8_t> Encode(const Statement& statement);
 
 private:
 	Assembler(const Assembler&) = delete;

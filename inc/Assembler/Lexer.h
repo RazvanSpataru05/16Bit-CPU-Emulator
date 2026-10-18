@@ -11,6 +11,7 @@
 
 #include <iostream>
 #include <vector>
+#include <span>
 #include <functional>
 
 using TokenHandler = std::function<void()>;

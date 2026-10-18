@@ -26,7 +26,7 @@ namespace Utils
 		bool IsNumber(std::string_view word);
 		ParsedNumber ParseNumber(const std::string& word);
 
-		std::string_view OperatorKindToString(ISA::OperatorKind operatorKind);
+		std::string_view OperatorKindToString(ISA::OperandKind operatorKind);
 		std::string TokenTypeToString(const Token& token);
 	}
 

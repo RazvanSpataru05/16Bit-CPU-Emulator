@@ -8,6 +8,7 @@
 #include "Core/InterruptController.h"
 #include "Core/Terminal.h"
 #include "Core/Keyboard.h"
+#include "Core/MemoryUnit.h"
 
 #include "UI/UICommon.h"
 #include "UI/InstructionTableInfo.h"
@@ -15,6 +16,7 @@
 #include "Utils/StringUtils.h"
 #include "Utils/Logger.h"
 #include "Utils/UIUtils.h"
+#include "Utils/Constants.h"
 
 #include "ImGui/imgui.h"
 #include "ImGui/imgui-SFML.h"
@@ -27,6 +29,9 @@ struct AssemblerWarning;
 
 class Terminal;
 class InterruptController;
+
+class MemoryUnit;
+class CPU;
 
 namespace UIEditor
 {

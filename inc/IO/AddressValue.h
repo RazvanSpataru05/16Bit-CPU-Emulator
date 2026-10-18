@@ -1,13 +1,13 @@
 #pragma once
 
-#include <cstdint>
+#include "Core/uint20_t.h"
 
 struct AddressValue
 {
-	uint16_t address{};
-	uint16_t value{};
+	uint20_t address{};
+	uint8_t value{};
 
-	AddressValue(uint16_t a, uint16_t v) :
+	AddressValue(uint20_t a, uint8_t v) :
 		address{ a }, value{ v }
 	{
 	}

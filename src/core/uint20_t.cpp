@@ -1,16 +1,18 @@
 #include "Core/uint20_t.h"
 
-constexpr uint20_t::uint20_t(uint32_t v) :
-	m_value{v & MASK_20_BIT }
+uint20_t& uint20_t::operator++()
 {
+	(++m_value & Utils::MASK_20_BIT);
+	return *this;
 }
 
-constexpr uint32_t uint20_t::value() const
-{
-	return m_value;
+uint20_t& uint20_t::operator++(int)
+{	
+	(++m_value & Utils::MASK_20_BIT);
+	return *this;
 }
 
-constexpr uint20_t uint20_t::operator+(uint32_t rhs) const
+uint20_t uint20_t::operator+(uint32_t rhs)
 {
 	return uint20_t(m_value + rhs);
 }

@@ -1,6 +1,7 @@
 #include "IO/DataLoader.h"
+#include "Assembler/Assembler.h"
 
-std::vector<uint16_t> DataLoader::ParseHexValues(const std::filesystem::path& path, bool& hasData)
+std::vector<uint8_t> DataLoader::ParseHexValues(const std::filesystem::path& path, bool& hasData)
 {
 	std::ifstream file(path);
 	if (!file.is_open())
@@ -8,16 +9,18 @@ std::vector<uint16_t> DataLoader::ParseHexValues(const std::filesystem::path& pa
 		throw std::runtime_error("Error: could not open file " + path.string());
 	}
 
-	std::vector<uint16_t> values;
+	std::vector<uint8_t> values;
 	unsigned hexValue{};
+
 	while (file >> std::hex >> hexValue)
 	{
-		values.emplace_back(static_cast<uint16_t>(hexValue));
+		values.emplace_back(static_cast<uint8_t>(hexValue));
 		if (hexValue != 0x00)
 		{
 			hasData = true;
 		}
 	}
+
 	file.close();
 	return values;
 }
@@ -30,35 +33,17 @@ Program DataLoader::ParseStatements(std::span<const Statement> statements, uint1
 
 	for (const auto& statement : statements)
 	{
-		uint16_t address = statement.address;
+		uint20_t address = statement.address;
 
 		// this is an instruction
-		if (statement.opcode.has_value()) 
+		for (uint8_t byte : Assembler::Encode(statement))
 		{
-			program.addrValues.push_back({ address, statement.opcode.value() });
-			program.AddMemoryCellTypes(address, MemoryCellType::OPCODE);
 			++address;
-
-			for (size_t index = 0; index < statement.operatorCount; ++index)
-			{
-				program.addrValues.push_back({ address, statement.operands[index] });
-				program.AddMemoryCellTypes(address, MemoryCellType::OPERAND);
-				++address;
-			}
+			program.addrValues.push_back({ address, byte });
+			program.memoryCellType.insert({ address, MemoryCellType::DATA });
 		}
-		else
-		{
-			for (size_t index = 0; index < statement.operatorCount; ++index)
-			{
-				program.addrValues.push_back({ address, statement.operands[index] });
-				program.AddMemoryCellTypes(address, MemoryCellType::DATA);
-				++address;
-			}
-		}
-
-
 	}
-	if (values.size() < std::numeric_limits<uint16_t>::max())
+	if (values.size() < Utils::MEMORY_SIZE)
 	{
 		return program;
 	}

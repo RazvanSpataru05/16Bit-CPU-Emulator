@@ -74,6 +74,45 @@ void Assembler::SortWarnings() noexcept
 	std::sort(m_warnings.begin(), m_warnings.end());
 }
 
+std::vector<uint8_t> Assembler::Encode(const Statement& statement)
+{
+	// TODO: add checks if entry is nullptr to check if the statement holds a word or actual instruction
+	const auto* entry = statement.ISAEntry;
+	uint8_t opcode = entry->opcode;
+	uint8_t mod = 0b11, reg = 0, rm = 0;
+	std::vector<uint8_t> imm;
+
+	for (size_t index = 0; index < statement.operandCount; ++index)
+	{
+		const Operand& operand = statement.operands[index];
+		switch (entry->slots[index])
+		{
+		case Slot::IN_OPCODE:	opcode |= operand.reg;	break;
+		case Slot::MOD_RM_REG:	reg = operand.reg;		break;
+		case Slot::MOD_RM_RM:	rm = operand.reg;		break;
+		case Slot::IMM:
+		{
+			imm.push_back(operand.value & 0xFF);
+			if (operand.kind == OperandKind::IMM_16)
+			{
+				imm.push_back(operand.value >> 8);
+			}
+			break;
+		}
+		}
+	}
+
+	std::vector<uint8_t> values{ opcode };
+	if (entry->hasModRM)
+	{
+		const uint8_t modRM = (mod << 6) | (reg << 3) | rm;
+		values.push_back(modRM);
+	}
+
+	values.insert(values.end(), imm.begin(), imm.end());
+	return values;
+}
+
 void Assembler::RunLexer(std::string_view sourceCode)
 {
 	m_lexer.SetSourceCode(sourceCode);

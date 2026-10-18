@@ -7,12 +7,12 @@ MemoryUnit::MemoryUnit() :
 	std::fill(m_memory.begin(), m_memory.end(), std::nullopt);
 }
 
-const std::optional<uint16_t>& MemoryUnit::Peek(uint16_t address) const
+const std::optional<uint8_t>& MemoryUnit::Peek(uint20_t address) const
 {
-	return m_memory[address];
+	return m_memory[address.index()];
 }
 
-MemoryCellType MemoryUnit::GetMemoryCellType(uint16_t address) const noexcept
+MemoryCellType MemoryUnit::GetMemoryCellType(uint20_t address) const noexcept
 {
 	const auto it = m_memoryCellType.find(address);
 
@@ -33,21 +33,15 @@ uint16_t MemoryUnit::GetStartAddress() const noexcept
 	return m_startAddress;
 }
 
-uint16_t MemoryUnit::Read(uint16_t address) const noexcept
+uint8_t MemoryUnit::Read(uint20_t address) const noexcept
 {
-	return m_memory[address].value_or(0x00);
+	return m_memory[address.index()].value_or(0x00);
 }
 
-void MemoryUnit::Write(uint16_t address, uint16_t value)
+void MemoryUnit::Write(uint20_t address, uint8_t value)
 {
-	std::cout << std::hex
-		<< "address = " << address
-		<< ", size = " << m_memory.size()
-		<< ", value = " << static_cast<int>(value)
-		<< '\n';
-
-	m_memory[address].reset();
-	m_memory[address].emplace(value);
+	m_memory[address.index()].reset();
+	m_memory[address.index()].emplace(value);
 	m_hasData = true;
 }
 
@@ -63,7 +57,7 @@ void MemoryUnit::RestoreSnapshot()
 	Clear();
 	for (const auto& addrVal : m_snapshotData)
 	{
-		m_memory[addrVal.address] = addrVal.value;
+		m_memory[addrVal.address.index()] = addrVal.value;
 		if (addrVal.value != 0x00)
 		{
 			m_hasData = true;
@@ -81,7 +75,7 @@ void MemoryUnit::LoadValuesIntoMemory(const Program& program)
 
 	for (const auto& addrVal : program.addrValues)
 	{
-		m_memory[addrVal.address] = addrVal.value;
+		m_memory[addrVal.address.index()] = addrVal.value;
 	}
 
 	m_memoryCellType = program.memoryCellType;
@@ -95,12 +89,12 @@ void MemoryUnit::LoadProgramFromFIle(const std::filesystem::path& filename)
 	//LoadValuesIntoMemory(DataLoader::ParseHexValues(fullPath, m_hasData), 0x0000);
 }
 
-const std::optional<uint8_t>& MemoryUnit::operator[](uint16_t address) const
+const std::optional<uint8_t>& MemoryUnit::operator[](uint20_t address) const
 {
-	return m_memory[address];
+	return m_memory[address.index()];
 }
 
-std::optional<uint8_t>& MemoryUnit::operator[](uint16_t address)
+std::optional<uint8_t>& MemoryUnit::operator[](uint20_t address)
 {
-	return m_memory[address];
+	return m_memory[address.index()];
 }

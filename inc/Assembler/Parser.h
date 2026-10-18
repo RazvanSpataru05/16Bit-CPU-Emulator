@@ -3,8 +3,11 @@
 #include "Assembler/Lexer.h"
 #include "Assembler/LabelInfo.h"
 #include "Assembler/Statement.h"
+#include "Assembler/ParsedNumber.h"
 
 #include "Utils/Logger.h"
+
+#include <span>
 
 using namespace ISA;
 
@@ -58,10 +61,10 @@ private:
 	void HandleOrgDirective();
 	void HandleStartDirective();
 
-	std::array<uint16_t, 2> ConsumeImm8();
-	std::array<uint16_t, 2> ConsumeAddr16();
-	std::array<uint16_t, 2> ConsumeReg();
-	std::array<uint16_t, 2> ConsumeRegReg();
+	std::array<Operand, 2> ConsumeImm8();
+	std::array<Operand, 2> ConsumeAddr16();
+	std::array<Operand, 2> ConsumeReg();
+	std::array<Operand, 2> ConsumeRegReg();
 
 	void AddStatement();
 	void AddError(std::string_view message);
