@@ -95,12 +95,12 @@ void MemoryUnit::LoadProgramFromFIle(const std::filesystem::path& filename)
 	//LoadValuesIntoMemory(DataLoader::ParseHexValues(fullPath, m_hasData), 0x0000);
 }
 
-const std::optional<uint16_t>& MemoryUnit::operator[](uint16_t address) const
+const std::optional<uint8_t>& MemoryUnit::operator[](uint16_t address) const
 {
 	return m_memory[address];
 }
 
-std::optional<uint16_t>& MemoryUnit::operator[](uint16_t address)
+std::optional<uint8_t>& MemoryUnit::operator[](uint16_t address)
 {
 	return m_memory[address];
 }

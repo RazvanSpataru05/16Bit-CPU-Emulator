@@ -30,6 +30,7 @@ set(SOURCES
     src/Core/RegisterFile.cpp
     src/Core/StatusRegister.cpp
     src/Core/Terminal.cpp
+    src/Core/uint20_t.cpp
 
     src/Debugger/Dissasembler.cpp
 
@@ -71,6 +72,7 @@ set(HEADERS
     inc/Core/StatusRegister.h
     inc/Core/Terminal.h
     inc/Core/TerminalLine.h
+    inc/Core/uint20_t.h
 
     inc/Debugger/Dissasembler.h
 

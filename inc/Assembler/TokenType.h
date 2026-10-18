@@ -7,7 +7,7 @@ enum class TokenType : uint16_t
 	NONE = 0u,
 
 	MNEMONIC,
-	REGISTER, // A-D or a-d
+	REGISTER, // AX - DX 
 	NUMBER,
 	NEW_LINE,
 	IDENTIFIER,
