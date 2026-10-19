@@ -253,11 +253,12 @@ namespace UIEditor
 	}
 	void DrawMenu(MemoryUnit& memoryUnit, bool& followPC, bool& executeAuto, CPU& cpu)
 	{
-		ImGui::SetNextWindowPos(ImVec2(0.0f, 0.0f), ImGuiCond_Always);
-		ImGui::SetNextWindowSize(ImVec2(1525.0f, 90.0f), ImGuiCond_Always);
+		ImGui::SetNextWindowPos(Utils::UI::CalcMenuWindowPos(), ImGuiCond_Always);
+		ImGui::SetNextWindowSize(Utils::UI::CalcMenuWindowSize(), ImGuiCond_Always);
+
 		const auto menuFlags = ImGuiWindowFlags_NoResize |
 							ImGuiWindowFlags_NoMove |
-							ImGuiWindowFlags_NoCollapse;
+							ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoBringToFrontOnFocus;
 		ImGui::Begin("Menu", nullptr, menuFlags);
 		if (ImGui::Button("\t\tNext Step\t\t"))
 		{

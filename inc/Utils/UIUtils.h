@@ -27,5 +27,8 @@ namespace Utils
 		void DisplayGlossaryPage();
 		void DisplayMiscPage(const char* title, const char* tableId, std::initializer_list<uint16_t> opcodes);
 		void DisplayTable(const InstructionTableInfo& info);
+
+		ImVec2 CalcMenuWindowPos();
+		ImVec2 CalcMenuWindowSize();
 	}	
 }

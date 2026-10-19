@@ -245,5 +245,19 @@ namespace Utils
 			}
 			ImGui::PopStyleVar();
 		}
+
+		ImVec2 CalcMenuWindowPos()
+		{
+			return ImVec2(0.0f, 0.0f);
+		}
+
+		ImVec2 CalcMenuWindowSize()
+		{
+			ImGuiIO& io = ImGui::GetIO();
+			const float windowX = io.DisplaySize.x;
+			const float windowY = io.DisplaySize.y;
+
+			return ImVec2(windowX * Utils::MENU_WINDOW_WIDTH_PROCENT, windowY * Utils::MENU_WINDOW_HEIGHT_PROCENT);
+		}
 	}
 }
