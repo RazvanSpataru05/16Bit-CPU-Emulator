@@ -40,6 +40,7 @@ namespace UIEditor
 							const Dissasembler& dissasembler, CPU& cpu, Assembler& assembler,
 							Terminal& terminal, InterruptController& interruptController,
 							Keyboard& keyboard, bool& executeAuto);
+	void DrawDissasemblyPanel(MemoryUnit& memoryUnit, const CPU& cpu, const Dissasembler& dissasembler);
 
 	void DrawMemoryView(const MemoryUnit& memoryUnit, CPU& cpu, bool& followPC);
 	void DrawMenu(MemoryUnit& memoryUnit, 

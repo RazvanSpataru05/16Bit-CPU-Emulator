@@ -65,14 +65,20 @@ namespace UIEditor
 
 	void DrawCPUState(const CPU& cpu)
 	{
-		ImGui::Begin("CPU State");
-		ImGui::Text(std::format("Instruction Pointer: {:#06X}",			cpu.GetIP()).c_str());
-		ImGui::Text(std::format("Stack Pointer: {:#06X}",				cpu.GetSP()).c_str());
-		ImGui::Text(std::format("Instruction Register: {:#04X}",		cpu.GetIR()).c_str());
+		ImGui::SetNextWindowPos(Utils::UI::CalcCPUStatePanelPos(), ImGuiCond_Always);
+		ImGui::SetNextWindowSize(Utils::UI::CalcCPUStatePanelSize(), ImGuiCond_Always);
+		const auto flags = ImGuiWindowFlags_NoResize |
+						ImGuiWindowFlags_NoMove |
+						ImGuiWindowFlags_NoCollapse;
+
+		ImGui::Begin("CPU State", nullptr, flags);
+		ImGui::Text(std::format("Instruction Pointer: {:#06X}", cpu.GetIP()).c_str());
+		ImGui::Text(std::format("Stack Pointer: {:#06X}", cpu.GetSP()).c_str());
+		ImGui::Text(std::format("Instruction Register: {:#04X}", cpu.GetIR()).c_str());
 		ImGui::Separator();
 
 		ImGui::Text("General Purpose Registry");
-		ImGui::SameLine(250.0f); 
+		ImGui::SameLine(250.0f);
 		ImGui::Text("Segment Registry");
 
 		ImGui::Text(std::format("AX: {}", cpu.GetRegisterFile().AX()).c_str());
@@ -86,7 +92,7 @@ namespace UIEditor
 		ImGui::Text(std::format("CX: {}", cpu.GetRegisterFile().CX()).c_str());
 		ImGui::SameLine(250.0f);
 		ImGui::Text(std::format("SS: {}", cpu.GetRegisterFile().SS()).c_str());
-		
+
 		ImGui::Text(std::format("DX: {}", cpu.GetRegisterFile().DX()).c_str());
 		ImGui::SameLine(250.0f);
 		ImGui::Text(std::format("DS: {}", cpu.GetRegisterFile().DS()).c_str());
@@ -94,12 +100,12 @@ namespace UIEditor
 		ImGui::Separator();
 
 		ImGui::Text("\nFlags");
-		ImGui::Text(std::format("Interrupt Flag: {}",	cpu.GetInterruptController().GetInterruptFlag() ? "True" : "False").c_str());
-		ImGui::Text(std::format("Zero Flag: {}",		cpu.GetStatusRegister().Zero() ? "True" : "False").c_str());
-		ImGui::Text(std::format("Carry Flag: {}",		cpu.GetStatusRegister().Carry() ? "True" : "False").c_str());
-		ImGui::Text(std::format("Negative Flag: {}",	cpu.GetStatusRegister().Negative() ? "True" : "False").c_str());
-		ImGui::Text(std::format("Overflow Flag: {}",	cpu.GetStatusRegister().Overflow() ? "True" : "False").c_str());
-		ImGui::Text(std::format("Halt Flag: {}",		cpu.GetHaltFlag() ? "True" : "False").c_str());
+		ImGui::Text(std::format("Interrupt Flag: {}", cpu.GetInterruptController().GetInterruptFlag() ? "True" : "False").c_str());
+		ImGui::Text(std::format("Zero Flag: {}", cpu.GetStatusRegister().Zero() ? "True" : "False").c_str());
+		ImGui::Text(std::format("Carry Flag: {}", cpu.GetStatusRegister().Carry() ? "True" : "False").c_str());
+		ImGui::Text(std::format("Negative Flag: {}", cpu.GetStatusRegister().Negative() ? "True" : "False").c_str());
+		ImGui::Text(std::format("Overflow Flag: {}", cpu.GetStatusRegister().Overflow() ? "True" : "False").c_str());
+		ImGui::Text(std::format("Halt Flag: {}", cpu.GetHaltFlag() ? "True" : "False").c_str());
 		ImGui::Separator();
 		ImGui::End();
 	}
@@ -110,9 +116,9 @@ namespace UIEditor
 	{
 		static char editorBuffer[BUFFER_SIZE];
 		const auto flags = ImGuiWindowFlags_NoResize |
-							ImGuiWindowFlags_NoMove |
-							ImGuiWindowFlags_NoCollapse |
-							ImGuiWindowFlags_NoTitleBar;
+			ImGuiWindowFlags_NoMove |
+			ImGuiWindowFlags_NoCollapse |
+			ImGuiWindowFlags_NoTitleBar;
 		ImGui::SetNextWindowPos(Utils::UI::CalcCodePanelPos(), ImGuiCond_Always);
 		ImGui::SetNextWindowSize(Utils::UI::CalcCodePanelSize(), ImGuiCond_Always);
 
@@ -152,7 +158,7 @@ namespace UIEditor
 			}
 		}
 		DrawOutput(assembler, cpu, terminal, interruptController, keyboard, executeAuto);
-		
+
 
 		//else if (mode == Mode::DISSASEMBLY)
 		//{
@@ -187,6 +193,47 @@ namespace UIEditor
 		ImGui::End();
 	}
 
+	void DrawDissasemblyPanel(MemoryUnit& memoryUnit, const CPU& cpu, const Dissasembler& dissasembler)
+	{
+		ImGui::SetNextWindowPos(Utils::UI::CalcDissasemblyPanelPos(), ImGuiCond_Always);
+		ImGui::SetNextWindowSize(Utils::UI::CalcDissasemblyPanelSize(), ImGuiCond_Always);
+
+		const auto flags = ImGuiWindowFlags_NoCollapse;
+		ImGui::Begin("Dissasembly Panel", nullptr, flags);
+
+		if (memoryUnit.IsMemoryEmpty())
+		{
+			ImGui::TextDisabled("Memory Unit is empty.");
+			ImGui::End();
+			return;
+		}
+		for (size_t index = 0; index < Utils::Constants::MEMORY_SIZE; ++index)
+		{
+			std::optional<uint16_t> opcode = memoryUnit.Peek(static_cast<uint16_t>(index));
+			if (!opcode.has_value())
+			{
+				continue;
+			}
+
+			const InstructionDef& instruction = dissasembler.GetInstructionDef(opcode.value());
+
+			if (index == cpu.GetIP())
+			{
+				ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(0, 255, 0, 255));
+			}
+			else
+			{
+				ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 255, 255, 255));
+			}
+
+			Utils::UI::DisplayInstruction(instruction, memoryUnit, static_cast<uint16_t>(index), opcode);
+
+			index += static_cast<size_t>(instruction.size - 1);
+			ImGui::PopStyleColor();
+		}
+		ImGui::End();
+	}
+
 	void DrawMemoryView(const MemoryUnit& memoryUnit, CPU& cpu, bool& followPC)
 	{
 		if (followPC)
@@ -198,10 +245,10 @@ namespace UIEditor
 		ImGui::SetNextWindowSize(Utils::UI::CalcMemoryViewSize(), ImGuiCond_Always);
 
 		const auto memoryFlags = ImGuiWindowFlags_NoResize |
-								ImGuiWindowFlags_NoMove |
-								ImGuiWindowFlags_NoCollapse;
+			ImGuiWindowFlags_NoMove |
+			ImGuiWindowFlags_NoCollapse;
 
-		ImGui::Begin(std::format("Memory View (Page {}/{})", currentPage, PAGE_SIZE-1).c_str(), nullptr, memoryFlags);
+		ImGui::Begin(std::format("Memory View (Page {}/{})", currentPage, PAGE_SIZE - 1).c_str(), nullptr, memoryFlags);
 		if (ImGui::Button("Prev"))
 		{
 			currentPage = currentPage - 1 < 0 ? 255 : currentPage - 1;
@@ -265,8 +312,8 @@ namespace UIEditor
 		ImGui::SetNextWindowSize(Utils::UI::CalcMenuWindowSize(), ImGuiCond_Always);
 
 		const auto menuFlags = ImGuiWindowFlags_NoResize |
-							ImGuiWindowFlags_NoMove |
-							ImGuiWindowFlags_NoCollapse;
+			ImGuiWindowFlags_NoMove |
+			ImGuiWindowFlags_NoCollapse;
 		ImGui::Begin("Menu", nullptr, menuFlags);
 		if (ImGui::Button("\t\tNext Step\t\t"))
 		{
@@ -363,7 +410,7 @@ namespace UIEditor
 			{
 				Utils::UI::DisplayTable(INSTRUCTION_TABLES[
 					static_cast<uint16_t>(currentHelperPage) -
-					static_cast<uint16_t>(PageType::LOAD_STORE_PAGE)
+						static_cast<uint16_t>(PageType::LOAD_STORE_PAGE)
 				]);
 				break;
 			}
@@ -445,7 +492,7 @@ namespace UIEditor
 	}
 
 	void DrawConsole(CPU& cpu, Terminal& terminal, InterruptController& interruptController, Keyboard& keyboard,
-					bool& executeAuto)
+		bool& executeAuto)
 	{
 		static char consoleBuffer[CONSOLE_BUFFER_SIZE];
 
@@ -499,7 +546,7 @@ namespace UIEditor
 				//executeAuto = false;
 				interruptController.EnableInterrupts(false);
 				interruptController.RaiseInterrupt(KEYBOARD_INTERRUPT_LINE);
-				
+
 				for (uint16_t key : line)
 				{
 					keyboard.AddKey(key);

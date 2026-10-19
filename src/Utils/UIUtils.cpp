@@ -294,6 +294,41 @@ namespace Utils
 				windowY * Utils::Constants::CODE_PANEL_WINDOW_HEIGHT_PROCENT);
 		}
 
+		ImVec2 CalcDissasemblyPanelPos()
+		{
+			const ImVec2 menuSize = CalcMenuWindowSize();
+
+			return ImVec2(menuSize.x, 0.0f);
+		}
+
+		ImVec2 CalcDissasemblyPanelSize()
+		{
+			ImGuiIO& io = ImGui::GetIO();
+			const float windowX = io.DisplaySize.x;
+			const float windowY = io.DisplaySize.y;
+
+			return ImVec2(windowX * Utils::Constants::DISSASEMBLY_WINDOW_WIDTH_PROCENT, 
+						windowY * Utils::Constants::DISSASEMBLY_WINDOW_HEIGHT_PROCENT);
+		}
+
+		ImVec2 CalcCPUStatePanelPos()
+		{
+			const ImVec2 menuSize = CalcMenuWindowSize();
+			const ImVec2 dissasemblySize = CalcDissasemblyPanelSize();
+
+			return ImVec2(menuSize.x + dissasemblySize.x, 0.0f);
+		}
+
+		ImVec2 CalcCPUStatePanelSize()
+		{
+			ImGuiIO& io = ImGui::GetIO();
+			const float windowX = io.DisplaySize.x;
+			const float windowY = io.DisplaySize.y;
+
+			return ImVec2(windowX * Utils::Constants::CPU_STATE_WINDOW_WIDTH_PROCENT,
+				windowY * Utils::Constants::CPU_STATE_WINDOW_HEIGHT_PROCENT);
+		}
+
 		ImVec2 CalcTextEditorSize()
 		{
 			ImGuiIO& io = ImGui::GetIO();

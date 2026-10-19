@@ -21,5 +21,11 @@ namespace Utils
 
 		constexpr float TEXT_EDITOR_WINDOW_HEIGHT_PROCENT{ 0.4861f };
 		constexpr float TAB_HEIGHT_PROCENT{ 0.1215f };
+
+		constexpr float CPU_STATE_WINDOW_WIDTH_PROCENT{ 0.2f };
+		constexpr float CPU_STATE_WINDOW_HEIGHT_PROCENT{ 0.29f };
+
+		constexpr float DISSASEMBLY_WINDOW_WIDTH_PROCENT{ 0.2f };
+		constexpr float DISSASEMBLY_WINDOW_HEIGHT_PROCENT{ 0.29f };
 	}
 }

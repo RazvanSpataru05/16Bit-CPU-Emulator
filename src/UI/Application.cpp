@@ -58,6 +58,7 @@ void Application::RenderUI()
 	UIEditor::DrawCodePanel(m_editorMode, m_emulator->GetCPU().GetMemoryUnit(),
 		*m_dissasembler, m_emulator->GetCPU(), *m_assembler, m_emulator->GetTerminal(), m_emulator->GetInterruptController(),
 		m_emulator->GetKeyboard(), m_appConfig.executeAuto);
+	UIEditor::DrawDissasemblyPanel(m_emulator->GetCPU().GetMemoryUnit(), m_emulator->GetCPU(), *m_dissasembler);
 
 	UIEditor::DrawMemoryView(m_emulator->GetCPU().GetMemoryUnit(),
 		m_emulator->GetCPU(), m_appConfig.followPC);
