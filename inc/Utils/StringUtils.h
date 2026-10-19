@@ -7,6 +7,7 @@
 #include "Assembler/ISAEntry.h"
 #include "Assembler/Token.h"
 #include "Assembler/ParsedNumber.h"
+#include "Assembler/Slot.h"
 
 #include <string>
 #include <algorithm>
@@ -26,8 +27,10 @@ namespace Utils
 		bool IsNumber(std::string_view word);
 		ParsedNumber ParseNumber(const std::string& word);
 
-		std::string_view OperatorKindToString(ISA::OperandKind operatorKind);
-		std::string TokenTypeToString(const Token& token);
+		std::string_view	OperatorKindToString(ISA::OperandKind operatorKind);
+		std::string_view	SlotToString(Slot slot);
+		std::string			TokenTypeToString(const Token& token);
+	
 	}
 
 };  

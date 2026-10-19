@@ -6,9 +6,34 @@ CPU::CPU(InterruptController& interruptController) :
 	Reset();
 }
 
+uint20_t CPU::PhysAddr() const noexcept
+{
+	return uint20_t(static_cast<uint32_t>((m_registerFile.CS() << 4) + m_IP));
+}
+
+uint8_t CPU::Fetch8()
+{
+	assert(m_memoryUnit[PhysAddr()].has_value());
+	++m_IP;
+	return m_memoryUnit[PhysAddr()].value();
+}
+
+uint16_t CPU::Fetch16() 
+{
+	assert(m_memoryUnit[PhysAddr()].has_value());
+	uint8_t lo = m_memoryUnit[PhysAddr()].value();
+	++m_IP;
+
+	assert(m_memoryUnit[PhysAddr()].has_value());
+	uint8_t hi = m_memoryUnit[PhysAddr()].value();
+	++m_IP;
+
+	return (static_cast<uint16_t>(hi) << 8) | static_cast<uint16_t>(lo);
+}
+
 void CPU::Fetch()
 {
-	uint20_t address = m_IP + 1;
+	uint20_t address = PhysAddr();
 	if (!m_memoryUnit[address.index()].has_value())
 	{
 		m_haltFlag = true;

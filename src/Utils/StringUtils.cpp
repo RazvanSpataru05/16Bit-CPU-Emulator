@@ -104,6 +104,19 @@ namespace Utils
 			}
 		}
 
+		std::string_view SlotToString(Slot slot)
+		{
+			switch (slot) 
+			{
+			case Slot::NONE:					return "None";
+			case Slot::IN_OPCODE:				return "In Opcode";
+			case Slot::MOD_RM_REG:				return "Mod RM Reg";
+			case Slot::MOD_RM_RM:				return "Mod RM RM";
+			case Slot::IMM:						return "IMM";
+			default:							return "Error";
+			}
+		}
+
 		std::string TokenTypeToString(const Token& token)
 		{
 			switch (token.type)

@@ -7,6 +7,7 @@
 #include "Core/MemoryUnit.h"
 
 #include <string>
+#include <assert.h>
 
 class CPU
 {
@@ -18,6 +19,11 @@ public:
 
 	CPU(CPU&&) = default;
 	CPU& operator=(CPU&&) = default;
+
+	uint20_t	PhysAddr()		const noexcept;
+
+	uint8_t		Fetch8();
+	uint16_t	Fetch16();
 
 	void Fetch();
 	void Step();
