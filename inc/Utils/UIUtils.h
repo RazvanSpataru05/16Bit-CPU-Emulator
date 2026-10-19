@@ -43,6 +43,9 @@ namespace Utils
 		ImVec2 CalcCPUStatePanelPos();
 		ImVec2 CalcCPUStatePanelSize();
 
+		ImVec2 CalcCPUDiagramPos();
+		ImVec2 CalcCPUDiagramSize();
+
 		ImVec2 CalcTextEditorSize();
 		ImVec2 CalcTabSize();
 

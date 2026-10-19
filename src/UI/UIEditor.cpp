@@ -149,6 +149,16 @@ namespace UIEditor
 		ImGui::End();
 	}
 
+	void DrawCPUDiagram()
+	{
+		ImGui::SetNextWindowPos(Utils::UI::CalcCPUDiagramPos());
+		ImGui::SetNextWindowSize(Utils::UI::CalcCPUDiagramSize());
+
+		ImGui::Begin("CPU Diagram");
+		ImGui::Text("cpu diagram");
+		ImGui::End();
+	}
+
 	void DrawDissasemblyPanel(MemoryUnit& memoryUnit, const CPU& cpu, const Dissasembler& dissasembler)
 	{
 		ImGui::SetNextWindowPos(Utils::UI::CalcDissasemblyPanelPos(), ImGuiCond_Always);

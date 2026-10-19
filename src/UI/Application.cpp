@@ -50,6 +50,8 @@ void Application::RenderUI()
 
 	UIEditor::DrawCPUState(m_emulator->GetCPU());
 	UIEditor::DrawCodePanel(*m_emulator, m_appConfig);
+	UIEditor::DrawCPUDiagram();
+
 	UIEditor::DrawDissasemblyPanel(m_emulator->GetCPU().GetMemoryUnit(), m_emulator->GetCPU(), *m_dissasembler);
 	UIEditor::DrawMemoryView(*m_emulator, m_appConfig);
 

@@ -25,6 +25,9 @@ namespace Utils
 		constexpr float CPU_STATE_WINDOW_WIDTH_PROCENT{ 0.2f };
 		constexpr float CPU_STATE_WINDOW_HEIGHT_PROCENT{ 0.29f };
 
+		constexpr float CPU_DIAGRAM_WIDTH_PROCENT{ 0.4f };
+		constexpr float CPU_DIAGRAM_HEIGHT_PROCENT{ 0.4f };
+
 		constexpr float DISSASEMBLY_WINDOW_WIDTH_PROCENT{ 0.2f };
 		constexpr float DISSASEMBLY_WINDOW_HEIGHT_PROCENT{ 0.29f };
 

@@ -329,6 +329,23 @@ namespace Utils
 				windowY * Utils::Constants::CPU_STATE_WINDOW_HEIGHT_PROCENT);
 		}
 
+		ImVec2 CalcCPUDiagramPos()
+		{
+			const ImVec2 codePanelSize = CalcCodePanelSize();
+			const ImVec2 dissasemblyPanelSize = CalcDissasemblyPanelSize();
+			return ImVec2(codePanelSize.x, dissasemblyPanelSize.y);
+		}
+
+		ImVec2 CalcCPUDiagramSize()
+		{
+			ImGuiIO& io = ImGui::GetIO();
+			const float windowX = io.DisplaySize.x;
+			const float windowY = io.DisplaySize.y;
+
+			return ImVec2(windowX * Utils::Constants::CPU_DIAGRAM_WIDTH_PROCENT,
+						windowY * Utils::Constants::CPU_DIAGRAM_HEIGHT_PROCENT);
+		}
+
 		ImVec2 CalcTextEditorSize()
 		{
 			ImGuiIO& io = ImGui::GetIO();

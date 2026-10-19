@@ -40,6 +40,7 @@ namespace UIEditor
 {
 	void DrawCPUState(const CPU& cpu);
 	void DrawCodePanel(Emulator& emulator, AppConfig& config);
+	void DrawCPUDiagram();
 	void DrawDissasemblyPanel(MemoryUnit& memoryUnit, const CPU& cpu, const Dissasembler& dissasembler);
 
 	void DrawMemoryView(Emulator& emulator, AppConfig& config);
