@@ -47,7 +47,7 @@ private:
 	MemoryUnit& operator=(const MemoryUnit&) = delete;
 
 private:
-	std::array<std::optional<uint8_t>, Utils::MEMORY_SIZE> m_memory{};
+	std::array<std::optional<uint8_t>, Utils::Constants::MEMORY_SIZE> m_memory{};
 	std::unordered_map<uint20_t, MemoryCellType> m_memoryCellType{};
 
 	bool m_hasData;

@@ -115,6 +115,8 @@ std::vector<uint8_t> Assembler::Encode(const Statement& statement)
 
 void Assembler::RunLexer(std::string_view sourceCode)
 {
+	if (sourceCode.empty()) return;
+
 	m_lexer.SetSourceCode(sourceCode);
 	m_lexer.Tokenize();
 	m_lexer.PrintTokenizedSourceCode();
@@ -122,6 +124,8 @@ void Assembler::RunLexer(std::string_view sourceCode)
 
 void Assembler::RunParser()
 {
+	if (m_lexer.GetTokens().empty()) return;
+
 	m_parser.SetTokens(m_lexer.GetTokens());
 	m_parser.ParseTokens();
 	m_parser.PrintStatements();

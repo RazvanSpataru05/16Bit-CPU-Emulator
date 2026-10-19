@@ -43,7 +43,7 @@ Program DataLoader::ParseStatements(std::span<const Statement> statements, uint1
 			program.memoryCellType.insert({ address, MemoryCellType::DATA });
 		}
 	}
-	if (values.size() < Utils::MEMORY_SIZE)
+	if (values.size() < Utils::Constants::MEMORY_SIZE)
 	{
 		return program;
 	}

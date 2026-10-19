@@ -104,81 +104,86 @@ namespace UIEditor
 		ImGui::End();
 	}
 
-	void DrawAssemblyPanel(Mode& mode, MemoryUnit& memoryUnit, const Dissasembler& dissasembler,
+	void DrawCodePanel(Mode& mode, MemoryUnit& memoryUnit, const Dissasembler& dissasembler,
 		CPU& cpu, Assembler& assembler, Terminal& terminal, InterruptController& interruptController,
 		Keyboard& keyboard, bool& executeAuto)
 	{
 		static char editorBuffer[BUFFER_SIZE];
+		const auto flags = ImGuiWindowFlags_NoResize |
+							ImGuiWindowFlags_NoMove |
+							ImGuiWindowFlags_NoCollapse |
+							ImGuiWindowFlags_NoTitleBar;
+		ImGui::SetNextWindowPos(Utils::UI::CalcCodePanelPos(), ImGuiCond_Always);
+		ImGui::SetNextWindowSize(Utils::UI::CalcCodePanelSize(), ImGuiCond_Always);
 
-		ImGui::Begin("Assembly Panel");
-		if (ImGui::Button("Edit Mode"))
-		{
-			mode = Mode::EDIT;
-		}
-		ImGui::SameLine();
-		if (ImGui::Button("Dissasembly"))
-		{
-			mode = Mode::DISSASEMBLY;
-		}
-		ImGui::Separator();
 
-		if (mode == Mode::EDIT)
-		{
-			ImGui::InputTextMultiline
-			("##editor", editorBuffer, IM_ARRAYSIZE(editorBuffer), ImVec2(-1, 300), ImGuiInputTextFlags_AllowTabInput);
+		ImGui::Begin("Code Panel", nullptr, flags);
+		//if (ImGui::Button("Edit Mode"))
+		//{
+		//	mode = Mode::EDIT;
+		//}
+		//ImGui::SameLine();
+		//if (ImGui::Button("Dissasembly"))
+		//{
+		//	mode = Mode::DISSASEMBLY;
+		//}
+		//ImGui::Separator();
 
-			if (ImGui::Button("Assemble & Load"))
+		ImGui::InputTextMultiline
+		("##editor", editorBuffer, IM_ARRAYSIZE(editorBuffer), Utils::UI::CalcTextEditorSize(), ImGuiInputTextFlags_AllowTabInput);
+
+		if (ImGui::Button("Assemble & Load"))
+		{
+			Logger::ClearLogFile();
+			if (assembler.Assemble(editorBuffer))
 			{
-				Logger::ClearLogFile();
-				if (assembler.Assemble(editorBuffer))
-				{
-					const auto& statements = assembler.GetStatements();
-					const Program program = DataLoader::ParseStatements(statements, assembler.GetStartAddress());
+				const auto& statements = assembler.GetStatements();
+				const Program program = DataLoader::ParseStatements(statements, assembler.GetStartAddress());
 
-					memoryUnit.LoadValuesIntoMemory(program);
-					cpu.Reset();
+				memoryUnit.LoadValuesIntoMemory(program);
+				cpu.Reset();
 
-					tab = SelectedTab::CONSOLE;
-					mode = Mode::DISSASEMBLY;
-				}
-				else
-				{
-					tab = SelectedTab::ERROR_LIST;
-				}
+				tab = SelectedTab::CONSOLE;
+				mode = Mode::DISSASEMBLY;
 			}
-			DrawOutput(assembler, cpu, terminal, interruptController, keyboard, executeAuto);
-		}
-
-		else if (mode == Mode::DISSASEMBLY)
-		{
-			if (!memoryUnit.IsMemoryEmpty())
+			else
 			{
-				for (size_t index = 0; index < Utils::MEMORY_SIZE; ++index)
-				{
-					std::optional<uint16_t> opcode = memoryUnit.Peek(static_cast<uint16_t>(index));
-					if (!opcode.has_value())
-					{
-						continue;
-					}
-
-					const InstructionDef& instruction = dissasembler.GetInstructionDef(opcode.value());
-
-					if (index == cpu.GetIP())
-					{
-						ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(0, 255, 0, 255));
-					}
-					else
-					{
-						ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 255, 255, 255));
-					}
-						
-					Utils::UI::DisplayInstruction(instruction, memoryUnit, static_cast<uint16_t>(index), opcode);
-
-					index += static_cast<size_t>(instruction.size - 1);
-					ImGui::PopStyleColor();
-				}
+				tab = SelectedTab::ERROR_LIST;
 			}
 		}
+		DrawOutput(assembler, cpu, terminal, interruptController, keyboard, executeAuto);
+		
+
+		//else if (mode == Mode::DISSASEMBLY)
+		//{
+		//	if (!memoryUnit.IsMemoryEmpty())
+		//	{
+		//		for (size_t index = 0; index < Utils::MEMORY_SIZE; ++index)
+		//		{
+		//			std::optional<uint16_t> opcode = memoryUnit.Peek(static_cast<uint16_t>(index));
+		//			if (!opcode.has_value())
+		//			{
+		//				continue;
+		//			}
+
+		//			const InstructionDef& instruction = dissasembler.GetInstructionDef(opcode.value());
+
+		//			if (index == cpu.GetIP())
+		//			{
+		//				ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(0, 255, 0, 255));
+		//			}
+		//			else
+		//			{
+		//				ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 255, 255, 255));
+		//			}
+		//				
+		//			Utils::UI::DisplayInstruction(instruction, memoryUnit, static_cast<uint16_t>(index), opcode);
+
+		//			index += static_cast<size_t>(instruction.size - 1);
+		//			ImGui::PopStyleColor();
+		//		}
+		//	}
+		//}
 		ImGui::End();
 	}
 
@@ -189,18 +194,21 @@ namespace UIEditor
 			currentPage = static_cast<uint16_t>(cpu.GetIP() / PAGE_SIZE);
 		}
 
-		ImGui::Begin(std::format("Memory View (Page {}/{})", currentPage, PAGE_SIZE-1).c_str());
-		if (ImGui::Button("\t\t\tPrev\t\t\t"))
+		ImGui::SetNextWindowPos(Utils::UI::CalcMemoryViewPos(), ImGuiCond_Always);
+		ImGui::SetNextWindowSize(Utils::UI::CalcMemoryViewSize(), ImGuiCond_Always);
+
+		const auto memoryFlags = ImGuiWindowFlags_NoResize |
+								ImGuiWindowFlags_NoMove |
+								ImGuiWindowFlags_NoCollapse;
+
+		ImGui::Begin(std::format("Memory View (Page {}/{})", currentPage, PAGE_SIZE-1).c_str(), nullptr, memoryFlags);
+		if (ImGui::Button("Prev"))
 		{
 			currentPage = currentPage - 1 < 0 ? 255 : currentPage - 1;
 		}
-
-		ImGui::SameLine();
-		const std::string spaces = std::string(" ", 79);
-		ImGui::Text(spaces.c_str());
 		ImGui::SameLine();
 
-		if (ImGui::Button("\t\t\tNext\t\t\t"))
+		if (ImGui::Button("Next"))
 		{
 			currentPage = (currentPage + 1) % 256;
 		}
@@ -258,7 +266,7 @@ namespace UIEditor
 
 		const auto menuFlags = ImGuiWindowFlags_NoResize |
 							ImGuiWindowFlags_NoMove |
-							ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoBringToFrontOnFocus;
+							ImGuiWindowFlags_NoCollapse;
 		ImGui::Begin("Menu", nullptr, menuFlags);
 		if (ImGui::Button("\t\tNext Step\t\t"))
 		{
@@ -416,7 +424,7 @@ namespace UIEditor
 
 	void DrawErrorList(std::span<const AssemblerError> errors, std::span<const AssemblerWarning> warnings)
 	{
-		ImGui::BeginChild("##errorList", ImVec2(-1, 150), true);
+		ImGui::BeginChild("##errorList", Utils::UI::CalcTabSize(), true);
 		if (errors.empty() && warnings.empty())
 		{
 			ImGui::TextDisabled("No errors.");
@@ -440,7 +448,6 @@ namespace UIEditor
 					bool& executeAuto)
 	{
 		static char consoleBuffer[CONSOLE_BUFFER_SIZE];
-		static bool scrollToBottom = true;
 
 		ImGuiStyle& style = ImGui::GetStyle();
 		const ImVec4 consoleBg = ImVec4(0.05f, 0.05f, 0.05f, 1.0f);
@@ -448,7 +455,7 @@ namespace UIEditor
 		const ImVec4 errorText = ImVec4(0.90f, 0.29f, 0.23f, 1.0f);
 
 		ImGui::PushStyleColor(ImGuiCol_ChildBg, consoleBg);
-		ImGui::BeginChild("##consoleOutput", ImVec2(-1, 200), true);
+		ImGui::BeginChild("##consoleOutput", Utils::UI::CalcTabSize(), true);
 
 		ImGui::PushStyleColor(ImGuiCol_Text, consoleText);
 		for (const auto& terminalLine : terminal.GetLines())
@@ -465,15 +472,8 @@ namespace UIEditor
 				ImGui::TextWrapped("%s", terminalLine.command.c_str());
 				ImGui::PopStyleColor();
 			}
-			
 		}
 		ImGui::PopStyleColor();
-
-		if (scrollToBottom || ImGui::GetScrollY() >= ImGui::GetScrollMaxY())
-		{
-			ImGui::SetScrollHereY(1.0f);
-		}
-		scrollToBottom = false;
 
 		ImGui::PopStyleColor();
 
@@ -512,7 +512,6 @@ namespace UIEditor
 			}
 
 			consoleBuffer[0] = '\0'; // empty buffer
-			scrollToBottom = true;
 		}
 
 		if (reclaimFocus || (ImGui::IsItemDeactivatedAfterEdit()))
@@ -522,6 +521,11 @@ namespace UIEditor
 
 		ImGui::PopStyleVar();
 		ImGui::PopStyleColor(4);
+
+		if (ImGui::GetScrollY() >= ImGui::GetScrollMaxY() - 1.0f)
+		{
+			ImGui::SetScrollHereY(1.0f);
+		}
 
 		ImGui::EndChild();
 	}

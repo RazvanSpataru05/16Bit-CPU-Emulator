@@ -257,7 +257,57 @@ namespace Utils
 			const float windowX = io.DisplaySize.x;
 			const float windowY = io.DisplaySize.y;
 
-			return ImVec2(windowX * Utils::MENU_WINDOW_WIDTH_PROCENT, windowY * Utils::MENU_WINDOW_HEIGHT_PROCENT);
+			return ImVec2(windowX * Utils::Constants::MENU_WINDOW_WIDTH_PROCENT,
+				windowY * Utils::Constants::MENU_WINDOW_HEIGHT_PROCENT);
+		}
+
+		ImVec2 CalcMemoryViewPos()
+		{
+			const ImVec2 menuSize = CalcMenuWindowSize();
+			return ImVec2(0.0f, menuSize.y);
+		}
+
+		ImVec2 CalcMemoryViewSize()
+		{
+			ImGuiIO& io = ImGui::GetIO();
+			const float windowX = io.DisplaySize.x;
+			const float windowY = io.DisplaySize.y;
+
+			return ImVec2(windowX * Utils::Constants::MEMORY_VIEW_WINDOW_WIDTH_PROCENT,
+				windowY * Utils::Constants::MEMORY_VIEW_WINDOW_HEIGHT_PROCENT);
+		}
+
+		ImVec2 CalcCodePanelPos()
+		{
+			const ImVec2 memorySize = CalcMemoryViewSize();
+			const ImVec2 memoryPos = CalcMemoryViewPos();
+			return ImVec2(0.0f, memoryPos.y + memorySize.y);
+		}
+
+		ImVec2 CalcCodePanelSize()
+		{
+			ImGuiIO& io = ImGui::GetIO();
+			const float windowX = io.DisplaySize.x;
+			const float windowY = io.DisplaySize.y;
+
+			return ImVec2(windowX * Utils::Constants::CODE_PANEL_WINDOW_WIDTH_PROCENT, 
+				windowY * Utils::Constants::CODE_PANEL_WINDOW_HEIGHT_PROCENT);
+		}
+
+		ImVec2 CalcTextEditorSize()
+		{
+			ImGuiIO& io = ImGui::GetIO();
+			const float windowY = io.DisplaySize.y;
+
+			return ImVec2(-1, windowY * Utils::Constants::TEXT_EDITOR_WINDOW_HEIGHT_PROCENT);
+		}
+
+		ImVec2 CalcTabSize()
+		{
+			ImGuiIO& io = ImGui::GetIO();
+			const float windowY = io.DisplaySize.y;
+
+			return ImVec2(-1, windowY * Utils::Constants::TAB_HEIGHT_PROCENT);
 		}
 	}
 }

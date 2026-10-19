@@ -8,7 +8,7 @@
 class uint20_t
 {
 public:
-	constexpr explicit uint20_t(uint32_t v = 0) : m_value{ v & Utils::MASK_20_BIT } {};
+	constexpr explicit uint20_t(uint32_t v = 0) : m_value{ v & Utils::Constants::MASK_20_BIT } {};
 	constexpr uint20_t(uint16_t v) : m_value{ v } {};
 
 	uint20_t(const uint20_t&) = default;
@@ -22,7 +22,7 @@ public:
 	uint20_t& operator++();
 	uint20_t& operator++(int);
 
-	constexpr uint20_t& operator=(uint32_t rhs) { m_value = rhs & Utils::MASK_20_BIT; return *this; };
+	constexpr uint20_t& operator=(uint32_t rhs) { m_value = rhs & Utils::Constants::MASK_20_BIT; return *this; };
 	constexpr bool operator==(uint20_t rhs) const { return m_value == rhs.index(); };
 	uint20_t operator+(uint32_t rhs);
 

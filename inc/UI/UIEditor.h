@@ -36,7 +36,7 @@ class CPU;
 namespace UIEditor
 {
 	void DrawCPUState(const CPU& cpu);
-	void DrawAssemblyPanel(Mode& mode, MemoryUnit& memoryUnit,
+	void DrawCodePanel(Mode& mode, MemoryUnit& memoryUnit,
 							const Dissasembler& dissasembler, CPU& cpu, Assembler& assembler,
 							Terminal& terminal, InterruptController& interruptController,
 							Keyboard& keyboard, bool& executeAuto);

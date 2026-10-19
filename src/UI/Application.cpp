@@ -52,10 +52,10 @@ void Application::Update()
 
 void Application::RenderUI()
 {
-	m_window.clear(sf::Color(65, 65, 65));
+	m_window.clear(sf::Color(0, 0, 0));
 
 	UIEditor::DrawCPUState(m_emulator->GetCPU());
-	UIEditor::DrawAssemblyPanel(m_editorMode, m_emulator->GetCPU().GetMemoryUnit(),
+	UIEditor::DrawCodePanel(m_editorMode, m_emulator->GetCPU().GetMemoryUnit(),
 		*m_dissasembler, m_emulator->GetCPU(), *m_assembler, m_emulator->GetTerminal(), m_emulator->GetInterruptController(),
 		m_emulator->GetKeyboard(), m_appConfig.executeAuto);
 

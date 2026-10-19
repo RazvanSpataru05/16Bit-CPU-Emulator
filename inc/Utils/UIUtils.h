@@ -30,5 +30,14 @@ namespace Utils
 
 		ImVec2 CalcMenuWindowPos();
 		ImVec2 CalcMenuWindowSize();
+
+		ImVec2 CalcMemoryViewPos();
+		ImVec2 CalcMemoryViewSize();
+
+		ImVec2 CalcCodePanelPos();
+		ImVec2 CalcCodePanelSize();
+
+		ImVec2 CalcTextEditorSize();
+		ImVec2 CalcTabSize();
 	}	
 }
