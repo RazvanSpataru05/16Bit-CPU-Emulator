@@ -3,15 +3,9 @@
 Application::Application() :
 	m_emulator{ std::make_unique<Emulator>()},
 	m_dissasembler{ std::make_unique<Dissasembler>() },
-	m_assembler{std::make_unique<Assembler>()},
 	m_editorMode{ UIEditor::Mode::EDIT }
 {
 
-}
-
-Assembler& Application::GetAssembler()
-{
-	return *m_assembler;
 }
 
 void Application::Init()
@@ -55,18 +49,11 @@ void Application::RenderUI()
 	m_window.clear(sf::Color(0, 0, 0));
 
 	UIEditor::DrawCPUState(m_emulator->GetCPU());
-	UIEditor::DrawCodePanel(m_editorMode, m_emulator->GetCPU().GetMemoryUnit(),
-		*m_dissasembler, m_emulator->GetCPU(), *m_assembler, m_emulator->GetTerminal(), m_emulator->GetInterruptController(),
-		m_emulator->GetKeyboard(), m_appConfig.executeAuto);
+	UIEditor::DrawCodePanel(*m_emulator, m_appConfig);
 	UIEditor::DrawDissasemblyPanel(m_emulator->GetCPU().GetMemoryUnit(), m_emulator->GetCPU(), *m_dissasembler);
+	UIEditor::DrawMemoryView(*m_emulator, m_appConfig);
 
-	UIEditor::DrawMemoryView(m_emulator->GetCPU().GetMemoryUnit(),
-		m_emulator->GetCPU(), m_appConfig.followPC);
-
-	UIEditor::DrawMenu(m_emulator->GetCPU().GetMemoryUnit(),
-		m_appConfig.followPC, m_appConfig.executeAuto, m_emulator->GetCPU());
-
-	UIEditor::DrawSpeedSlider(m_appConfig.autoSpeed);
+	UIEditor::DrawMenu(*m_emulator, m_appConfig);
 	UIEditor::DrawHelpMenu();
 
 	ImGui::SFML::Render(m_window);

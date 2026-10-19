@@ -12,6 +12,7 @@
 
 #include "UI/UICommon.h"
 #include "UI/InstructionTableInfo.h"
+#include "UI/AppConfig.h"
 
 #include "Utils/StringUtils.h"
 #include "Utils/Logger.h"
@@ -27,6 +28,8 @@ class Assembler;
 struct AssemblerError;
 struct AssemblerWarning;
 
+class Emulator;
+
 class Terminal;
 class InterruptController;
 
@@ -36,21 +39,14 @@ class CPU;
 namespace UIEditor
 {
 	void DrawCPUState(const CPU& cpu);
-	void DrawCodePanel(Mode& mode, MemoryUnit& memoryUnit,
-							const Dissasembler& dissasembler, CPU& cpu, Assembler& assembler,
-							Terminal& terminal, InterruptController& interruptController,
-							Keyboard& keyboard, bool& executeAuto);
+	void DrawCodePanel(Emulator& emulator, AppConfig& config);
 	void DrawDissasemblyPanel(MemoryUnit& memoryUnit, const CPU& cpu, const Dissasembler& dissasembler);
 
-	void DrawMemoryView(const MemoryUnit& memoryUnit, CPU& cpu, bool& followPC);
-	void DrawMenu(MemoryUnit& memoryUnit, 
-				  bool& followPC, bool& executeAuto, CPU& cpu);
-	void DrawSpeedSlider(float& speed);
+	void DrawMemoryView(Emulator& emulator, AppConfig& config);
+	void DrawMenu(Emulator& emulator, AppConfig& config);
 	void DrawHelpMenu();
-	void DrawOutput(const Assembler& assembler, CPU& cpu, Terminal& terminal, 
-		InterruptController& interruptController, Keyboard& keyboard, bool& executeAuto);
+	void DrawOutput(Emulator& emulator, AppConfig& config);
 
 	void DrawErrorList(std::span<const AssemblerError> errors, std::span<const AssemblerWarning> warnings);
-	void DrawConsole(CPU& cpu, Terminal& terminal, InterruptController& interruptController, Keyboard& keyboard,
-					bool& executeAuto);
+	void DrawConsole(Emulator& emulator, AppConfig& config);
 }

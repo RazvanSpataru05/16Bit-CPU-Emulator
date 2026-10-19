@@ -15,8 +15,6 @@ class Application
 public:
 	explicit Application();
 
-	Assembler& GetAssembler();
-
 	void Init();
 	void ProcessEvents();
 	void Update();
@@ -38,7 +36,6 @@ private:
 private:
 	std::unique_ptr<Emulator> m_emulator;
 	std::unique_ptr<Dissasembler> m_dissasembler;
-	std::unique_ptr<Assembler> m_assembler;
 
 	UIEditor::Mode m_editorMode;
 

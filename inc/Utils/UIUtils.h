@@ -45,5 +45,7 @@ namespace Utils
 
 		ImVec2 CalcTextEditorSize();
 		ImVec2 CalcTabSize();
+
+		float CalcSliderWidth();
 	}	
 }

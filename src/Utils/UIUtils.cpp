@@ -344,5 +344,13 @@ namespace Utils
 
 			return ImVec2(-1, windowY * Utils::Constants::TAB_HEIGHT_PROCENT);
 		}
+
+		float CalcSliderWidth()
+		{
+			ImGuiIO& io = ImGui::GetIO();
+			const float windowX = io.DisplaySize.x;
+
+			return windowX * Utils::Constants::SLIDER_WIDTH_PROCENT;
+		}
 	}
 }

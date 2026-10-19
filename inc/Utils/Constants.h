@@ -27,5 +27,7 @@ namespace Utils
 
 		constexpr float DISSASEMBLY_WINDOW_WIDTH_PROCENT{ 0.2f };
 		constexpr float DISSASEMBLY_WINDOW_HEIGHT_PROCENT{ 0.29f };
+
+		constexpr float SLIDER_WIDTH_PROCENT{ 0.058f };
 	}
 }
