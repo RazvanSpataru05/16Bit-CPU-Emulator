@@ -36,7 +36,8 @@ public:
 	void Clear() noexcept;
 	void RestoreSnapshot();
 
-	void LoadValuesIntoMemory(const Program& program);
+	void LoadProgramIntoMemory(const Program& program);
+	void LoadBytesIntoMemory(const std::vector<uint8_t> bytes);
 	void LoadProgramFromFIle(const std::filesystem::path& filename);
 
 	const std::optional<uint8_t>& operator[](uint20_t address) const;
@@ -52,6 +53,7 @@ private:
 
 	bool m_hasData;
 	std::vector<AddressValue> m_snapshotData;
+	std::vector<uint8_t> m_bytes;
 	std::unordered_map<uint20_t, MemoryCellType> m_snapshotCellType;
 	uint16_t m_startAddress{};
 };

@@ -26,7 +26,6 @@ public:
 	uint8_t		Fetch8();
 	uint16_t	Fetch16();
 
-	void Fetch();
 	void Step();
 	void Reset();
 
@@ -36,13 +35,14 @@ public:
 
 	//Registry getters
 	uint16_t		GetIP()			const noexcept;
-	uint16_t		GetIR()			const noexcept;
+	uint8_t			GetIR()			const noexcept;
 
 	bool			GetHaltFlag()	const noexcept;
 
-	// PC setter
-	void SetProgramCounter(uint16_t address);
+	void SetInstructionPointer(uint16_t address);
 	void SetInstructionRegister();
+
+	void UpdateIR();
 
 	bool IsReadingInstruction() const noexcept;
 	bool IsWritingInstruction() const noexcept;
@@ -70,8 +70,8 @@ private:
 	RegisterFile m_registerFile;
 	StatusRegister m_statusRegister;
 
-	uint16_t m_IP{};		// Instruction Pointer Registry (offset, 16 bits) 
-	uint16_t m_IR{};		// Instruction Registry
+	uint16_t	m_IP{};		// Instruction Pointer Registry (offset, 16 bits) 
+	uint8_t		m_IR{};		// Instruction Registry
 
 	bool m_haltFlag{ false };
 };

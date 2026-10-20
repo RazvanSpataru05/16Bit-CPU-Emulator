@@ -130,20 +130,23 @@ namespace UIEditor
 		if (ImGui::Button("Assemble & Load"))
 		{
 			Logger::ClearLogFile();
-			if (emulator.GetToolchain().GetAssembler().Assemble(editorBuffer))
-			{
-				const auto& statements = emulator.GetToolchain().GetAssembler().GetStatements();
-				const Program program = DataLoader::ParseStatements(statements, emulator.GetToolchain().GetAssembler().GetStartAddress());
+			//if (emulator.GetToolchain().GetAssembler().Assemble(editorBuffer))
+			//{
+			//	const auto& statements = emulator.GetToolchain().GetAssembler().GetStatements();
+			//	const Program program = DataLoader::ParseStatements(statements, emulator.GetToolchain().GetAssembler().GetStartAddress());
 
-				emulator.GetCPU().GetMemoryUnit().LoadValuesIntoMemory(program);
-				emulator.GetCPU().Reset();
+			//	emulator.GetCPU().GetMemoryUnit().LoadValuesIntoMemory(program);
+			//	emulator.GetCPU().Reset();
 
-				tab = SelectedTab::CONSOLE;
-			}
-			else
-			{
-				tab = SelectedTab::ERROR_LIST;
-			}
+			//	tab = SelectedTab::CONSOLE;
+			//}
+			//else
+			//{
+			//	tab = SelectedTab::ERROR_LIST;
+			//}
+			std::vector<uint8_t> bytes = DataLoader::ParseHexValues(editorBuffer);
+			emulator.GetCPU().GetMemoryUnit().LoadBytesIntoMemory(bytes);
+			emulator.GetCPU().SetInstructionRegister();
 		}
 		DrawOutput(emulator, config);
 		ImGui::End();

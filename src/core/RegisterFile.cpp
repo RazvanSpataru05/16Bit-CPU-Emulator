@@ -28,19 +28,19 @@ void RegisterFile::Reset()
 	m_generalPurproseReg[SP_SELECTOR] = 0xFFFF;
 }
 
-uint8_t RegisterFile::GetHi(size_t index) const
+uint8_t RegisterFile::GetHi(size_t selector) const
 {
-	return (m_generalPurproseReg[index] >> 8);
+	return (m_generalPurproseReg[selector] >> 8);
 }
 
-uint8_t RegisterFile::GetLo(size_t index) const
+uint8_t RegisterFile::GetLo(size_t selector) const
 {
-	return (m_generalPurproseReg[index] & 0xFF);
+	return (m_generalPurproseReg[selector] & 0xFF);
 }
 
-uint16_t RegisterFile::Get16(size_t index) const
+uint16_t RegisterFile::Get16(size_t selector) const
 {
-	return m_generalPurproseReg[index];
+	return m_generalPurproseReg[selector];
 }
 
 void RegisterFile::SetHi(size_t index, uint8_t value)
@@ -57,9 +57,9 @@ void RegisterFile::SetLo(size_t index, uint8_t value)
 	m_generalPurproseReg[index] = newValue;
 }
 
-void RegisterFile::Set16(size_t index, uint16_t value)
+void RegisterFile::Set16(size_t selector, uint16_t value)
 {
-	m_generalPurproseReg[index] = value;
+	m_generalPurproseReg[selector] = value;
 }
 
 uint16_t RegisterFile::AX() const noexcept

@@ -55,18 +55,20 @@ void MemoryUnit::Clear() noexcept
 void MemoryUnit::RestoreSnapshot()
 {
 	Clear();
-	for (const auto& addrVal : m_snapshotData)
-	{
-		m_memory[addrVal.address.index()] = addrVal.value;
-		if (addrVal.value != 0x00)
-		{
-			m_hasData = true;
-		}
-	}
-	m_memoryCellType = m_snapshotCellType;
+	std::copy(m_bytes.begin(), m_bytes.end(), m_memory.begin());
+
+	//for (const auto& addrVal : m_snapshotData)
+	//{
+	//	m_memory[addrVal.address.index()] = addrVal.value;
+	//	if (addrVal.value != 0x00)
+	//	{
+	//		m_hasData = true;
+	//	}
+	//}
+	//m_memoryCellType = m_snapshotCellType;
 }
 
-void MemoryUnit::LoadValuesIntoMemory(const Program& program)
+void MemoryUnit::LoadProgramIntoMemory(const Program& program)
 {
 	if (program.startAddress + program.addrValues.size() > m_memory.size() || program.addrValues.empty()) return;
 
@@ -81,6 +83,13 @@ void MemoryUnit::LoadValuesIntoMemory(const Program& program)
 	m_memoryCellType = program.memoryCellType;
 	m_startAddress = program.startAddress;
 	m_hasData = true;
+}
+
+void MemoryUnit::LoadBytesIntoMemory(const std::vector<uint8_t> bytes)
+{
+	std::copy(bytes.begin(), bytes.end(), m_memory.begin());
+	m_bytes.insert(m_bytes.begin(), bytes.begin(), bytes.end());
+
 }
 
 void MemoryUnit::LoadProgramFromFIle(const std::filesystem::path& filename)

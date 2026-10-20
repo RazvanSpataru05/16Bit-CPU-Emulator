@@ -1,7 +1,7 @@
 #include "IO/DataLoader.h"
 #include "Assembler/Assembler.h"
 
-std::vector<uint8_t> DataLoader::ParseHexValues(const std::filesystem::path& path, bool& hasData)
+std::vector<uint8_t> DataLoader::ParseHexValuesFromFile(const std::filesystem::path& path, bool& hasData)
 {
 	std::ifstream file(path);
 	if (!file.is_open())
@@ -23,6 +23,25 @@ std::vector<uint8_t> DataLoader::ParseHexValues(const std::filesystem::path& pat
 
 	file.close();
 	return values;
+}
+
+std::vector<uint8_t> DataLoader::ParseHexValues(const std::string& code)
+{
+	std::vector<uint8_t> bytes;
+	std::stringstream ss(code);
+	unsigned temp{};
+
+	while (ss >> std::hex >> temp)
+	{
+		bytes.push_back(static_cast<uint8_t>(temp));
+	}
+
+	for (auto byte : bytes)
+	{
+		std::cout << std::hex << static_cast<int>(byte) << " ";
+	}
+
+	return bytes;
 }
 
 Program DataLoader::ParseStatements(std::span<const Statement> statements, uint16_t startAddress)

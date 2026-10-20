@@ -25,7 +25,7 @@ public:
 	RegisterFile();
 
 	uint16_t Read(uint16_t selector) const;
-	void	Write(uint16_t selector, uint16_t value);
+	void	 Write(uint16_t selector, uint16_t value);
 
 	void UpdateA(uint16_t value);
 	void Reset();

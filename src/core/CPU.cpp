@@ -1,6 +1,6 @@
 #include "Core/CPU.h"
 
-CPU::CPU(InterruptController& interruptController) : 
+CPU::CPU(InterruptController& interruptController) :
 	m_interruptController{ interruptController }
 {
 	Reset();
@@ -18,7 +18,7 @@ uint8_t CPU::Fetch8()
 	return m_memoryUnit[PhysAddr()].value();
 }
 
-uint16_t CPU::Fetch16() 
+uint16_t CPU::Fetch16()
 {
 	assert(m_memoryUnit[PhysAddr()].has_value());
 	uint8_t lo = m_memoryUnit[PhysAddr()].value();
@@ -31,20 +31,69 @@ uint16_t CPU::Fetch16()
 	return (static_cast<uint16_t>(hi) << 8) | static_cast<uint16_t>(lo);
 }
 
-void CPU::Fetch()
-{
-	uint20_t address = PhysAddr();
-	if (!m_memoryUnit[address.index()].has_value())
-	{
-		m_haltFlag = true;
-		return;
-	}
-	m_IR = m_memoryUnit[++address].value();
-}
-
 void CPU::Step()
 {
-	const uint8_t opcode = Fetch8();
+	if (m_haltFlag) return;
+
+	switch (m_IR)
+	{
+	case 0x90: // NOP, 1by
+	{
+		break;
+	}
+	case 0xF4: // HLT 1by
+	{
+		m_haltFlag = true;
+		break;
+	}
+
+	// MOV reg16, imm16 3by
+	case 0xB8:
+	case 0xB9:
+	case 0xBA:
+	case 0xBB:
+	case 0xBC:
+	case 0xBD:
+	case 0xBE:
+	case 0xBF:
+	{
+		const uint8_t selector = m_IR & 0b111;
+		const uint16_t imm16 = Fetch16();
+		m_registerFile.Set16(selector, imm16);
+		break;
+	}
+
+	// MOV reg8_lo, imm8
+	case 0xB0:
+	case 0xB1:
+	case 0xB2:
+	case 0xB3:
+	{
+		const uint8_t selector = m_IR & 0b111;
+		const uint8_t imm8 = Fetch8();
+		m_registerFile.SetLo(selector, imm8);
+		break;
+	}
+
+	// MOV reg8_hi, imm8
+	case 0xB4:
+	case 0xB5:
+	case 0xB6:
+	case 0xB7:
+	{
+		const uint8_t selector = m_IR & 0b111;
+		const uint8_t imm8 = Fetch8();
+		m_registerFile.SetHi(selector, imm8);
+		break;
+	}
+	default:
+	{
+		std::cout << "Hi from default\n";
+		std::cout << std::hex << static_cast<int>(m_IR) << '\n';
+		break;
+	}
+	}
+	UpdateIR();
 	//if (m_haltFlag || m_memoryUnit.IsMemoryEmpty()) return;
 
 	//switch (m_IR)
@@ -708,7 +757,7 @@ uint16_t CPU::GetIP() const noexcept
 	return m_IP;
 }
 
-uint16_t CPU::GetIR() const noexcept
+uint8_t CPU::GetIR() const noexcept
 {
 	return m_IR;
 }
@@ -718,7 +767,7 @@ bool CPU::GetHaltFlag() const noexcept
 	return m_haltFlag;
 }
 
-void CPU::SetProgramCounter(uint16_t address)
+void CPU::SetInstructionPointer(uint16_t address)
 {
 	m_IP = address;
 }
@@ -730,7 +779,15 @@ void CPU::SetInstructionRegister()
 		m_haltFlag = true;
 		return;
 	}
-	m_IR = m_memoryUnit[m_IP].value();
+	m_IR = m_memoryUnit[PhysAddr()].value();
+}
+
+void CPU::UpdateIR()
+{
+	if (m_haltFlag) return;
+
+	m_IR = m_memoryUnit[PhysAddr()].value();
+	++m_IP;
 }
 
 bool CPU::IsReadingInstruction() const noexcept
