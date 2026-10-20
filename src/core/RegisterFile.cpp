@@ -1,5 +1,10 @@
 #include "Core/RegisterFile.h"
 
+RegisterFile::RegisterFile()
+{
+	Reset();
+}
+
 uint16_t RegisterFile::Read(uint16_t selector) const
 {
 	return m_generalPurproseReg[selector];
@@ -21,18 +26,40 @@ void RegisterFile::Reset()
 	std::fill(m_segmentReg.begin(), m_segmentReg.end(), 0x00);
 
 	m_generalPurproseReg[SP_SELECTOR] = 0xFFFF;
-
-	m_segmentReg[CS_SELECTOR] = 0xFFFF;
 }
 
-uint16_t RegisterFile::GetHi(size_t index) const
+uint8_t RegisterFile::GetHi(size_t index) const
 {
 	return (m_generalPurproseReg[index] >> 8);
 }
 
-uint16_t RegisterFile::GetLo(size_t index) const
+uint8_t RegisterFile::GetLo(size_t index) const
 {
 	return (m_generalPurproseReg[index] & 0xFF);
+}
+
+uint16_t RegisterFile::Get16(size_t index) const
+{
+	return m_generalPurproseReg[index];
+}
+
+void RegisterFile::SetHi(size_t index, uint8_t value)
+{
+	uint8_t lo = GetLo(index);
+	uint16_t newValue = static_cast<uint16_t>(value << 8) | static_cast<uint16_t>(lo);
+	m_generalPurproseReg[index] = newValue;
+}
+
+void RegisterFile::SetLo(size_t index, uint8_t value)
+{
+	uint8_t hi = GetHi(index);
+	uint16_t newValue = static_cast<uint16_t>(hi << 8) | static_cast<uint16_t>(value);
+	m_generalPurproseReg[index] = newValue;
+}
+
+void RegisterFile::Set16(size_t index, uint16_t value)
+{
+	m_generalPurproseReg[index] = value;
 }
 
 uint16_t RegisterFile::AX() const noexcept

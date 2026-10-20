@@ -44,6 +44,7 @@ void CPU::Fetch()
 
 void CPU::Step()
 {
+	const uint8_t opcode = Fetch8();
 	//if (m_haltFlag || m_memoryUnit.IsMemoryEmpty()) return;
 
 	//switch (m_IR)
@@ -672,7 +673,6 @@ void CPU::Reset()
 	m_haltFlag = false;
 
 	m_IP = m_memoryUnit.GetStartAddress();
-	m_SP = 0x1000;
 
 	if (m_memoryUnit[m_IP].has_value())
 	{
@@ -695,8 +695,8 @@ void CPU::HandleInterrupt()
 		const uint16_t loPC = m_IP & 0xFF;
 
 		// save PC address on the stack
-		m_memoryUnit[m_SP--] = hiPC; 
-		m_memoryUnit[m_SP--] = loPC;
+		m_memoryUnit[m_registerFile.SP()--] = hiPC;
+		m_memoryUnit[m_registerFile.SP()--] = loPC;
 
 		const uint16_t vectorAddress = line * 2;
 		m_IP = ComputeAddress(vectorAddress);
@@ -706,11 +706,6 @@ void CPU::HandleInterrupt()
 uint16_t CPU::GetIP() const noexcept
 {
 	return m_IP;
-}
-
-uint16_t CPU::GetSP() const noexcept
-{
-	return m_SP;
 }
 
 uint16_t CPU::GetIR() const noexcept

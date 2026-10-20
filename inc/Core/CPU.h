@@ -5,6 +5,7 @@
 #include "Core/RegisterFile.h"
 #include "Core/StatusRegister.h"
 #include "Core/MemoryUnit.h"
+#include "Core/ModRM.h"
 
 #include <string>
 #include <assert.h>
@@ -35,7 +36,6 @@ public:
 
 	//Registry getters
 	uint16_t		GetIP()			const noexcept;
-	uint16_t		GetSP()			const noexcept;
 	uint16_t		GetIR()			const noexcept;
 
 	bool			GetHaltFlag()	const noexcept;
@@ -70,7 +70,6 @@ private:
 	RegisterFile m_registerFile;
 	StatusRegister m_statusRegister;
 
-	uint16_t m_SP{};		// Stack Pointer Registry
 	uint16_t m_IP{};		// Instruction Pointer Registry (offset, 16 bits) 
 	uint16_t m_IR{};		// Instruction Registry
 

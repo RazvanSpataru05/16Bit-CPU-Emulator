@@ -69,6 +69,7 @@ set(HEADERS
     inc/Core/Emulator.h
     inc/Core/MemoryUnit.h
     inc/Core/MemoryCellType.h
+    inc/Core/ModRM.h
     inc/Core/Keyboard.h
     inc/Core/InterruptController.h
     inc/Core/RegisterFile.h

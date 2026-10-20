@@ -74,7 +74,7 @@ namespace UIEditor
 
 		ImGui::Begin("CPU State", nullptr, flags);
 		ImGui::Text(std::format("Instruction Pointer: {:#06X}", cpu.GetIP()).c_str());
-		ImGui::Text(std::format("Stack Pointer: {:#06X}", cpu.GetSP()).c_str());
+		ImGui::Text(std::format("Stack Pointer: {:#06X}", cpu.GetRegisterFile().SP()).c_str());
 		ImGui::Text(std::format("Instruction Register: {:#04X}", cpu.GetIR()).c_str());
 		ImGui::Separator();
 

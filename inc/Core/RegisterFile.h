@@ -22,7 +22,7 @@ public:
 	const size_t DS_SELECTOR = 3;
 
 public:
-	RegisterFile() = default;
+	RegisterFile();
 
 	uint16_t Read(uint16_t selector) const;
 	void	Write(uint16_t selector, uint16_t value);
@@ -30,8 +30,13 @@ public:
 	void UpdateA(uint16_t value);
 	void Reset();
 	
-	uint16_t GetHi(size_t index) const;
-	uint16_t GetLo(size_t index) const;
+	uint8_t GetHi(size_t index) const;
+	uint8_t GetLo(size_t index) const;
+	uint16_t Get16(size_t index) const;
+
+	void SetHi(size_t index, uint8_t value);
+	void SetLo(size_t index, uint8_t value);
+	void Set16(size_t index, uint16_t value);
 
 	// const getters
 	uint16_t AX() const noexcept;
