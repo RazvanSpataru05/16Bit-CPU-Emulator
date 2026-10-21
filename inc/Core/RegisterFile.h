@@ -1,25 +1,30 @@
 #pragma once
 
+#include "Core/Reg8.h"
+#include "Core/Reg16.h"
+#include "Core/SegmentReg.h"
+
 #include <array>
+#include <iostream>
 #include <cstdint>
 
 class RegisterFile
 {
 public:
-	const size_t AX_SELECTOR = 0;
-	const size_t CX_SELECTOR = 1;
-	const size_t DX_SELECTOR = 2;
-	const size_t BX_SELECTOR = 3;
+	const size_t AX_SELECTOR = 0x00;
+	const size_t CX_SELECTOR = 0x01;
+	const size_t DX_SELECTOR = 0x02;
+	const size_t BX_SELECTOR = 0x03;
 
-	const size_t SP_SELECTOR = 4;
-	const size_t BP_SELECTOR = 5;
-	const size_t SI_SELECTOR = 6;
-	const size_t DI_SELECTOR = 7;
+	const size_t SP_SELECTOR = 0x04;
+	const size_t BP_SELECTOR = 0x05;
+	const size_t SI_SELECTOR = 0x06;
+	const size_t DI_SELECTOR = 0x07;
 
-	const size_t ES_SELECTOR = 0;
-	const size_t CS_SELECTOR = 1;
-	const size_t SS_SELECTOR = 2;
-	const size_t DS_SELECTOR = 3;
+	const size_t ES_SELECTOR = 0x00;
+	const size_t CS_SELECTOR = 0x01;
+	const size_t SS_SELECTOR = 0x02;
+	const size_t DS_SELECTOR = 0x03;
 
 public:
 	RegisterFile();
@@ -29,13 +34,11 @@ public:
 
 	void UpdateA(uint16_t value);
 	void Reset();
-	
-	uint8_t GetHi(size_t index) const;
-	uint8_t GetLo(size_t index) const;
-	uint16_t Get16(size_t index) const;
 
-	void SetHi(size_t index, uint8_t value);
-	void SetLo(size_t index, uint8_t value);
+	[[nodiscard]]	uint8_t Get8(Reg8 reg)			const noexcept;
+	[[nodiscard]]	uint16_t Get16(Reg16 reg)		const noexcept;
+	
+	void Set8(Reg8 reg, uint8_t value);
 	void Set16(size_t index, uint16_t value);
 
 	// const getters GP registers (lo part)

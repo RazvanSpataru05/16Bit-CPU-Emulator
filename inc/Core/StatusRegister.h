@@ -11,20 +11,26 @@ public:
 
 	void UpdateFrom(const Result& result);
 
-	bool Zero()			const noexcept;
-	bool Negative()		const noexcept;
 	bool Carry()		const noexcept;
 	bool Overflow()		const noexcept;
+	bool Zero()			const noexcept;
+	bool Sign()			const noexcept;
+	bool Parity()		const noexcept;
+	bool Auxiliary()	const noexcept;
 
-	bool& Zero();
-	bool& Negative();
 	bool& Carry();
 	bool& Overflow();
+	bool& Zero();
+	bool& Sign();
+	bool& Parity();
+	bool& Auxiliary();
 
 private:
 
-	bool m_zeroFlag{};
-	bool m_negativeFlag{};
 	bool m_carryFlag{};
 	bool m_overflowFlag{};
+	bool m_zeroFlag{};
+	bool m_signFlag{};
+	bool m_parityFlag{};
+	bool m_auxiliaryCarryFlag{};
 };

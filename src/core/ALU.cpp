@@ -2,22 +2,38 @@
 
 namespace ALU
 {
-
-	Result Add(uint16_t a, uint16_t operand, bool carry)
+	Result Add8(uint8_t reg, uint8_t operand)
 	{
-		uint16_t sum = a + operand + (carry ? 1 : 0);
+		uint16_t sum = reg + operand;
+		uint8_t result = static_cast<uint8_t>(sum);
+		
+		Result r;
+		r.value = result;
+		r.carry = sum > 0xFF;
+		r.zero = result == 0;
+		r.sign = (result & 0x80) != 0;
+		r.overflow = ((reg ^ result) & (operand ^ result) & 0x80) != 0;
+		r.auxiliary = ((reg ^ operand ^ result) & 0x10) != 0;
+		r.parity = (std::popcount(result) % 2) == 0;
+
+		return r;
+	}
+
+	Result Add16(uint16_t a, uint16_t operand, bool carry)
+	{
+		uint32_t sum = a + operand + (carry ? 1 : 0);
 		uint16_t result = static_cast<uint16_t>(sum);
 
 		Result r;
 		r.value = result;
 		r.carry = sum > 0xFF;
 		r.zero = (result == 0);
-		r.negative = (result & 0x80) != 0;
+		r.sign = (result & 0x80) != 0;
 		r.overflow = (~(a ^ operand) & (a ^ result) & 0x80) != 0;
 
 		return r;
 	}
-	Result Sub(uint16_t a, uint16_t operand, bool borrow)
+	Result Sub16(uint16_t a, uint16_t operand, bool borrow)
 	{
 		uint16_t diff = a - operand - (borrow ? 1 : 0);
 		uint16_t result = static_cast<uint16_t>(diff);
@@ -26,7 +42,7 @@ namespace ALU
 		r.value = result;
 		r.carry = diff > 0xFF;
 		r.zero = (result == 0);
-		r.negative = (result & 0x80) != 0;
+		r.sign = (result & 0x80) != 0;
 		r.overflow = ((a ^ operand) & (a ^ result) & 0x80) != 0;
 
 		return r;
@@ -39,7 +55,7 @@ namespace ALU
 		Result r;
 		r.value = result;
 		r.zero = (result == 0);
-		r.negative = (result & 0x80) != 0;
+		r.sign = (result & 0x80) != 0;
 		r.overflow = (~(a ^ 1) & (a ^ result) & 0x80) != 0;
 
 		return r;
@@ -52,7 +68,7 @@ namespace ALU
 		Result r;
 		r.value = result;
 		r.zero = (result == 0);
-		r.negative = (result & 0x80) != 0;
+		r.sign = (result & 0x80) != 0;
 		r.overflow = ((a ^ 1) & (a ^ result) & 0x80) != 0;
 
 		return r;
@@ -67,7 +83,7 @@ namespace ALU
 		r.value = result;
 		r.carry = prod > 0xFF;
 		r.zero = (result == 0);
-		r.negative = (result & 0x80) != 0;
+		r.sign = (result & 0x80) != 0;
 		r.overflow = false; // no explicit definiton for overflow flag without hardware native support
 
 		return r;
@@ -149,7 +165,7 @@ namespace ALU
 		r.value = result;
 		r.carry = operand > a;
 		r.zero = (result == 0);
-		r.negative = (result & 0x80) != 0;
+		r.sign = (result & 0x80) != 0;
 		r.overflow = ((a ^ operand) & (a ^ result) & 0x80) != 0;
 
 		return r;

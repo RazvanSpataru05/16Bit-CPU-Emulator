@@ -28,33 +28,39 @@ void RegisterFile::Reset()
 	m_generalPurproseReg[SP_SELECTOR] = 0xFFFF;
 }
 
-uint8_t RegisterFile::GetHi(size_t selector) const
+uint8_t RegisterFile::Get8(Reg8 reg) const noexcept
 {
-	return (m_generalPurproseReg[selector] >> 8);
+	const size_t idx = static_cast<size_t>(reg);
+	if (idx < 4) // Get lo GP reg
+	{
+		return static_cast<uint8_t>(m_generalPurproseReg[idx] & 0x00FF);
+	}
+	else // Get hi GP reg
+	{
+		return static_cast<uint8_t>(m_generalPurproseReg[idx - 4] & 0xFF00);
+	}
 }
 
-uint8_t RegisterFile::GetLo(size_t selector) const
+uint16_t RegisterFile::Get16(Reg16 reg) const noexcept
 {
-	return (m_generalPurproseReg[selector] & 0xFF);
+	return m_generalPurproseReg[static_cast<size_t>(reg)];
 }
 
-uint16_t RegisterFile::Get16(size_t selector) const
+void RegisterFile::Set8(Reg8 reg, uint8_t value)
 {
-	return m_generalPurproseReg[selector];
-}
-
-void RegisterFile::SetHi(size_t index, uint8_t value)
-{
-	uint8_t lo = GetLo(index);
-	uint16_t newValue = static_cast<uint16_t>(value << 8) | static_cast<uint16_t>(lo);
-	m_generalPurproseReg[index] = newValue;
-}
-
-void RegisterFile::SetLo(size_t index, uint8_t value)
-{
-	uint8_t hi = GetHi(index);
-	uint16_t newValue = static_cast<uint16_t>(hi << 8) | static_cast<uint16_t>(value);
-	m_generalPurproseReg[index] = newValue;
+	size_t idx = static_cast<size_t>(reg);
+	if (idx < 4) // lo part of GP reg (AL, CL, DL, BL)
+	{
+		uint16_t newValue = (m_generalPurproseReg[idx] & 0xFF00) | value;
+		std::cout << "New value: " << newValue << '\n';
+		m_generalPurproseReg[idx] = newValue;
+	}
+	else // hi part of GP reg (AH, CH, DH, BH)
+	{
+		uint16_t newValue = value | (m_generalPurproseReg[idx-4] & 0x00FF);
+		std::cout << "New value: " << newValue << '\n';
+		m_generalPurproseReg[idx - 4] = newValue;
+	}
 }
 
 void RegisterFile::Set16(size_t selector, uint16_t value)

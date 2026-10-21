@@ -5,10 +5,13 @@
 struct Result
 {
 	uint16_t value{};
-	bool zero{};
+
 	bool carry{};
-	bool negative{};
 	bool overflow{};
+	bool zero{};
+	bool sign{};
+	bool parity{};
+	bool auxiliary{};
 
 	Result() = default;
 };

@@ -38,11 +38,13 @@ void CPU::Step()
 
 	switch (m_IR)
 	{
-	case 0x04: // ADD (AL Ib)
+	case 0x04: // ADD (AL Ib), 2by
 	{
 		++m_IP;
 		uint8_t value = m_memoryUnit[PhysAddr()].value();
-		//Result result = ALU::Add()
+		Result result = ALU::Add8(m_registerFile.AL(), value);
+
+		m_statusRegister.UpdateFrom(result);
 		break;
 	}
 
@@ -79,9 +81,9 @@ void CPU::Step()
 	case 0xB2:
 	case 0xB3:
 	{
-		const uint8_t selector = m_IR & 0b111;
+		const Reg8 reg = static_cast<Reg8>(m_IR & 0b111);
 		const uint8_t imm8 = Fetch8();
-		m_registerFile.SetLo(selector, imm8);
+		m_registerFile.Set8(reg, imm8);
 		break;
 	}
 
@@ -91,15 +93,13 @@ void CPU::Step()
 	case 0xB6:
 	case 0xB7:
 	{
-		const uint8_t selector = m_IR & 0b111;
+		const Reg8 reg = static_cast<Reg8>(m_IR & 0b111);
 		const uint8_t imm8 = Fetch8();
-		m_registerFile.SetHi(selector, imm8);
+		m_registerFile.Set8(reg, imm8);
 		break;
 	}
 	default:
 	{
-		std::cout << "Hi from default\n";
-		std::cout << std::hex << static_cast<int>(m_IR) << '\n';
 		break;
 	}
 	}

@@ -74,6 +74,9 @@ set(HEADERS
     inc/Core/InterruptController.h
     inc/Core/RegisterFile.h
     inc/Core/Result.h
+    inc/Core/Reg8.h
+    inc/Core/Reg16.h
+    inc/Core/SegmentReg.h
     inc/Core/StatusRegister.h
     inc/Core/Terminal.h
     inc/Core/TerminalLine.h

@@ -104,7 +104,7 @@ namespace UIEditor
 		ImGui::Text(std::format("Interrupt Flag: {}", cpu.GetInterruptController().GetInterruptFlag() ? "True" : "False").c_str());
 		ImGui::Text(std::format("Zero Flag: {}", cpu.GetStatusRegister().Zero() ? "True" : "False").c_str());
 		ImGui::Text(std::format("Carry Flag: {}", cpu.GetStatusRegister().Carry() ? "True" : "False").c_str());
-		ImGui::Text(std::format("Negative Flag: {}", cpu.GetStatusRegister().Negative() ? "True" : "False").c_str());
+		ImGui::Text(std::format("Negative Flag: {}", cpu.GetStatusRegister().Sign() ? "True" : "False").c_str());
 		ImGui::Text(std::format("Overflow Flag: {}", cpu.GetStatusRegister().Overflow() ? "True" : "False").c_str());
 		ImGui::Text(std::format("Halt Flag: {}", cpu.GetHaltFlag() ? "True" : "False").c_str());
 		ImGui::Separator();
