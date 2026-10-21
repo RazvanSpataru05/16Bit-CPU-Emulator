@@ -38,6 +38,18 @@ public:
 	void SetLo(size_t index, uint8_t value);
 	void Set16(size_t index, uint16_t value);
 
+	// const getters GP registers (lo part)
+	uint8_t AL() const noexcept;
+	uint8_t BL() const noexcept;
+	uint8_t CL() const noexcept;
+	uint8_t DL() const noexcept;
+
+	// const getters GP registers (hi part)
+	uint8_t AH() const noexcept;
+	uint8_t BH() const noexcept;
+	uint8_t CH() const noexcept;
+	uint8_t DH() const noexcept;
+
 	// const getters
 	uint16_t AX() const noexcept;
 	uint16_t BX() const noexcept;

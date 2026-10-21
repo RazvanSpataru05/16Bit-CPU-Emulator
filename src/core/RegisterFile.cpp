@@ -62,6 +62,46 @@ void RegisterFile::Set16(size_t selector, uint16_t value)
 	m_generalPurproseReg[selector] = value;
 }
 
+uint8_t RegisterFile::AL() const noexcept
+{
+	return static_cast<uint8_t>(m_generalPurproseReg[AX_SELECTOR] & 0xFF);
+}
+
+uint8_t RegisterFile::BL() const noexcept
+{
+	return static_cast<uint8_t>(m_generalPurproseReg[BX_SELECTOR] & 0xFF);
+}
+
+uint8_t RegisterFile::CL() const noexcept
+{
+	return static_cast<uint8_t>(m_generalPurproseReg[CX_SELECTOR] & 0xFF);
+}
+
+uint8_t RegisterFile::DL() const noexcept
+{
+	return static_cast<uint8_t>(m_generalPurproseReg[DX_SELECTOR] & 0xFF);
+}
+
+uint8_t RegisterFile::AH() const noexcept
+{
+	return static_cast<uint8_t>(m_generalPurproseReg[AX_SELECTOR] >> 8);
+}
+
+uint8_t RegisterFile::BH() const noexcept
+{
+	return static_cast<uint8_t>(m_generalPurproseReg[BX_SELECTOR] >> 8);
+}
+
+uint8_t RegisterFile::CH() const noexcept
+{
+	return static_cast<uint8_t>(m_generalPurproseReg[CX_SELECTOR] >> 8);
+}
+
+uint8_t RegisterFile::DH() const noexcept
+{
+	return static_cast<uint8_t>(m_generalPurproseReg[DX_SELECTOR] >> 8);
+}
+
 uint16_t RegisterFile::AX() const noexcept
 {
 	return m_generalPurproseReg[AX_SELECTOR];

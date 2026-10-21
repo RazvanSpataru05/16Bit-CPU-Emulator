@@ -20,6 +20,7 @@ uint8_t CPU::Fetch8()
 
 uint16_t CPU::Fetch16()
 {
+	++m_IP;
 	assert(m_memoryUnit[PhysAddr()].has_value());
 	uint8_t lo = m_memoryUnit[PhysAddr()].value();
 	++m_IP;
@@ -37,6 +38,14 @@ void CPU::Step()
 
 	switch (m_IR)
 	{
+	case 0x04: // ADD (AL Ib)
+	{
+		++m_IP;
+		uint8_t value = m_memoryUnit[PhysAddr()].value();
+		//Result result = ALU::Add()
+		break;
+	}
+
 	case 0x90: // NOP, 1by
 	{
 		break;
@@ -59,6 +68,7 @@ void CPU::Step()
 	{
 		const uint8_t selector = m_IR & 0b111;
 		const uint16_t imm16 = Fetch16();
+		std::cout << "value: " << imm16;
 		m_registerFile.Set16(selector, imm16);
 		break;
 	}
