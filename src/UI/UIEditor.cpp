@@ -7,6 +7,32 @@ namespace UIEditor
 {
 	namespace
 	{
+		template<typename... Args>
+		void TextF(std::format_string<Args...> formatted, Args&&... args)
+		{
+			const std::string s = std::format(formatted, std::forward<Args>(args)...);
+			ImGui::TextUnformatted(s.c_str());
+		}
+
+		struct GPView
+		{
+			const char* name = nullptr;
+			Reg16 full{};
+			Reg8 hi{};
+			Reg8 lo{};
+		};
+
+		constexpr GPView GP[] = {
+			{"AX", Reg16::AX, Reg8::AH, Reg8::AL},
+			{"BX", Reg16::BX, Reg8::BH, Reg8::BL},
+			{"CX", Reg16::CX, Reg8::CH, Reg8::CL},
+			{"DX", Reg16::DX, Reg8::DH, Reg8::DL}
+		};
+
+		constexpr const char* segNames[] = { "ES", "CS", "SS", "DS" };
+		constexpr float kSecondColumnX = 250.0f;
+
+
 		SelectedTab tab{ SelectedTab::ERROR_LIST };
 		PageType currentHelperPage{ PageType::GLOSSARY_PAGE };
 
@@ -68,33 +94,41 @@ namespace UIEditor
 	{
 		ImGui::SetNextWindowPos(Utils::UI::CalcCPUStatePanelPos(), ImGuiCond_Always);
 		ImGui::SetNextWindowSize(Utils::UI::CalcCPUStatePanelSize(), ImGuiCond_Always);
-		const auto flags = ImGuiWindowFlags_NoResize |
-						ImGuiWindowFlags_NoMove |
-						ImGuiWindowFlags_NoCollapse;
+		const auto windowFlags = ImGuiWindowFlags_NoResize |
+								ImGuiWindowFlags_NoMove |
+								ImGuiWindowFlags_NoCollapse;
 
-		ImGui::Begin("CPU State", nullptr, flags);
-		ImGui::Text(std::format("Instruction Pointer: {:#06X}", cpu.GetIP()).c_str());
-		ImGui::Text(std::format("Stack Pointer: {:#06X}", cpu.GetRegisterFile().SP()).c_str());
-		ImGui::Text(std::format("Instruction Register: {:#04X}", cpu.GetIR()).c_str());
+		const auto& regFile = cpu.GetRegisterFile();
+		const auto& segmentReg = cpu.GetStatusRegister();
+
+		ImGui::Begin("CPU State", nullptr, windowFlags);
+
+		TextF("CS:IP = {:04X}:{:04X} (Physical: {:05X})",
+			regFile.CS(), cpu.GetIP(), cpu.PhysAddr().index());
+		TextF("Instruction Register: {:04X}", cpu.GetIR());
 		ImGui::Separator();
 
-		ImGui::Text("General Purpose Registry");
-		ImGui::SameLine(250.0f);
-		ImGui::Text("Segment Registry");
+		ImGui::TextUnformatted("General Purpose Registers");
+		ImGui::SameLine(kSecondColumnX);
+		ImGui::TextUnformatted("Segment Registrers");
 
-		ImGui::Text(std::format("AX: {}", cpu.GetRegisterFile().AX()).c_str());
+		ImGui::Text(std::format("AX: {} | AH: {} | AL: {}", cpu.GetRegisterFile().AX(),
+			cpu.GetRegisterFile().Get8(Reg8::AH), cpu.GetRegisterFile().Get8(Reg8::AL)).c_str());
 		ImGui::SameLine(250.0f);
 		ImGui::Text(std::format("ES: {}", cpu.GetRegisterFile().ES()).c_str());
 
-		ImGui::Text(std::format("BX: {}", cpu.GetRegisterFile().BX()).c_str());
+		ImGui::Text(std::format("BX: {} | BH: {} | BL: {}", cpu.GetRegisterFile().BX(),
+			cpu.GetRegisterFile().Get8(Reg8::BH), cpu.GetRegisterFile().Get8(Reg8::BL)).c_str());
 		ImGui::SameLine(250.0f);
 		ImGui::Text(std::format("CS: {}", cpu.GetRegisterFile().CS()).c_str());
 
-		ImGui::Text(std::format("CX: {}", cpu.GetRegisterFile().CX()).c_str());
+		ImGui::Text(std::format("CX: {} | CH: {} | CL: {}", cpu.GetRegisterFile().CX(),
+			cpu.GetRegisterFile().Get8(Reg8::CH), cpu.GetRegisterFile().Get8(Reg8::CL)).c_str());
 		ImGui::SameLine(250.0f);
 		ImGui::Text(std::format("SS: {}", cpu.GetRegisterFile().SS()).c_str());
 
-		ImGui::Text(std::format("DX: {}", cpu.GetRegisterFile().DX()).c_str());
+		ImGui::Text(std::format("DX: {} | DH: {} | DL: {}", cpu.GetRegisterFile().DX(),
+			cpu.GetRegisterFile().Get8(Reg8::DH), cpu.GetRegisterFile().Get8(Reg8::DL)).c_str());
 		ImGui::SameLine(250.0f);
 		ImGui::Text(std::format("DS: {}", cpu.GetRegisterFile().DS()).c_str());
 

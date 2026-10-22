@@ -23,6 +23,7 @@
 #include "ImGui/imgui-SFML.h"
 
 #include <format>
+#include <forward_list>
 
 class Assembler;
 struct AssemblerError;
