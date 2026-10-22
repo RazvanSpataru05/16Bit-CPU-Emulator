@@ -1,16 +1,16 @@
-## CPU Emulator - 8-bit
-A cycle accurate 8-bit CPU emulator with a 16-bit address space, built in C++ with an interactive ImGui + SFML interface
+## CPU Emulator - 16-bit
+This application features a 1:1 emulator of the Intel 8086 microprocessor, built in C++ with an interactive ImGui + SFML interface
 Designed to simulate a low-level processor including instruction execution, memory access, stack management.
 
 ## Features
 # Processor
-- Custom 8-bit ISA with ~50 instructions across 7 categories
-- 4 general-purpose registers, Program Counter, Instruction Register and Stack Pointer
+- Full implementation of the Intel 8086 ISA
+- 8 general-purpose registers, as well as 4 segment registers
 - Flag registers
 - Accurate fetch, decode and execute cycle
 
 # Memory
-- 16-bit address space (65.536 bytes)
+- 20-bit address space (1MB of RAM memory)
 - Paginated view featuring 256 pages x 256 addresses each
 - Active cell highlighted for PC position
 - Read/Write access highlighted cells per instruction cycle
@@ -30,6 +30,6 @@ Designed to simulate a low-level processor including instruction execution, memo
 - Real-time display of all registers and flags after each instruction
 
 ## Built With
-- C++17
+- C++23
 - ImGui
 - SFML
