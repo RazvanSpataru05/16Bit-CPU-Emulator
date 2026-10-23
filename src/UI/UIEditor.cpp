@@ -7,13 +7,6 @@ namespace UIEditor
 {
 	namespace
 	{
-		template<typename... Args>
-		void TextF(std::format_string<Args...> formatted, Args&&... args)
-		{
-			const std::string s = std::format(formatted, std::forward<Args>(args)...);
-			ImGui::TextUnformatted(s.c_str());
-		}
-
 		struct GPView
 		{
 			const char* name = nullptr;
@@ -103,9 +96,12 @@ namespace UIEditor
 
 		ImGui::Begin("CPU State", nullptr, windowFlags);
 
-		TextF("CS:IP = {:04X}:{:04X} (Physical: {:05X})",
-			regFile.CS(), cpu.GetIP(), cpu.PhysAddr().index());
-		TextF("Instruction Register: {:04X}", cpu.GetIR());
+		ImGui::TextUnformatted(
+			Utils::String::TextFormat("CS:IP = {:04X}:{:04X} (Physical: {:05X})",
+			regFile.CS(), cpu.GetIP(), cpu.PhysAddr().index()).c_str());
+
+		ImGui::TextUnformatted(
+			Utils::String::TextFormat("Instruction Register: {:04X}", cpu.GetIR()).c_str());
 		ImGui::Separator();
 
 		ImGui::TextUnformatted("General Purpose Registers");

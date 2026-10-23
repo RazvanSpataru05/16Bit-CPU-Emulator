@@ -11,6 +11,7 @@
 
 #include <string>
 #include <algorithm>
+#include <format>
 
 namespace Utils
 {
@@ -30,7 +31,13 @@ namespace Utils
 		std::string_view	OperatorKindToString(ISA::OperandKind operatorKind);
 		std::string_view	SlotToString(Slot slot);
 		std::string			TokenTypeToString(const Token& token);
-	
+		
+		template<typename... Args>
+		std::string TextFormat(std::format_string<Args...> format, Args&&... args)
+		{
+			const std::string s = std::format(format, std::forward<Args>(args)...);
+			return s;
+		}
 	}
 
 };  
