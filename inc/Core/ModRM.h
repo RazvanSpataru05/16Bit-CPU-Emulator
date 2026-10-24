@@ -13,5 +13,6 @@ union ModRM
 		uint8_t mod : 2;
 	};
 
+	ModRM() = default;
 	ModRM(uint8_t r) : raw{ r } {}
 };

@@ -37,6 +37,7 @@ void CPU::Step()
 
 	if ((m_IR & 0xC0) == 0x00 && (m_IR & 0b111) < 6) ExecALU();
 	else if ((m_IR & 0xF0) == 0xB0)					 ExecMOVImm();
+	else if ((m_IR & 0xFC) == 0x88)					 ExecMOVModRM();
 	else switch (m_IR)
 	{
 	case 0x90: break; // NOP 1by
@@ -52,19 +53,43 @@ void CPU::ExecALU()
 {
 	const uint8_t operation = (m_IR >> 3) & 0b111;
 	const uint8_t form = m_IR & 0b111;
-	if (form < 4) return; // TODO: Implement Mod R/M
-
-	const bool word = (form == 5);		// 4 = AL, imm8		5 = AX, imm16
-	const uint16_t a = word ? m_registerFile.Get16(Reg16::AX) : m_registerFile.Get8(Reg8::AL);
-	const uint16_t b = word ? Fetch16() : Fetch8();
-
-	const Result r = ALU::Execute(operation, a, b, word, m_statusRegister.Carry());
-	m_statusRegister.UpdateFrom(r);
-
-	if (operation != 0b111) // not CMP
+	if (form < 4)
 	{
-		if (word) m_registerFile.Set16(Reg16::AX, static_cast<uint16_t>(r.value));
-		else m_registerFile.Set8(Reg8::AL, static_cast<uint8_t>(r.value));
+		DecodeModRM();
+		if (m_modRM.mod != 0b11) // NOT reg-reg
+		{
+			Logger::AddInfoMessage(std::format("Unimplemented mod: {}", static_cast<uint8_t>(m_modRM.mod)));
+		}
+
+		const bool word		= (form & 0b1) != 0;	// bit 1 of opcode, word = 16-bits, else 8-bits
+		const bool toReg	= (form & 0b10) != 0;	// if bit 1 is true, dest is reg
+
+		const uint8_t destination	= toReg ? m_modRM.reg : m_modRM.rm;
+		const uint8_t source		= toReg ? m_modRM.rm  : m_modRM.reg;
+
+		const Result r = ALU::Execute(operation, ReadReg(destination, word), ReadReg(source, word),
+			word, m_statusRegister.Carry());
+
+		m_statusRegister.UpdateFrom(r);
+		if (operation != 0b111) // not CMP
+		{
+			WriteReg(destination, r.value, word);
+		}
+	}
+	else
+	{
+		const bool word = (form == 5);		// 4 = AL, imm8		5 = AX, imm16
+		const uint16_t a = word ? m_registerFile.Get16(Reg16::AX) : m_registerFile.Get8(Reg8::AL);
+		const uint16_t b = word ? Fetch16() : Fetch8();
+
+		const Result r = ALU::Execute(operation, a, b, word, m_statusRegister.Carry());
+		m_statusRegister.UpdateFrom(r);
+
+		if (operation != 0b111) // not CMP
+		{
+			if (word) m_registerFile.Set16(Reg16::AX, static_cast<uint16_t>(r.value));
+			else m_registerFile.Set8(Reg8::AL, static_cast<uint8_t>(r.value));
+		}
 	}
 	++m_IP;
 }
@@ -86,6 +111,24 @@ void CPU::ExecMOVImm()
 	++m_IP;
 }
 
+void CPU::ExecMOVModRM()
+{
+	DecodeModRM();
+	if (m_modRM.mod != 0b11)
+	{
+		return;
+	}
+
+	const bool word		= (m_IR & 0b1) != 0;
+	const bool toReg	= (m_IR & 0b10) != 0;
+
+	const uint8_t destination	= toReg ? m_modRM.reg	: m_modRM.rm;
+	const uint8_t source		= toReg ? m_modRM.rm	: m_modRM.reg;
+
+	WriteReg(destination, ReadReg(source, word), word);
+	++m_IP;
+}
+
 void CPU::Reset()
 {
 	m_registerFile.Reset();
@@ -104,6 +147,16 @@ void CPU::Reset()
 		m_IR = 0x00;
 	}
 
+}
+
+void CPU::DecodeModRM()
+{
+	m_modRM.raw = Fetch8();
+	std::cout << std::hex << static_cast<int>(m_modRM.raw) << '\n';
+	
+	m_modRM.rm = m_modRM.raw & 0b111;
+	m_modRM.reg = (m_modRM.raw >> 3) & 0b111;
+	m_modRM.mod = (m_modRM.raw >> 6) & 0b11;
 }
 
 void CPU::HandleInterrupt()
@@ -200,6 +253,22 @@ const RegisterFile& CPU::GetRegisterFile() const noexcept
 const StatusRegister& CPU::GetStatusRegister() const noexcept
 {
 	return m_statusRegister;
+}
+
+uint16_t CPU::ReadReg(uint8_t selector, bool word) const
+{
+	if (word) return m_registerFile.Get16(static_cast<Reg16>(selector));
+	return m_registerFile.Get8(static_cast<Reg8>(selector));
+}
+
+void CPU::WriteReg(uint8_t selector, uint16_t value, bool word)
+{
+	if (word)
+	{
+		m_registerFile.Set16(static_cast<Reg16>(selector), value);
+		return;
+	}
+	m_registerFile.Set8(static_cast<Reg8>(selector), static_cast<uint8_t>(value));
 }
 
 uint16_t CPU::ComputeAddress(uint16_t address)

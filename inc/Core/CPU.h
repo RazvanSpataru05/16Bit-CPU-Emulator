@@ -30,8 +30,11 @@ public:
 
 	void ExecALU();
 	void ExecMOVImm();
+	void ExecMOVModRM();
 	
 	void Reset();
+
+	void DecodeModRM();
 
 	void HandleInterrupt();
 
@@ -61,6 +64,8 @@ public:
 	[[nodiscard]] const StatusRegister& GetStatusRegister()				const noexcept;
 
 private:
+	uint16_t ReadReg(uint8_t selector, bool word) const;
+	void WriteReg(uint8_t selector, uint16_t value, bool word);
 
 private:
 	CPU(const CPU&) = delete;
@@ -76,6 +81,8 @@ private:
 
 	uint16_t	m_IP{};		// Instruction Pointer Registry (offset, 16 bits) 
 	uint8_t		m_IR{};		// Instruction Registry
+
+	ModRM m_modRM;
 
 	bool m_haltFlag{ false };
 };
