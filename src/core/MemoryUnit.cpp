@@ -89,7 +89,7 @@ void MemoryUnit::LoadBytesIntoMemory(const std::vector<uint8_t> bytes)
 {
 	std::copy(bytes.begin(), bytes.end(), m_memory.begin());
 	m_bytes.insert(m_bytes.begin(), bytes.begin(), bytes.end());
-
+	m_hasData = !bytes.empty();
 }
 
 void MemoryUnit::LoadProgramFromFIle(const std::filesystem::path& filename)

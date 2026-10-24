@@ -15,14 +15,14 @@ namespace UIEditor
 			Reg8 lo{};
 		};
 
-		constexpr GPView GP[] = {
+		constexpr GPView kGP[] = {
 			{"AX", Reg16::AX, Reg8::AH, Reg8::AL},
 			{"BX", Reg16::BX, Reg8::BH, Reg8::BL},
 			{"CX", Reg16::CX, Reg8::CH, Reg8::CL},
 			{"DX", Reg16::DX, Reg8::DH, Reg8::DL}
 		};
 
-		constexpr const char* segNames[] = { "ES", "CS", "SS", "DS" };
+		constexpr const char* ksegNames[] = { "ES", "CS", "SS", "DS" };
 		constexpr float kSecondColumnX = 250.0f;
 
 
@@ -88,8 +88,8 @@ namespace UIEditor
 		ImGui::SetNextWindowPos(Utils::UI::CalcCPUStatePanelPos(), ImGuiCond_Always);
 		ImGui::SetNextWindowSize(Utils::UI::CalcCPUStatePanelSize(), ImGuiCond_Always);
 		const auto windowFlags = ImGuiWindowFlags_NoResize |
-								ImGuiWindowFlags_NoMove |
-								ImGuiWindowFlags_NoCollapse;
+			ImGuiWindowFlags_NoMove |
+			ImGuiWindowFlags_NoCollapse;
 
 		const auto& regFile = cpu.GetRegisterFile();
 		const auto& segmentReg = cpu.GetStatusRegister();
@@ -97,47 +97,68 @@ namespace UIEditor
 		ImGui::Begin("CPU State", nullptr, windowFlags);
 
 		ImGui::TextUnformatted(
-			Utils::String::TextFormat("CS:IP = {:04X}:{:04X} (Physical: {:05X})",
-			regFile.CS(), cpu.GetIP(), cpu.PhysAddr().index()).c_str());
-
+			Utils::String::TextFormat("CS:IP = {:04X}:{:04X} (Physical: 0x{:05X})",
+				regFile.CS(), cpu.GetIP(), cpu.PhysAddr().index()).c_str());
 		ImGui::TextUnformatted(
-			Utils::String::TextFormat("Instruction Register: {:04X}", cpu.GetIR()).c_str());
+			Utils::String::TextFormat("Instruction Register: 0x{:04X}", cpu.GetIR()).c_str());
 		ImGui::Separator();
 
 		ImGui::TextUnformatted("General Purpose Registers");
 		ImGui::SameLine(kSecondColumnX);
-		ImGui::TextUnformatted("Segment Registrers");
+		ImGui::TextUnformatted("Segment Registrers\n");
 
-		ImGui::Text(std::format("AX: {} | AH: {} | AL: {}", cpu.GetRegisterFile().AX(),
-			cpu.GetRegisterFile().Get8(Reg8::AH), cpu.GetRegisterFile().Get8(Reg8::AL)).c_str());
-		ImGui::SameLine(250.0f);
-		ImGui::Text(std::format("ES: {}", cpu.GetRegisterFile().ES()).c_str());
+		const uint16_t seg[] = { regFile.ES(), regFile.CS(), regFile.SS(), regFile.DS() };
 
-		ImGui::Text(std::format("BX: {} | BH: {} | BL: {}", cpu.GetRegisterFile().BX(),
-			cpu.GetRegisterFile().Get8(Reg8::BH), cpu.GetRegisterFile().Get8(Reg8::BL)).c_str());
-		ImGui::SameLine(250.0f);
-		ImGui::Text(std::format("CS: {}", cpu.GetRegisterFile().CS()).c_str());
-
-		ImGui::Text(std::format("CX: {} | CH: {} | CL: {}", cpu.GetRegisterFile().CX(),
-			cpu.GetRegisterFile().Get8(Reg8::CH), cpu.GetRegisterFile().Get8(Reg8::CL)).c_str());
-		ImGui::SameLine(250.0f);
-		ImGui::Text(std::format("SS: {}", cpu.GetRegisterFile().SS()).c_str());
-
-		ImGui::Text(std::format("DX: {} | DH: {} | DL: {}", cpu.GetRegisterFile().DX(),
-			cpu.GetRegisterFile().Get8(Reg8::DH), cpu.GetRegisterFile().Get8(Reg8::DL)).c_str());
-		ImGui::SameLine(250.0f);
-		ImGui::Text(std::format("DS: {}", cpu.GetRegisterFile().DS()).c_str());
+		for (size_t i = 0; i < std::size(kGP); ++i)
+		{
+			const auto& reg = kGP[i];
+			ImGui::TextUnformatted(Utils::String::TextFormat("{}: 0x{:04X} | H: 0x{:02X} | L: 0x{:02X}",
+				reg.name, regFile.Get16(reg.full), regFile.Get8(reg.hi), regFile.Get8(reg.lo)).c_str());
+			ImGui::SameLine(kSecondColumnX);
+			ImGui::TextUnformatted(Utils::String::TextFormat("{}: 0x{:04X}",
+				ksegNames[i], seg[i]).c_str());
+		}
 
 		ImGui::Separator();
 
-		ImGui::Text("\nFlags");
-		ImGui::Text(std::format("Interrupt Flag: {}", cpu.GetInterruptController().GetInterruptFlag() ? "True" : "False").c_str());
-		ImGui::Text(std::format("Zero Flag: {}", cpu.GetStatusRegister().Zero() ? "True" : "False").c_str());
-		ImGui::Text(std::format("Carry Flag: {}", cpu.GetStatusRegister().Carry() ? "True" : "False").c_str());
-		ImGui::Text(std::format("Negative Flag: {}", cpu.GetStatusRegister().Sign() ? "True" : "False").c_str());
-		ImGui::Text(std::format("Overflow Flag: {}", cpu.GetStatusRegister().Overflow() ? "True" : "False").c_str());
-		ImGui::Text(std::format("Halt Flag: {}", cpu.GetHaltFlag() ? "True" : "False").c_str());
+		ImGui::TextUnformatted("Pointer Registers");
+		ImGui::SameLine(kSecondColumnX);
+		ImGui::TextUnformatted("Index Registers");
+
+		ImGui::TextUnformatted(Utils::String::TextFormat("SP: 0x{:04X}",
+			regFile.Get16(Reg16::SP)).c_str());
+		ImGui::SameLine(kSecondColumnX);
+		ImGui::TextUnformatted(Utils::String::TextFormat("SI: 0x{:04X}",
+			regFile.Get16(Reg16::SI)).c_str());
+
+		ImGui::TextUnformatted(Utils::String::TextFormat("BP: 0x{:04X}",
+			regFile.Get16(Reg16::BP)).c_str());
+		ImGui::SameLine(kSecondColumnX);
+		ImGui::TextUnformatted(Utils::String::TextFormat("DI: 0x{:04X}",
+			regFile.Get16(Reg16::DI)).c_str());
+
 		ImGui::Separator();
+
+		ImGui::TextUnformatted("\n\nFlags\n\n");
+		const struct { const char* name; bool value; } flagList[] = {
+			{"Carry Flag",		segmentReg.Carry() },
+			{"Parity Flag",		segmentReg.Parity() },
+			{"Auxiliary Flag",	segmentReg.Auxiliary() },
+			{"Zero Flag",		segmentReg.Zero() },
+			{"Sign Flag",		segmentReg.Sign() },
+			{"Overflow Flag",	segmentReg.Overflow() },
+			{"Interrupt Flag",	cpu.GetInterruptController().GetInterruptFlag() },
+		};
+
+		for (size_t i = 0; i < std::size(flagList); ++i)
+		{
+			ImGui::TextUnformatted(Utils::String::TextFormat("{}: {}",
+				flagList[i].name, flagList[i].value ? "true" : "false").c_str());
+		}
+
+		ImGui::TextUnformatted(Utils::String::TextFormat("Halted: {}",
+			cpu.GetHaltFlag() ? "yes" : "no").c_str());
+		
 		ImGui::End();
 	}
 
@@ -197,8 +218,8 @@ namespace UIEditor
 		ImGui::SetNextWindowPos(Utils::UI::CalcDissasemblyPanelPos(), ImGuiCond_Always);
 		ImGui::SetNextWindowSize(Utils::UI::CalcDissasemblyPanelSize(), ImGuiCond_Always);
 		const auto flags = ImGuiWindowFlags_NoCollapse |
-							ImGuiWindowFlags_NoMove |
-							ImGuiWindowFlags_NoResize;
+			ImGuiWindowFlags_NoMove |
+			ImGuiWindowFlags_NoResize;
 
 		ImGui::Begin("Dissasembly Panel", nullptr, flags);
 
@@ -274,7 +295,8 @@ namespace UIEditor
 					ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, IM_COL32(0, 0, 255, 255));
 				}
 
-				if (emulator.GetCPU().IsReadingInstruction() && index == emulator.GetCPU().ComputeAddress(emulator.GetCPU().GetIP() + 1))
+				if (emulator.GetCPU().IsReadingInstruction()
+					&& index == emulator.GetCPU().ComputeAddress(emulator.GetCPU().GetIP() + 1))
 				{
 					ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, IM_COL32(0, 255, 0, 255));
 				}
@@ -460,8 +482,10 @@ namespace UIEditor
 
 			switch (tab)
 			{
-			case SelectedTab::ERROR_LIST: { DrawErrorList(emulator.GetToolchain().GetAssembler().GetErrors(),
-											emulator.GetToolchain().GetAssembler().GetWarnings()); break; }
+			case SelectedTab::ERROR_LIST: {
+				DrawErrorList(emulator.GetToolchain().GetAssembler().GetErrors(),
+					emulator.GetToolchain().GetAssembler().GetWarnings()); break;
+			}
 			case SelectedTab::CONSOLE: { DrawConsole(emulator, config); break; }
 			}
 		}

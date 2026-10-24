@@ -34,7 +34,7 @@ uint16_t CPU::Fetch16()
 
 void CPU::Step()
 {
-	if (m_haltFlag) return;
+	if (m_haltFlag || m_memoryUnit.IsMemoryEmpty()) return;
 
 	switch (m_IR)
 	{
