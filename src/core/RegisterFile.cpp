@@ -63,9 +63,9 @@ void RegisterFile::Set8(Reg8 reg, uint8_t value)
 	}
 }
 
-void RegisterFile::Set16(size_t selector, uint16_t value)
+void RegisterFile::Set16(Reg16 selector, uint16_t value)
 {
-	m_generalPurproseReg[selector] = value;
+	m_generalPurproseReg[static_cast<size_t>(selector)] = value;
 }
 
 uint8_t RegisterFile::AL() const noexcept

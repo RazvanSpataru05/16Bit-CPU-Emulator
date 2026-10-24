@@ -27,6 +27,10 @@ public:
 	uint16_t	Fetch16();
 
 	void Step();
+
+	void ExecALU();
+	void ExecMOVImm();
+	
 	void Reset();
 
 	void HandleInterrupt();

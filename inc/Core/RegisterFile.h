@@ -39,7 +39,7 @@ public:
 	[[nodiscard]]	uint16_t Get16(Reg16 reg)		const noexcept;
 	
 	void Set8(Reg8 reg, uint8_t value);
-	void Set16(size_t index, uint16_t value);
+	void Set16(Reg16 reg, uint16_t value);
 
 	// const getters GP registers (lo part)
 	uint8_t AL() const noexcept;

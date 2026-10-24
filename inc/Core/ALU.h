@@ -6,35 +6,24 @@
 
 namespace ALU
 {
-	namespace
-	{
-		void ComputeFlagsLogicalOperation(Result& r, uint16_t result)
-		{
-			r.carry = false;
-			r.zero = (result == 0);
-			r.sign = false;
-			r.overflow = false;
-		}
-	}
+	Result Execute(uint8_t operation, uint16_t a, uint16_t b, bool word, bool carryIn);
 
-	/* Arithmetic operations 8-bit*/
-	Result Add8(uint8_t reg, uint8_t operand);
+	Result Add(uint16_t a, uint16_t b, bool carryIn, bool word);
+	Result Sub(uint16_t a, uint16_t b, bool borrowIn, bool word);
 
-	/* Arithmetic operations 16-bit*/
-	Result Add16(uint16_t a, uint16_t operand, bool carry);
-	Result Sub16(uint16_t a, uint16_t operand, bool borrow);
 	Result Inc(uint16_t a);
 	Result Dec(uint16_t a);
-	Result Mul(uint16_t a, uint16_t operand);
+	Result Mul(uint16_t a, uint16_t b);
 
 	/* Logical operations */
-	Result AND(uint16_t a, uint16_t operand);
-	Result OR(uint16_t a, uint16_t operand);
-	Result XOR(uint16_t a, uint16_t operand);
-	Result NOT(uint16_t a);
-	Result ShiftLeft(uint16_t a);
-	Result ShiftRight(uint16_t a);
+	Result AND(uint16_t a, uint16_t b, bool word);
+	Result OR(uint16_t a, uint16_t b, bool word);
+	Result XOR(uint16_t a, uint16_t b, bool word);
+	Result NOT(uint16_t a, bool word);
+
+	Result ShiftLeft(uint16_t a, bool word);
+	Result ShiftRight(uint16_t a, bool word);
 
 	/* Compare operation */
-	Result Compare(uint16_t a, uint16_t operand);
+	Result Cmp(uint16_t a, uint16_t b);
 }
