@@ -56,6 +56,7 @@ void MemoryUnit::RestoreSnapshot()
 {
 	Clear();
 	std::copy(m_bytes.begin(), m_bytes.end(), m_memory.begin());
+	m_hasData = true;
 
 	//for (const auto& addrVal : m_snapshotData)
 	//{
@@ -88,7 +89,7 @@ void MemoryUnit::LoadProgramIntoMemory(const Program& program)
 void MemoryUnit::LoadBytesIntoMemory(const std::vector<uint8_t> bytes)
 {
 	std::copy(bytes.begin(), bytes.end(), m_memory.begin());
-	m_bytes.insert(m_bytes.begin(), bytes.begin(), bytes.end());
+	m_bytes = bytes;
 	m_hasData = !bytes.empty();
 }
 

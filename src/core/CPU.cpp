@@ -23,11 +23,10 @@ uint16_t CPU::Fetch16()
 	++m_IP;
 	assert(m_memoryUnit[PhysAddr()].has_value());
 	uint8_t lo = m_memoryUnit[PhysAddr()].value();
+	
 	++m_IP;
-
 	assert(m_memoryUnit[PhysAddr()].has_value());
 	uint8_t hi = m_memoryUnit[PhysAddr()].value();
-	++m_IP;
 
 	return (static_cast<uint16_t>(hi) << 8) | static_cast<uint16_t>(lo);
 }
@@ -40,6 +39,8 @@ void CPU::Step()
 	else if ((m_IR & 0xF0) == 0xB0)					 ExecMOVImm();
 	else switch (m_IR)
 	{
+	case 0x90: break; // NOP 1by
+	case 0xF4: m_haltFlag = true; break; // HLT 1by
 	default:
 		Logger::AddInfoMessage(std::format("Unimplemented opcode: {:02X}", m_IR));
 		break;
@@ -57,7 +58,7 @@ void CPU::ExecALU()
 	const uint16_t a = word ? m_registerFile.Get16(Reg16::AX) : m_registerFile.Get8(Reg8::AL);
 	const uint16_t b = word ? Fetch16() : Fetch8();
 
-	const Result r = Result();
+	const Result r = ALU::Execute(operation, a, b, word, m_statusRegister.Carry());
 	m_statusRegister.UpdateFrom(r);
 
 	if (operation != 0b111) // not CMP
@@ -65,13 +66,14 @@ void CPU::ExecALU()
 		if (word) m_registerFile.Set16(Reg16::AX, static_cast<uint16_t>(r.value));
 		else m_registerFile.Set8(Reg8::AL, static_cast<uint8_t>(r.value));
 	}
-
+	++m_IP;
 }
 
 void CPU::ExecMOVImm()
 {
-	const bool word = (m_IR >> 3) & 1;
+	const bool word = (m_IR >> 3) & 1; // word == 1 -> full reg / word == 0 -> Hi / Lo
 	const uint8_t selector = m_IR & 0b111;
+	std::cout << std::hex << static_cast<int>(selector);
 
 	if (word)
 	{
@@ -81,6 +83,7 @@ void CPU::ExecMOVImm()
 	{
 		m_registerFile.Set8(static_cast<Reg8>(selector), Fetch8());
 	}
+	++m_IP;
 }
 
 void CPU::Reset()
@@ -155,8 +158,8 @@ void CPU::UpdateIR()
 {
 	if (m_haltFlag) return;
 
+	assert(m_memoryUnit[PhysAddr()].has_value());
 	m_IR = m_memoryUnit[PhysAddr()].value();
-	++m_IP;
 }
 
 bool CPU::IsReadingInstruction() const noexcept

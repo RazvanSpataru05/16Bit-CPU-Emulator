@@ -181,21 +181,10 @@ namespace UIEditor
 		if (ImGui::Button("Assemble & Load"))
 		{
 			Logger::ClearLogFile();
-			//if (emulator.GetToolchain().GetAssembler().Assemble(editorBuffer))
-			//{
-			//	const auto& statements = emulator.GetToolchain().GetAssembler().GetStatements();
-			//	const Program program = DataLoader::ParseStatements(statements, emulator.GetToolchain().GetAssembler().GetStartAddress());
 
-			//	emulator.GetCPU().GetMemoryUnit().LoadValuesIntoMemory(program);
-			//	emulator.GetCPU().Reset();
-
-			//	tab = SelectedTab::CONSOLE;
-			//}
-			//else
-			//{
-			//	tab = SelectedTab::ERROR_LIST;
-			//}
 			std::vector<uint8_t> bytes = DataLoader::ParseHexValues(editorBuffer);
+			emulator.GetCPU().Reset();
+			emulator.GetCPU().GetMemoryUnit().Clear();
 			emulator.GetCPU().GetMemoryUnit().LoadBytesIntoMemory(bytes);
 			emulator.GetCPU().SetInstructionRegister();
 		}
@@ -209,7 +198,6 @@ namespace UIEditor
 		ImGui::SetNextWindowSize(Utils::UI::CalcCPUDiagramSize());
 
 		ImGui::Begin("CPU Diagram");
-		ImGui::Text("cpu diagram");
 		ImGui::End();
 	}
 
@@ -217,9 +205,9 @@ namespace UIEditor
 	{
 		ImGui::SetNextWindowPos(Utils::UI::CalcDissasemblyPanelPos(), ImGuiCond_Always);
 		ImGui::SetNextWindowSize(Utils::UI::CalcDissasemblyPanelSize(), ImGuiCond_Always);
-		const auto flags = ImGuiWindowFlags_NoCollapse |
-			ImGuiWindowFlags_NoMove |
-			ImGuiWindowFlags_NoResize;
+		const auto flags =	ImGuiWindowFlags_NoCollapse |
+							ImGuiWindowFlags_NoMove |
+							ImGuiWindowFlags_NoResize;
 
 		ImGui::Begin("Dissasembly Panel", nullptr, flags);
 
@@ -229,30 +217,30 @@ namespace UIEditor
 			ImGui::End();
 			return;
 		}
-		for (size_t index = 0; index < Utils::Constants::MEMORY_SIZE; ++index)
-		{
-			std::optional<uint16_t> opcode = memoryUnit.Peek(static_cast<uint16_t>(index));
-			if (!opcode.has_value())
-			{
-				continue;
-			}
+		//for (size_t index = 0; index < Utils::Constants::MEMORY_SIZE; ++index)
+		//{
+		//	std::optional<uint16_t> opcode = memoryUnit.Peek(static_cast<uint16_t>(index));
+		//	if (!opcode.has_value())
+		//	{
+		//		continue;
+		//	}
 
-			const InstructionDef& instruction = dissasembler.GetInstructionDef(opcode.value());
+		//	const InstructionDef& instruction = dissasembler.GetInstructionDef(opcode.value());
 
-			if (index == cpu.GetIP())
-			{
-				ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(0, 255, 0, 255));
-			}
-			else
-			{
-				ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 255, 255, 255));
-			}
+		//	if (index == cpu.GetIP())
+		//	{
+		//		ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(0, 255, 0, 255));
+		//	}
+		//	else
+		//	{
+		//		ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 255, 255, 255));
+		//	}
 
-			Utils::UI::DisplayInstruction(instruction, memoryUnit, static_cast<uint16_t>(index), opcode);
+		//	Utils::UI::DisplayInstruction(instruction, memoryUnit, static_cast<uint16_t>(index), opcode);
 
-			index += static_cast<size_t>(instruction.size - 1);
-			ImGui::PopStyleColor();
-		}
+		//	index += static_cast<size_t>(instruction.size - 1);
+		//	ImGui::PopStyleColor();
+		//}
 		ImGui::End();
 	}
 
@@ -295,16 +283,16 @@ namespace UIEditor
 					ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, IM_COL32(0, 0, 255, 255));
 				}
 
-				if (emulator.GetCPU().IsReadingInstruction()
-					&& index == emulator.GetCPU().ComputeAddress(emulator.GetCPU().GetIP() + 1))
-				{
-					ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, IM_COL32(0, 255, 0, 255));
-				}
-				else if (emulator.GetCPU().IsWritingInstruction() &&
-					index == emulator.GetCPU().ComputeAddress(emulator.GetCPU().GetIP() + 1))
-				{
-					ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, IM_COL32(255, 0, 0, 255));
-				}
+				//if (emulator.GetCPU().IsReadingInstruction()
+				//	&& index == emulator.GetCPU().ComputeAddress(emulator.GetCPU().GetIP() + 1))
+				//{
+				//	ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, IM_COL32(0, 255, 0, 255));
+				//}
+				//else if (emulator.GetCPU().IsWritingInstruction() &&
+				//	index == emulator.GetCPU().ComputeAddress(emulator.GetCPU().GetIP() + 1))
+				//{
+				//	ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, IM_COL32(255, 0, 0, 255));
+				//}
 
 				char cellText[8];
 				if (const auto result = emulator.GetCPU().GetMemoryUnit()[static_cast<uint16_t>(index)]; result.has_value())

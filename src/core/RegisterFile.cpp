@@ -22,8 +22,8 @@ void RegisterFile::UpdateA(uint16_t value)
 
 void RegisterFile::Reset()
 {
-	std::fill(m_generalPurproseReg.begin(), m_generalPurproseReg.begin() + 3, 0x00);
-	std::fill(m_segmentReg.begin(), m_segmentReg.end(), 0x00);
+	std::fill(m_generalPurproseReg.begin(), m_generalPurproseReg.end(), 0x0000);
+	std::fill(m_segmentReg.begin(), m_segmentReg.end(), 0x0000);
 
 	m_generalPurproseReg[SP_SELECTOR] = 0xFFFF;
 }
@@ -37,7 +37,7 @@ uint8_t RegisterFile::Get8(Reg8 reg) const noexcept
 	}
 	else // Get hi GP reg
 	{
-		return static_cast<uint8_t>(m_generalPurproseReg[idx - 4] & 0xFF00);
+		return static_cast<uint8_t>((m_generalPurproseReg[idx - 4] & 0xFF00) >> 8);
 	}
 }
 
@@ -52,13 +52,11 @@ void RegisterFile::Set8(Reg8 reg, uint8_t value)
 	if (idx < 4) // lo part of GP reg (AL, CL, DL, BL)
 	{
 		uint16_t newValue = (m_generalPurproseReg[idx] & 0xFF00) | value;
-		std::cout << "New value: " << newValue << '\n';
 		m_generalPurproseReg[idx] = newValue;
 	}
 	else // hi part of GP reg (AH, CH, DH, BH)
 	{
-		uint16_t newValue = value | (m_generalPurproseReg[idx-4] & 0x00FF);
-		std::cout << "New value: " << newValue << '\n';
+		uint16_t newValue = static_cast<uint16_t>(value << 8) | static_cast<uint16_t>(m_generalPurproseReg[idx - 4] & 0x00FF);
 		m_generalPurproseReg[idx - 4] = newValue;
 	}
 }
