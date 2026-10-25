@@ -60,10 +60,13 @@ private:
 	uint16_t ReadReg(uint8_t selector, bool word) const;
 	void WriteReg(uint8_t selector, uint16_t value, bool word);
 
+	void ShortJump(int8_t offset);
+
 	void ExecALU();
 	void ExecMOVImm();
 	void ExecMOVModRM();
 	void ExecINCDEC();
+	void ExecConditionedJump();
 
 	void DecodeModRM();
 

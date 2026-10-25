@@ -38,6 +38,7 @@ void CPU::Step()
 
 	if ((m_IR & 0xC0) == 0x00 && (m_IR & 0b111) < 6) ExecALU();
 	else if ((m_IR & 0xF0) == 0x40)					 ExecINCDEC();
+	else if ((m_IR & 0xF0) == 0x70)					 ExecConditionedJump();
 	else if ((m_IR & 0xF0) == 0xB0)					 ExecMOVImm();
 	else if ((m_IR & 0xFC) == 0x88)					 ExecMOVModRM();
 	else switch (m_IR)
@@ -175,6 +176,66 @@ void CPU::ExecINCDEC()
 	++m_IP;
 }
 
+void CPU::ExecConditionedJump()
+{
+	const bool negative = (m_IR & 0b1) == 1;
+	const uint8_t flag = (m_IR >> 1) & 0b111;
+	const int8_t offset = static_cast<int8_t>(Fetch8());
+	bool result = false;
+	++m_IP;
+
+	switch (flag)
+	{
+	case 0b000:		// JO & JNO
+	{
+		result = m_statusRegister.Overflow() ^ negative;
+		break;
+	}
+	case 0b001:		// JB & JNB
+	{
+		result = m_statusRegister.Carry() ^ negative;
+		break;
+	}
+	case 0b010:		// JZ & JNZ
+	{
+		result = m_statusRegister.Zero() ^ negative;
+		break;
+	}
+	case 0b011:		// JBE (CF = 1 or ZF = 1) & JA (CF = 0 and ZF = 0)
+	{
+		result = (m_statusRegister.Carry() || m_statusRegister.Zero()) ^ negative;
+		break;
+	}
+	case 0b100:		// JS & JNS
+	{
+		result = m_statusRegister.Sign() ^ negative;
+		break;
+	}
+	case 0b101:		// JPE & JPO
+	{
+		result = m_statusRegister.Parity() ^ negative;
+		break;
+	}
+	case 0b110:		// JL (SF != OF) & JGE (SF == OF)
+	{
+		result = (m_statusRegister.Sign() != m_statusRegister.Overflow()) ^ negative;
+		break;
+	}
+	case 0b111:		// JLE (SF != OF or ZF == 1) & JG (ZF == 0 and SF == OF)
+	{
+		result = ((m_statusRegister.Sign() != m_statusRegister.Overflow()) ||
+			m_statusRegister.Zero()) ^ negative;
+		break;
+	}
+
+	if (result)
+	{
+		ShortJump(offset);
+	}
+
+	}
+}
+
 void CPU::Reset()
 {
 	m_registerFile.Reset();
@@ -264,7 +325,6 @@ void CPU::UpdateIR()
 	}
 	else
 	{
-		std::cout << "JMP worked\n";
 		m_IR = 0x00;
 	}
 	
@@ -324,6 +384,11 @@ void CPU::WriteReg(uint8_t selector, uint16_t value, bool word)
 		return;
 	}
 	m_registerFile.SetGP8(static_cast<Reg8>(selector), static_cast<uint8_t>(value));
+}
+
+void CPU::ShortJump(int8_t offset)
+{
+	m_IP = m_IP + offset;
 }
 
 uint16_t CPU::ComputeAddress(uint16_t address)
