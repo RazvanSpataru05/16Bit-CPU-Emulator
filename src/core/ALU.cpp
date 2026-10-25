@@ -193,18 +193,4 @@ namespace ALU
 
 		return r;
 	}
-
-	Result Cmp(uint16_t a, uint16_t b)
-	{
-		uint16_t result = a - b;
-		Result r;
-
-		r.value = result;
-		r.carry = b > a;
-		r.zero = (result == 0);
-		r.sign = (result & 0x80) != 0;
-		r.overflow = ((a ^ b) & (a ^ result) & 0x80) != 0;
-
-		return r;
-	}
 }

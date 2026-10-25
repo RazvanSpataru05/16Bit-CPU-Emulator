@@ -33,7 +33,8 @@ uint16_t CPU::Fetch16()
 
 void CPU::Step()
 {
-	if (m_haltFlag || m_memoryUnit.IsMemoryEmpty()) return;
+	if (m_haltFlag || m_memoryUnit.IsMemoryEmpty() ||
+		!m_memoryUnit[PhysAddr()].has_value()) return;
 
 	if ((m_IR & 0xC0) == 0x00 && (m_IR & 0b111) < 6) ExecALU();
 	else if ((m_IR & 0xF0) == 0x40)					 ExecINCDEC();
@@ -41,7 +42,30 @@ void CPU::Step()
 	else if ((m_IR & 0xFC) == 0x88)					 ExecMOVModRM();
 	else switch (m_IR)
 	{
-	case 0x90: break; // NOP 1by
+	case 0x90: break;	// NOP 1by
+	case 0xE9:			// JMP Jv (Near jump)
+	{
+		int16_t offset = static_cast<int16_t>(Fetch16());
+		++m_IP;
+		m_IP = static_cast<uint16_t>(m_IP + offset);
+		break;
+	}
+	case 0xEA:			// JMP Ap (Far jump)
+	{
+		uint16_t offset = Fetch16();
+		uint16_t segment = Fetch16();
+		m_registerFile.SetSEG(SegmentReg::CS, segment);
+		m_IP = offset;
+		break;
+	}
+	case 0xEB:			// JMP Jb (Short jump)
+	{
+		int8_t offset = static_cast<int8_t>(Fetch8());
+		++m_IP;
+		m_IP = static_cast<uint16_t>(m_IP + offset);
+		break;
+	}
+
 	case 0xF4: m_haltFlag = true; break; // HLT 1by
 	default:
 		Logger::AddInfoMessage(std::format("Unimplemented opcode: {:02X}", m_IR));
@@ -88,8 +112,8 @@ void CPU::ExecALU()
 
 		if (operation != 0b111) // not CMP
 		{
-			if (word) m_registerFile.Set16(Reg16::AX, static_cast<uint16_t>(r.value));
-			else m_registerFile.Set8(Reg8::AL, static_cast<uint8_t>(r.value));
+			if (word) m_registerFile.SetGP16(Reg16::AX, static_cast<uint16_t>(r.value));
+			else m_registerFile.SetGP8(Reg8::AL, static_cast<uint8_t>(r.value));
 		}
 	}
 	++m_IP;
@@ -103,11 +127,11 @@ void CPU::ExecMOVImm()
 
 	if (word)
 	{
-		m_registerFile.Set16(static_cast<Reg16>(selector), Fetch16());
+		m_registerFile.SetGP16(static_cast<Reg16>(selector), Fetch16());
 	}
 	else
 	{
-		m_registerFile.Set8(static_cast<Reg8>(selector), Fetch8());
+		m_registerFile.SetGP8(static_cast<Reg8>(selector), Fetch8());
 	}
 	++m_IP;
 }
@@ -147,7 +171,7 @@ void CPU::ExecINCDEC()
 	}
 
 	m_statusRegister.UpdateFrom(r);
-	m_registerFile.Set16(static_cast<Reg16>(selector), r.value);
+	m_registerFile.SetGP16(static_cast<Reg16>(selector), r.value);
 	++m_IP;
 }
 
@@ -233,8 +257,17 @@ void CPU::UpdateIR()
 {
 	if (m_haltFlag) return;
 
-	assert(m_memoryUnit[PhysAddr()].has_value());
-	m_IR = m_memoryUnit[PhysAddr()].value();
+	//assert(m_memoryUnit[PhysAddr()].has_value());
+	if (m_memoryUnit[PhysAddr()].has_value())
+	{
+		m_IR = m_memoryUnit[PhysAddr()].value();
+	}
+	else
+	{
+		std::cout << "JMP worked\n";
+		m_IR = 0x00;
+	}
+	
 }
 
 bool CPU::IsReadingInstruction() const noexcept
@@ -287,10 +320,10 @@ void CPU::WriteReg(uint8_t selector, uint16_t value, bool word)
 {
 	if (word)
 	{
-		m_registerFile.Set16(static_cast<Reg16>(selector), value);
+		m_registerFile.SetGP16(static_cast<Reg16>(selector), value);
 		return;
 	}
-	m_registerFile.Set8(static_cast<Reg8>(selector), static_cast<uint8_t>(value));
+	m_registerFile.SetGP8(static_cast<Reg8>(selector), static_cast<uint8_t>(value));
 }
 
 uint16_t CPU::ComputeAddress(uint16_t address)

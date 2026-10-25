@@ -23,7 +23,4 @@ namespace ALU
 
 	Result ShiftLeft(uint16_t a, bool word);
 	Result ShiftRight(uint16_t a, bool word);
-
-	/* Compare operation */
-	Result Cmp(uint16_t a, uint16_t b);
 }

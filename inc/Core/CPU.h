@@ -27,15 +27,7 @@ public:
 	uint16_t	Fetch16();
 
 	void Step();
-
-	void ExecALU();
-	void ExecMOVImm();
-	void ExecMOVModRM();
-	void ExecINCDEC();
-	
 	void Reset();
-
-	void DecodeModRM();
 
 	void HandleInterrupt();
 
@@ -67,6 +59,13 @@ public:
 private:
 	uint16_t ReadReg(uint8_t selector, bool word) const;
 	void WriteReg(uint8_t selector, uint16_t value, bool word);
+
+	void ExecALU();
+	void ExecMOVImm();
+	void ExecMOVModRM();
+	void ExecINCDEC();
+
+	void DecodeModRM();
 
 private:
 	CPU(const CPU&) = delete;

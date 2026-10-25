@@ -23,8 +23,8 @@ public:
 
 	const size_t ES_SELECTOR = 0x00;
 	const size_t CS_SELECTOR = 0x01;
-	const size_t SS_SELECTOR = 0x02;
-	const size_t DS_SELECTOR = 0x03;
+	const size_t DS_SELECTOR = 0x02;
+	const size_t SS_SELECTOR = 0x03;
 
 public:
 	RegisterFile();
@@ -32,14 +32,18 @@ public:
 	uint16_t Read(uint16_t selector) const;
 	void	 Write(uint16_t selector, uint16_t value);
 
-	void UpdateA(uint16_t value);
+	void UpdateAX(uint16_t value);
+	void UpdateCS(uint16_t value);
+
 	void Reset();
 
-	[[nodiscard]]	uint8_t Get8(Reg8 reg)			const noexcept;
-	[[nodiscard]]	uint16_t Get16(Reg16 reg)		const noexcept;
+	[[nodiscard]]	uint8_t		Get8(Reg8 reg)			const noexcept;
+	[[nodiscard]]	uint16_t	Get16(Reg16 reg)		const noexcept;
 	
-	void Set8(Reg8 reg, uint8_t value);
-	void Set16(Reg16 reg, uint16_t value);
+	void SetGP8(Reg8 reg, uint8_t value);
+	void SetGP16(Reg16 reg, uint16_t value);
+
+	void SetSEG(SegmentReg reg, uint16_t value);
 
 	// const getters GP registers (lo part)
 	uint8_t AL() const noexcept;
