@@ -77,29 +77,31 @@ namespace ALU
 		return r;
 	}
 
-	Result Inc(uint16_t a)
+	Result INC(uint16_t a, bool word)
 	{
-		uint16_t result = static_cast<uint16_t>(a + 1);
+		const Width w = W(word);
+		const uint16_t result = static_cast<uint16_t>((a + 1) & w.mask);
 
 		Result r;
-		r.value = result;
-		r.zero = (result == 0);
-		r.sign = (result & 0x80) != 0;
-		r.overflow = (~(a ^ 1) & (a ^ result) & 0x80) != 0;
-
+		r.value			= result;
+		r.overflow		= (result == w.sign);
+		r.auxiliary		= ((a ^ 1 ^ result) & 0x10) != 0;
+		r.affectsCarry	= false;
+		SetZSP(r, result, w);
 		return r;
 	}
 
-	Result Dec(uint16_t a)
+	Result DEC(uint16_t a, bool word)
 	{
-		uint16_t result = static_cast<uint16_t>(a - 1);
+		const Width w = W(word);
+		const uint16_t result = static_cast<uint16_t>((a - 1) & w.mask);
 
 		Result r;
-		r.value = result;
-		r.zero = (result == 0);
-		r.sign = (result & 0x80) != 0;
-		r.overflow = ((a ^ 1) & (a ^ result) & 0x80) != 0;
-
+		r.value			= result;
+		r.overflow		= (a == w.sign);
+		r.auxiliary		= ((a ^ 1 ^ result) & 0x10) != 0;
+		r.affectsCarry	= false;
+		SetZSP(r, result, w);
 		return r;
 	}
 

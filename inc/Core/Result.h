@@ -13,5 +13,7 @@ struct Result
 	bool parity{};
 	bool auxiliary{};
 
+	bool affectsCarry{ true };
+
 	Result() = default;
 };

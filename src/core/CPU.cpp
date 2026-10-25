@@ -36,6 +36,7 @@ void CPU::Step()
 	if (m_haltFlag || m_memoryUnit.IsMemoryEmpty()) return;
 
 	if ((m_IR & 0xC0) == 0x00 && (m_IR & 0b111) < 6) ExecALU();
+	else if ((m_IR & 0xF0) == 0x40)					 ExecINCDEC();
 	else if ((m_IR & 0xF0) == 0xB0)					 ExecMOVImm();
 	else if ((m_IR & 0xFC) == 0x88)					 ExecMOVModRM();
 	else switch (m_IR)
@@ -116,6 +117,7 @@ void CPU::ExecMOVModRM()
 	DecodeModRM();
 	if (m_modRM.mod != 0b11)
 	{
+		Logger::AddInfoMessage(std::format("Unimplemented mod: {}", static_cast<uint8_t>(m_modRM.mod)));
 		return;
 	}
 
@@ -126,6 +128,26 @@ void CPU::ExecMOVModRM()
 	const uint8_t source		= toReg ? m_modRM.rm	: m_modRM.reg;
 
 	WriteReg(destination, ReadReg(source, word), word);
+	++m_IP;
+}
+
+void CPU::ExecINCDEC()
+{
+	const uint8_t selector = m_IR & 0b111;
+	const bool isDEC = ((m_IR >> 3) & 0b1) != 0;
+	Result r;
+
+	if (isDEC)
+	{
+		r = ALU::DEC(m_registerFile.Get16(static_cast<Reg16>(selector)), true);
+	}
+	else
+	{
+		r = ALU::INC(m_registerFile.Get16(static_cast<Reg16>(selector)), true);
+	}
+
+	m_statusRegister.UpdateFrom(r);
+	m_registerFile.Set16(static_cast<Reg16>(selector), r.value);
 	++m_IP;
 }
 

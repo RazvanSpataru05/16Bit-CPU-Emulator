@@ -12,7 +12,10 @@ void StatusRegister::Reset()
 
 void StatusRegister::UpdateFrom(const Result& result)
 {
-	m_carryFlag =			result.carry;
+	if (result.affectsCarry)
+	{
+		m_carryFlag =		result.carry;
+	}
 	m_overflowFlag =		result.overflow;
 	m_zeroFlag =			result.zero;
 	m_signFlag =			result.sign;

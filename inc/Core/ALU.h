@@ -11,8 +11,8 @@ namespace ALU
 	Result Add(uint16_t a, uint16_t b, bool carryIn, bool word);
 	Result Sub(uint16_t a, uint16_t b, bool borrowIn, bool word);
 
-	Result Inc(uint16_t a);
-	Result Dec(uint16_t a);
+	Result INC(uint16_t a, bool word);
+	Result DEC(uint16_t a, bool word);
 	Result Mul(uint16_t a, uint16_t b);
 
 	/* Logical operations */

@@ -31,6 +31,7 @@ public:
 	void ExecALU();
 	void ExecMOVImm();
 	void ExecMOVModRM();
+	void ExecINCDEC();
 	
 	void Reset();
 
