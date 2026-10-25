@@ -21,7 +21,7 @@ public:
 	CPU(CPU&&) = default;
 	CPU& operator=(CPU&&) = default;
 
-	uint20_t	PhysAddr()		const noexcept;
+	uint20_t	PhysAddr(uint16_t segment, uint16_t offset)		const noexcept;
 
 	uint8_t		Fetch8();
 	uint16_t	Fetch16();
@@ -60,13 +60,17 @@ private:
 	uint16_t ReadReg(uint8_t selector, bool word) const;
 	void WriteReg(uint8_t selector, uint16_t value, bool word);
 
+	uint16_t ReadStackWord(uint16_t stackPointer);
+
 	void ShortJump(int8_t offset);
+	void StackOperation(uint8_t selector, bool operation);
 
 	void ExecALU();
+	void ExecPushPop();
+	void ExecConditionedJump();
 	void ExecMOVImm();
 	void ExecMOVModRM();
 	void ExecINCDEC();
-	void ExecConditionedJump();
 
 	void DecodeModRM();
 

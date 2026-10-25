@@ -6,27 +6,27 @@ CPU::CPU(InterruptController& interruptController) :
 	Reset();
 }
 
-uint20_t CPU::PhysAddr() const noexcept
+uint20_t CPU::PhysAddr(uint16_t segment, uint16_t offset) const noexcept
 {
-	return uint20_t(static_cast<uint32_t>((m_registerFile.CS() << 4) + m_IP));
+	return uint20_t(static_cast<uint32_t>((segment << 4) + offset));
 }
 
 uint8_t CPU::Fetch8()
 {
 	++m_IP;
-	assert(m_memoryUnit[PhysAddr()].has_value());
-	return m_memoryUnit[PhysAddr()].value();
+	assert(m_memoryUnit[PhysAddr(m_registerFile.CS(), m_IP)].has_value());
+	return m_memoryUnit[PhysAddr(m_registerFile.CS(), m_IP)].value();
 }
 
 uint16_t CPU::Fetch16()
 {
 	++m_IP;
-	assert(m_memoryUnit[PhysAddr()].has_value());
-	uint8_t lo = m_memoryUnit[PhysAddr()].value();
+	assert(m_memoryUnit[PhysAddr(m_registerFile.CS(), m_IP)].has_value());
+	uint8_t lo = m_memoryUnit[PhysAddr(m_registerFile.CS(), m_IP)].value();
 	
 	++m_IP;
-	assert(m_memoryUnit[PhysAddr()].has_value());
-	uint8_t hi = m_memoryUnit[PhysAddr()].value();
+	assert(m_memoryUnit[PhysAddr(m_registerFile.CS(), m_IP)].has_value());
+	uint8_t hi = m_memoryUnit[PhysAddr(m_registerFile.CS(), m_IP)].value();
 
 	return (static_cast<uint16_t>(hi) << 8) | static_cast<uint16_t>(lo);
 }
@@ -34,10 +34,11 @@ uint16_t CPU::Fetch16()
 void CPU::Step()
 {
 	if (m_haltFlag || m_memoryUnit.IsMemoryEmpty() ||
-		!m_memoryUnit[PhysAddr()].has_value()) return;
+		!m_memoryUnit[PhysAddr(m_registerFile.CS(), m_IP)].has_value()) return;
 
 	if ((m_IR & 0xC0) == 0x00 && (m_IR & 0b111) < 6) ExecALU();
 	else if ((m_IR & 0xF0) == 0x40)					 ExecINCDEC();
+	else if ((m_IR & 0xF0) == 0x50)					 ExecPushPop();
 	else if ((m_IR & 0xF0) == 0x70)					 ExecConditionedJump();
 	else if ((m_IR & 0xF0) == 0xB0)					 ExecMOVImm();
 	else if ((m_IR & 0xFC) == 0x88)					 ExecMOVModRM();
@@ -120,11 +121,18 @@ void CPU::ExecALU()
 	++m_IP;
 }
 
+void CPU::ExecPushPop()
+{
+	const uint8_t selector = m_IR & 0b111;
+	const bool operation = ((m_IR >> 3) & 1) == 0; // PUSH = 0 ; POP = 1
+	StackOperation(selector, operation);
+	
+}
+
 void CPU::ExecMOVImm()
 {
 	const bool word = (m_IR >> 3) & 1; // word == 1 -> full reg / word == 0 -> Hi / Lo
 	const uint8_t selector = m_IR & 0b111;
-	std::cout << std::hex << static_cast<int>(selector);
 
 	if (word)
 	{
@@ -311,7 +319,7 @@ void CPU::SetInstructionRegister()
 		m_haltFlag = true;
 		return;
 	}
-	m_IR = m_memoryUnit[PhysAddr()].value();
+	m_IR = m_memoryUnit[PhysAddr(m_registerFile.CS(), m_IP)].value();
 }
 
 void CPU::UpdateIR()
@@ -319,9 +327,9 @@ void CPU::UpdateIR()
 	if (m_haltFlag) return;
 
 	//assert(m_memoryUnit[PhysAddr()].has_value());
-	if (m_memoryUnit[PhysAddr()].has_value())
+	if (m_memoryUnit[PhysAddr(m_registerFile.CS(), m_IP)].has_value())
 	{
-		m_IR = m_memoryUnit[PhysAddr()].value();
+		m_IR = m_memoryUnit[PhysAddr(m_registerFile.CS(), m_IP)].value();
 	}
 	else
 	{
@@ -386,9 +394,43 @@ void CPU::WriteReg(uint8_t selector, uint16_t value, bool word)
 	m_registerFile.SetGP8(static_cast<Reg8>(selector), static_cast<uint8_t>(value));
 }
 
+uint16_t CPU::ReadStackWord(uint16_t stackPointer)
+{
+	const uint8_t lo = m_memoryUnit[PhysAddr(m_registerFile.SS(), stackPointer)].value();
+	const uint8_t hi = m_memoryUnit[PhysAddr(m_registerFile.SS(), stackPointer + 1)].value();
+
+	return static_cast<uint16_t>((hi << 8) | lo);
+}
+
 void CPU::ShortJump(int8_t offset)
 {
 	m_IP = m_IP + offset;
+}
+
+void CPU::StackOperation(uint8_t selector, bool operation)
+{
+	if (operation)	// PUSH
+	{
+
+		const uint16_t sp = static_cast<uint16_t>(m_registerFile.SP() - 2);
+		m_registerFile.SetGP16(Reg16::SP, sp);
+
+		const uint16_t value = m_registerFile.Get16(static_cast<Reg16>(selector));
+
+		const uint8_t lo = static_cast<uint8_t>(value & 0xFF);
+		const uint8_t hi = static_cast<uint8_t>(value >> 8);
+
+		m_memoryUnit[PhysAddr(m_registerFile.SS(), sp)] = lo;
+		m_memoryUnit[PhysAddr(m_registerFile.SS(), static_cast<uint16_t>(sp + 1))] = hi;
+	}
+	else			// POP
+	{
+		const uint16_t sp = static_cast<uint16_t>(m_registerFile.SP());
+		const uint16_t word = ReadStackWord(sp);
+		m_registerFile.SetGP16(Reg16::SP, sp + 2);
+		m_registerFile.SetGP16(static_cast<Reg16>(selector), word);
+	}
+	++m_IP;
 }
 
 uint16_t CPU::ComputeAddress(uint16_t address)

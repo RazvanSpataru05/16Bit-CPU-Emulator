@@ -25,6 +25,7 @@ public:
 	constexpr uint20_t& operator=(uint32_t rhs) { m_value = rhs & Utils::Constants::MASK_20_BIT; return *this; };
 	constexpr bool operator==(uint20_t rhs) const { return m_value == rhs.index(); };
 	uint20_t operator+(uint32_t rhs);
+	uint20_t operator-(uint32_t rhs);
 
 private:
 	uint32_t m_value;

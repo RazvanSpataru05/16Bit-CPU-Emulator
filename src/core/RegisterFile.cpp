@@ -30,7 +30,7 @@ void RegisterFile::Reset()
 	std::fill(m_generalPurproseReg.begin(), m_generalPurproseReg.end(), 0x0000);
 	std::fill(m_segmentReg.begin(), m_segmentReg.end(), 0x0000);
 
-	m_generalPurproseReg[SP_SELECTOR] = 0xFFFF;
+	m_generalPurproseReg[SP_SELECTOR] = 0x0100;
 }
 
 uint8_t RegisterFile::Get8(Reg8 reg) const noexcept
@@ -74,6 +74,16 @@ void RegisterFile::SetGP16(Reg16 selector, uint16_t value)
 void RegisterFile::SetSEG(SegmentReg reg, uint16_t value)
 {
 	m_segmentReg[static_cast<size_t>(reg)] = value;
+}
+
+void RegisterFile::IncrementSP()
+{
+	++m_segmentReg[SP_SELECTOR];
+}
+
+void RegisterFile::DecrementSP()
+{
+	--m_segmentReg[SP_SELECTOR];
 }
 
 uint8_t RegisterFile::AL() const noexcept

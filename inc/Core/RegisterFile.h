@@ -45,6 +45,9 @@ public:
 
 	void SetSEG(SegmentReg reg, uint16_t value);
 
+	void IncrementSP();
+	void DecrementSP();
+
 	// const getters GP registers (lo part)
 	uint8_t AL() const noexcept;
 	uint8_t BL() const noexcept;

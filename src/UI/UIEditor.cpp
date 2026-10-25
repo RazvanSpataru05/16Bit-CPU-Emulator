@@ -98,7 +98,8 @@ namespace UIEditor
 
 		ImGui::TextUnformatted(
 			Utils::String::TextFormat("CS:IP = {:04X}:{:04X} (Physical: 0x{:05X})",
-				regFile.CS(), cpu.GetIP(), cpu.PhysAddr().index()).c_str());
+				regFile.CS(), cpu.GetIP(), 
+				cpu.PhysAddr(regFile.CS(), cpu.GetIP()).index()).c_str());
 		ImGui::TextUnformatted(
 			Utils::String::TextFormat("Instruction Register: 0x{:04X}", cpu.GetIR()).c_str());
 		ImGui::Separator();
@@ -281,6 +282,11 @@ namespace UIEditor
 				if (index == emulator.GetCPU().GetIP())
 				{
 					ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, IM_COL32(0, 0, 255, 255));
+				}
+
+				if (index == emulator.GetCPU().GetRegisterFile().Get16(Reg16::SP))
+				{
+					ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, IM_COL32(0, 255, 0, 255));
 				}
 
 				//if (emulator.GetCPU().IsReadingInstruction()
