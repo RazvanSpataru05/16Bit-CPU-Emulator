@@ -253,12 +253,11 @@ void CPU::ExecConditionedJump()
 			m_statusRegister.Zero()) ^ negative;
 		break;
 	}
+	}
 
 	if (result)
 	{
 		ShortJump(offset);
-	}
-
 	}
 }
 
