@@ -1,19 +1,14 @@
 #pragma once
 
+#include "Utils/Constants.h"
+
 #include <cstdint>
 
 struct Result
 {
 	uint16_t value{};
-
-	bool carry{};
-	bool overflow{};
-	bool zero{};
-	bool sign{};
-	bool parity{};
-	bool auxiliary{};
-
-	bool affectsCarry{ true };
+	uint16_t flags{};
+	uint16_t affected = Utils::Constants::STATUS_MASK;
 
 	Result() = default;
 };

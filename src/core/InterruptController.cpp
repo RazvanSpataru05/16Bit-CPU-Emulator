@@ -17,13 +17,3 @@ std::optional<uint16_t> InterruptController::PollPendingInterrupt()
 	}
 	return std::nullopt;
 }
-
-bool InterruptController::GetInterruptFlag() const noexcept
-{
-	return m_interruptFlag;
-}
-
-void InterruptController::EnableInterrupts(bool enabled) noexcept
-{
-	m_interruptFlag = enabled;
-}

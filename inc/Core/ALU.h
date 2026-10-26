@@ -2,6 +2,8 @@
 
 #include "Core/Result.h"
 
+#include "Utils/Constants.h"
+
 #include <bit>
 
 namespace ALU
@@ -13,7 +15,6 @@ namespace ALU
 
 	Result INC(uint16_t a, bool word);
 	Result DEC(uint16_t a, bool word);
-	Result Mul(uint16_t a, uint16_t b);
 
 	/* Logical operations */
 	Result AND(uint16_t a, uint16_t b, bool word);

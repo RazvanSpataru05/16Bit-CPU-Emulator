@@ -1,84 +1,74 @@
 #include "StatusRegister.h"
 
+StatusRegister::StatusRegister()
+{
+	Reset();
+}
+
 void StatusRegister::Reset()
 {
-	m_carryFlag =			false;
-	m_overflowFlag =		false;
-	m_zeroFlag =			false;
-	m_signFlag =			false;
-	m_parityFlag =			false;
-	m_auxiliaryCarryFlag =	false;
+	m_flags = Utils::Constants::FLAGS_DEFAULT_VALUE;
 }
 
-void StatusRegister::UpdateFrom(const Result& result)
+void StatusRegister::UpdateFrom(const Result& r) noexcept
 {
-	if (result.affectsCarry)
-	{
-		m_carryFlag =		result.carry;
-	}
-	m_overflowFlag =		result.overflow;
-	m_zeroFlag =			result.zero;
-	m_signFlag =			result.sign;
-	m_parityFlag =			result.parity;
-	m_auxiliaryCarryFlag =	result.auxiliary;
+	m_flags = static_cast<uint16_t>((m_flags & ~r.affected) | (r.flags & r.affected));
+
+	std::bitset<16> flags(m_flags);
+	std::cout << "Flags: " << flags << "\n";
 }
 
-bool StatusRegister::Zero() const noexcept
+uint16_t StatusRegister::GetFlags() const noexcept
 {
-	return m_zeroFlag;
+	return m_flags;
 }
 
-bool StatusRegister::Sign() const noexcept
+uint8_t StatusRegister::Zero() const noexcept
 {
-	return m_signFlag;
+	return (m_flags & Utils::Constants::ZF_MASK) != 0;
 }
 
-bool StatusRegister::Carry() const noexcept
+uint8_t StatusRegister::Sign() const noexcept
 {
-	return m_carryFlag;
+	return (m_flags & Utils::Constants::SF_MASK) != 0;
 }
 
-bool StatusRegister::Overflow() const noexcept
+uint8_t StatusRegister::Carry() const noexcept
 {
-	return m_overflowFlag;
+	return (m_flags & Utils::Constants::CF_MASK) != 0;
 }
 
-bool StatusRegister::Parity() const noexcept
+uint8_t StatusRegister::Overflow() const noexcept
 {
-	return m_parityFlag;
+	return (m_flags & Utils::Constants::OF_MASK) != 0;
 }
 
-bool StatusRegister::Auxiliary() const noexcept
+uint8_t StatusRegister::Parity() const noexcept
 {
-	return m_auxiliaryCarryFlag;
+	return (m_flags & Utils::Constants::PF_MASK) != 0;
 }
 
-bool& StatusRegister::Zero()
+uint8_t StatusRegister::Auxiliary() const noexcept
 {
-	return m_zeroFlag;
+	return (m_flags & Utils::Constants::AF_MASK) != 0;
 }
 
-bool& StatusRegister::Sign()
+uint8_t StatusRegister::Trap() const noexcept
 {
-	return m_signFlag;
+	return (m_flags & Utils::Constants::TF_MASK) != 0;
 }
 
-bool& StatusRegister::Carry()
+uint8_t StatusRegister::Interrupt() const noexcept
 {
-	return m_carryFlag;
+	return (m_flags & Utils::Constants::IF_MASK) != 0;
 }
 
-bool& StatusRegister::Overflow()
+uint8_t StatusRegister::Directional() const noexcept
 {
-	return m_overflowFlag;
+	return (m_flags & Utils::Constants::DF_MASK) != 0;
 }
 
-bool& StatusRegister::Parity()
+void StatusRegister::DisableInterrupts() noexcept
 {
-	return m_parityFlag;
-}
-
-bool& StatusRegister::Auxiliary()
-{
-	return m_auxiliaryCarryFlag;
+	m_flags &= ~(Utils::Constants::IF_MASK);
 }

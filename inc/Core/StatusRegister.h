@@ -2,35 +2,36 @@
 
 #include "Core/Result.h"
 
+#include "Utils/Constants.h"
+
+#include <iostream>
+#include <bitset>
+
 class StatusRegister
 {
 public:
-	StatusRegister() = default;
+	StatusRegister();
 
 	void Reset();
 
-	void UpdateFrom(const Result& result);
+	void UpdateFrom(const Result& r) noexcept;
 
-	bool Carry()		const noexcept;
-	bool Overflow()		const noexcept;
-	bool Zero()			const noexcept;
-	bool Sign()			const noexcept;
-	bool Parity()		const noexcept;
-	bool Auxiliary()	const noexcept;
+	[[nodiscard]]	uint16_t GetFlags()			const noexcept;
 
-	bool& Carry();
-	bool& Overflow();
-	bool& Zero();
-	bool& Sign();
-	bool& Parity();
-	bool& Auxiliary();
+	[[nodiscard]]	uint8_t Carry()				const noexcept;
+	[[nodiscard]]	uint8_t Overflow()			const noexcept;
+	[[nodiscard]]	uint8_t Zero()				const noexcept;
+	[[nodiscard]]	uint8_t Sign()				const noexcept;
+	[[nodiscard]]	uint8_t Parity()			const noexcept;
+	[[nodiscard]]	uint8_t Auxiliary()			const noexcept;
+
+	[[nodiscard]]	uint8_t Trap()				const noexcept;
+	[[nodiscard]]	uint8_t Interrupt()			const noexcept;
+	[[nodiscard]]	uint8_t Directional()		const noexcept;
+
+	void DisableInterrupts() noexcept;
 
 private:
 
-	bool m_carryFlag{};
-	bool m_overflowFlag{};
-	bool m_zeroFlag{};
-	bool m_signFlag{};
-	bool m_parityFlag{};
-	bool m_auxiliaryCarryFlag{};
+	uint16_t m_flags{};
 };

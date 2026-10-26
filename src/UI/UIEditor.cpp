@@ -88,8 +88,8 @@ namespace UIEditor
 		ImGui::SetNextWindowPos(Utils::UI::CalcCPUStatePanelPos(), ImGuiCond_Always);
 		ImGui::SetNextWindowSize(Utils::UI::CalcCPUStatePanelSize(), ImGuiCond_Always);
 		const auto windowFlags = ImGuiWindowFlags_NoResize |
-			ImGuiWindowFlags_NoMove |
-			ImGuiWindowFlags_NoCollapse;
+								 ImGuiWindowFlags_NoMove |
+								 ImGuiWindowFlags_NoCollapse;
 
 		const auto& regFile = cpu.GetRegisterFile();
 		const auto& segmentReg = cpu.GetStatusRegister();
@@ -140,21 +140,38 @@ namespace UIEditor
 
 		ImGui::Separator();
 
-		ImGui::TextUnformatted("\n\nFlags\n\n");
-		const struct { const char* name; bool value; } flagList[] = {
-			{"Carry Flag",		segmentReg.Carry() },
-			{"Parity Flag",		segmentReg.Parity() },
-			{"Auxiliary Flag",	segmentReg.Auxiliary() },
-			{"Zero Flag",		segmentReg.Zero() },
-			{"Sign Flag",		segmentReg.Sign() },
-			{"Overflow Flag",	segmentReg.Overflow() },
-			{"Interrupt Flag",	cpu.GetInterruptController().GetInterruptFlag() },
+		ImGui::TextUnformatted("\nFlags Register\n");
+		ImGui::TextUnformatted("Status Flags");
+		ImGui::SameLine(kSecondColumnX);
+		ImGui::TextUnformatted("Control Flags");
+		ImGui::Text("\n");
+
+		const struct { const char* name; uint8_t value; } statusFlags[] = {
+			{"Carry Flag",			segmentReg.Carry() },
+			{"Parity Flag",			segmentReg.Parity() },
+			{"Auxiliary Flag",		segmentReg.Auxiliary() },
+			{"Zero Flag",			segmentReg.Zero() },
+			{"Sign Flag",			segmentReg.Sign() },
+			{"Overflow Flag",		segmentReg.Overflow() },
 		};
 
-		for (size_t i = 0; i < std::size(flagList); ++i)
+		const struct { const char* name; uint8_t value; } controlFlags[] = {
+			{"Trap Flag",			segmentReg.Trap()},
+			{"Interrupt Flag",		segmentReg.Interrupt()},
+			{"Directional Flag",	segmentReg.Directional()}
+		};
+
+		for (size_t i = 0; i < std::size(statusFlags); ++i)
 		{
 			ImGui::TextUnformatted(Utils::String::TextFormat("{}: {}",
-				flagList[i].name, flagList[i].value ? "true" : "false").c_str());
+				statusFlags[i].name, statusFlags[i].value == 1u ? "true" : "false").c_str());
+
+			if (i < std::size(controlFlags))
+			{
+				ImGui::SameLine(kSecondColumnX);
+				ImGui::TextUnformatted(Utils::String::TextFormat("{}: {}",
+					controlFlags[i].name, controlFlags[i].value == 1u ? "true" : "false").c_str());
+			}
 		}
 
 		ImGui::TextUnformatted(Utils::String::TextFormat("Halted: {}",
@@ -459,7 +476,9 @@ namespace UIEditor
 				tab = SelectedTab::ERROR_LIST;
 			}
 
-			const auto consoleTabFlag = Utils::UI::ConsoleListTab(tab) ? ImGuiTabItemFlags_None : ImGuiTabItemFlags_SetSelected;
+			const auto consoleTabFlag = Utils::UI::ConsoleListTab(tab) ?
+										ImGuiTabItemFlags_None :
+										ImGuiTabItemFlags_SetSelected;
 			if (ImGui::BeginTabItem("Console", nullptr, consoleTabFlag))
 			{
 				if (ImGui::IsItemClicked())
@@ -556,10 +575,9 @@ namespace UIEditor
 		if (ImGui::InputText("##consoleInput", consoleBuffer, IM_ARRAYSIZE(consoleBuffer), inputFlags))
 		{
 			const std::string line{ consoleBuffer };
-			if (emulator.GetInterruptController().GetInterruptFlag())
+			if (emulator.GetCPU().GetStatusRegister().Interrupt())
 			{
-				//executeAuto = false;
-				emulator.GetInterruptController().EnableInterrupts(false);
+				emulator.GetCPU().GetStatusRegister().DisableInterrupts();
 				emulator.GetInterruptController().RaiseInterrupt(KEYBOARD_INTERRUPT_LINE);
 
 				for (uint16_t key : line)

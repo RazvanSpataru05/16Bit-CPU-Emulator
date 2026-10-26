@@ -274,7 +274,6 @@ void CPU::Reset()
 {
 	m_registerFile.Reset();
 	m_statusRegister.Reset();
-	m_interruptController.EnableInterrupts(false);
 	m_haltFlag = false;
 
 	m_IP = m_memoryUnit.GetStartAddress();
@@ -399,7 +398,17 @@ const RegisterFile& CPU::GetRegisterFile() const noexcept
 	return m_registerFile;
 }
 
+RegisterFile& CPU::GetRegisterFile() noexcept
+{
+	return m_registerFile;
+}
+
 const StatusRegister& CPU::GetStatusRegister() const noexcept
+{
+	return m_statusRegister;
+}
+
+StatusRegister& CPU::GetStatusRegister() noexcept
 {
 	return m_statusRegister;
 }

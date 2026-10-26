@@ -15,17 +15,34 @@ namespace ALU
 			return word ? Width{ 0xFFFF, 0x8000 } : Width{ 0xFF, 0x80 };
 		}
 
+		void SetFlag(Result& r, uint16_t mask, bool condition)
+		{
+			if (condition)
+			{
+				r.flags |= mask;
+			}
+			else
+			{
+				r.flags &= ~mask;
+			}
+		}
+
 		void SetZSP(Result& r, uint32_t result, Width w)
 		{
-			r.zero		= result == 0;
-			r.sign		= (result & w.sign) != 0;
-			r.parity	= (std::popcount(static_cast<uint8_t>(result)) % 2) == 0;
+			const bool zeroCondition =		result == 0;
+			const bool signCondition =		(result & w.sign) != 0;
+			const bool parityCondition =	(std::popcount(static_cast<uint8_t>(result)) % 2) == 0;
+
+			SetFlag(r, Utils::Constants::ZF_MASK, zeroCondition);
+			SetFlag(r, Utils::Constants::SF_MASK, signCondition);
+			SetFlag(r, Utils::Constants::PF_MASK, parityCondition);
 		}
 
 		void SetLogicFlags(Result& r, uint32_t result, Width w)
 		{
-			r.carry = false;
-			r.overflow = false;
+			r.affected = Utils::Constants::STATUS_MASK & ~Utils::Constants::AF_MASK;
+			r.flags &= ~(Utils::Constants::CF_MASK);
+			r.flags &= ~(Utils::Constants::OF_MASK);
 			SetZSP(r, result, w);
 		}
 	}
@@ -53,9 +70,14 @@ namespace ALU
 		
 		Result r;
 		r.value		= result;
-		r.carry		= sum > w.mask;
-		r.overflow	= ((a ^ result) & (b ^ result) & w.sign) != 0;
-		r.auxiliary = ((a ^ b ^ result) & 0x10) != 0;
+
+		const bool carryCondition = sum > w.mask;
+		const bool overflowCondition = ((a ^ result) & (b ^ result) & w.sign) != 0;
+		const bool auxiliaryCondition = ((a ^ b ^ result) & 0x10) != 0;
+
+		SetFlag(r, Utils::Constants::CF_MASK, carryCondition);
+		SetFlag(r, Utils::Constants::OF_MASK, overflowCondition);
+		SetFlag(r, Utils::Constants::AF_MASK, auxiliaryCondition);
 		SetZSP(r, result, w);
 
 		return r;
@@ -65,13 +87,18 @@ namespace ALU
 	{
 		const Width w = W(word);
 		const uint32_t bw = borrowIn ? 1u : 0u;
-		const uint16_t result = static_cast<uint16_t>(static_cast<uint32_t>(a) - b - bw & w.mask);
+		const uint16_t result = static_cast<uint16_t>((static_cast<uint32_t>(a) - b - bw) & w.mask);
 
 		Result r;
-		r.value		= result;
-		r.carry		= static_cast<uint32_t>(a) < static_cast<uint32_t>(b) + bw;
-		r.overflow	= ((a ^ b) & (a ^ result) & w.sign) != 0;
-		r.auxiliary = ((a ^ b ^ result) & 0x10) != 0;
+		r.value	= result;
+
+		const bool carryCondition = static_cast<uint32_t>(a) < static_cast<uint32_t>(b) + bw;
+		const bool overflowCondition = ((a ^ b) & (a ^ result) & w.sign) != 0;
+		const bool auxiliaryCondition = ((a ^ b ^ result) & 0x10) != 0;
+
+		SetFlag(r, Utils::Constants::CF_MASK, carryCondition);
+		SetFlag(r, Utils::Constants::OF_MASK, overflowCondition);
+		SetFlag(r, Utils::Constants::AF_MASK, auxiliaryCondition);
 		SetZSP(r, result, w);
 
 		return r;
@@ -83,10 +110,14 @@ namespace ALU
 		const uint16_t result = static_cast<uint16_t>((a + 1) & w.mask);
 
 		Result r;
-		r.value			= result;
-		r.overflow		= (result == w.sign);
-		r.auxiliary		= ((a ^ 1 ^ result) & 0x10) != 0;
-		r.affectsCarry	= false;
+		r.value	= result;
+		r.affected = Utils::Constants::STATUS_MASK & ~Utils::Constants::CF_MASK;
+
+		const bool overflowCondition = (result == w.sign);
+		const bool auxiliaryCondition = ((a ^ 1 ^ result) & 0x10) != 0;
+
+		SetFlag(r, Utils::Constants::OF_MASK, overflowCondition);
+		SetFlag(r, Utils::Constants::AF_MASK, auxiliaryCondition);
 		SetZSP(r, result, w);
 		return r;
 	}
@@ -97,26 +128,15 @@ namespace ALU
 		const uint16_t result = static_cast<uint16_t>((a - 1) & w.mask);
 
 		Result r;
-		r.value			= result;
-		r.overflow		= (a == w.sign);
-		r.auxiliary		= ((a ^ 1 ^ result) & 0x10) != 0;
-		r.affectsCarry	= false;
+		r.value	= result;
+		r.affected = Utils::Constants::STATUS_MASK & ~Utils::Constants::CF_MASK;
+
+		const bool overflowCondition = (a == w.sign);
+		const bool auxiliaryCondition = ((a ^ 1 ^ result) & 0x10) != 0;
+
+		SetFlag(r, Utils::Constants::OF_MASK, overflowCondition);
+		SetFlag(r, Utils::Constants::AF_MASK, auxiliaryCondition);
 		SetZSP(r, result, w);
-		return r;
-	}
-
-	Result Mul(uint16_t a, uint16_t b)
-	{
-		uint16_t prod = a * b;
-		uint16_t result = static_cast<uint16_t>(prod);
-
-		Result r;
-		r.value = result;
-		r.carry = prod > 0xFF;
-		r.zero = (result == 0);
-		r.sign = (result & 0x80) != 0;
-		r.overflow = false; // no explicit definiton for overflow flag without hardware native support
-
 		return r;
 	}
 
@@ -176,7 +196,9 @@ namespace ALU
 
 		r.value = result;
 		SetLogicFlags(r, result, w);
-		r.carry = (a & w.mask) != 0;
+
+		const bool carryCondition = (a & w.sign) != 0;
+		SetFlag(r, Utils::Constants::CF_MASK, carryCondition);
 
 		return r;
 	}
@@ -189,7 +211,9 @@ namespace ALU
 
 		r.value = result;
 		SetLogicFlags(r, result, w);
-		r.carry = (a & 0x01) != 0;
+
+		const bool carryCondition = (a & 0x01) != 0;
+		SetFlag(r, Utils::Constants::CF_MASK, carryCondition);
 
 		return r;
 	}

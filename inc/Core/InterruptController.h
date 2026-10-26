@@ -19,14 +19,10 @@ public:
 	std::optional<uint16_t> PollPendingInterrupt();
 	void RaiseInterrupt(uint16_t line);
 
-	bool GetInterruptFlag()				const noexcept;
-	void EnableInterrupts(bool enabled) noexcept;
-
 private:
 	InterruptController(const InterruptController&) = delete;
 	InterruptController& operator=(const InterruptController&) = delete;
 
 private:
 	std::array<bool, INTERRUPT_LINE_COUNT> m_pending{};
-	bool m_interruptFlag{ false };
 };

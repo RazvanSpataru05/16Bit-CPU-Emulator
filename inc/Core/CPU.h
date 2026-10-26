@@ -54,7 +54,9 @@ public:
 	[[nodiscard]] InterruptController& GetInterruptController()			noexcept;
 
 	[[nodiscard]] const RegisterFile& GetRegisterFile()					const noexcept;
+	[[nodiscard]] RegisterFile& GetRegisterFile()						noexcept;
 	[[nodiscard]] const StatusRegister& GetStatusRegister()				const noexcept;
+	[[nodiscard]] StatusRegister& GetStatusRegister()					noexcept;
 
 private:
 	uint16_t ReadReg(uint8_t selector, bool word) const;
