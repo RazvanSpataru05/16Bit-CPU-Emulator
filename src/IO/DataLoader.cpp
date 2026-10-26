@@ -36,11 +36,6 @@ std::vector<uint8_t> DataLoader::ParseHexValues(const std::string& code)
 		bytes.push_back(static_cast<uint8_t>(temp));
 	}
 
-	for (auto byte : bytes)
-	{
-		std::cout << std::hex << static_cast<int>(byte) << " ";
-	}
-
 	return bytes;
 }
 

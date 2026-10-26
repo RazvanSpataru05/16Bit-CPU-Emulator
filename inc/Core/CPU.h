@@ -68,6 +68,7 @@ private:
 	void ExecALU();
 	void ExecPushPop();
 	void ExecConditionedJump();
+	void ExecExchange();
 	void ExecMOVImm();
 	void ExecMOVModRM();
 	void ExecINCDEC();

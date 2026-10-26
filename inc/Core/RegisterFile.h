@@ -37,8 +37,12 @@ public:
 
 	void Reset();
 
+	// const ref getters for 8-bit / 16-bit
 	[[nodiscard]]	uint8_t		Get8(Reg8 reg)			const noexcept;
 	[[nodiscard]]	uint16_t	Get16(Reg16 reg)		const noexcept;
+
+	// non-const ref getters for 16-bit
+	[[nodiscard]] uint16_t&		Get16(Reg16 reg)			noexcept;
 	
 	void SetGP8(Reg8 reg, uint8_t value);
 	void SetGP16(Reg16 reg, uint16_t value);

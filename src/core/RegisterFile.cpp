@@ -51,6 +51,11 @@ uint16_t RegisterFile::Get16(Reg16 reg) const noexcept
 	return m_generalPurproseReg[static_cast<size_t>(reg)];
 }
 
+uint16_t& RegisterFile::Get16(Reg16 reg) noexcept
+{
+	return m_generalPurproseReg[static_cast<size_t>(reg)];
+}
+
 void RegisterFile::SetGP8(Reg8 reg, uint8_t value)
 {
 	size_t idx = static_cast<size_t>(reg);

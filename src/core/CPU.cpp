@@ -37,40 +37,57 @@ void CPU::Step()
 		!m_memoryUnit[PhysAddr(m_registerFile.CS(), m_IP)].has_value()) return;
 
 	if ((m_IR & 0xC0) == 0x00 && (m_IR & 0b111) < 6) ExecALU();
-	else if ((m_IR & 0xF0) == 0x40)					 ExecINCDEC();
-	else if ((m_IR & 0xF0) == 0x50)					 ExecPushPop();
-	else if ((m_IR & 0xF0) == 0x70)					 ExecConditionedJump();
-	else if ((m_IR & 0xF0) == 0xB0)					 ExecMOVImm();
-	else if ((m_IR & 0xFC) == 0x88)					 ExecMOVModRM();
+	/*
+	^	opcodes:	00 -> 05 (ADD); 
+					08 -> 0D (OR);
+					10 -> 15 (ADC);
+					18 -> 1D (SBB);
+					20 -> 25 (AND);
+					28 -> 2D (SUB);
+					30 -> 35 (XOR);
+					38 -> 3D (CMP);
+		total: 48 instructions
+	*/
+	else if ((m_IR & 0xF0) == 0x40)					 ExecINCDEC(); // opcodes: 40 -> 4F (16 instr)
+	else if ((m_IR & 0xF0) == 0x50)					 ExecPushPop(); // opcodes: 50 -> 5F (16 instr) 
+	// opcodes 60-6f are undefined 
+	else if ((m_IR & 0xF0) == 0x70)					 ExecConditionedJump(); // opcodes: 70 -> 7F (16 instr)
+	else if ((m_IR & 0xF8) == 0x90)					 ExecExchange();		// opcodes: 90 -> 97 (8 instr)
+	else if ((m_IR & 0xF0) == 0xB0)					 ExecMOVImm();			// opcodes: B0 -> BF (16 instr)
+	else if ((m_IR & 0xFC) == 0x88)					 ExecMOVModRM();		// opcodes: 88 -> 8B (4 instr)
 	else switch (m_IR)
 	{
-	case 0x90: break;	// NOP 1by
 	case 0xE9:			// JMP Jv (Near jump)
 	{
-		int16_t offset = static_cast<int16_t>(Fetch16());
+		const int16_t offset = static_cast<int16_t>(Fetch16());
 		++m_IP;
 		m_IP = static_cast<uint16_t>(m_IP + offset);
 		break;
 	}
 	case 0xEA:			// JMP Ap (Far jump)
 	{
-		uint16_t offset = Fetch16();
-		uint16_t segment = Fetch16();
+		const uint16_t offset = Fetch16();
+		const uint16_t segment = Fetch16();
 		m_registerFile.SetSEG(SegmentReg::CS, segment);
 		m_IP = offset;
 		break;
 	}
 	case 0xEB:			// JMP Jb (Short jump)
 	{
-		int8_t offset = static_cast<int8_t>(Fetch8());
+		const int8_t offset = static_cast<int8_t>(Fetch8());
 		++m_IP;
 		m_IP = static_cast<uint16_t>(m_IP + offset);
 		break;
 	}
 
-	case 0xF4: m_haltFlag = true; break; // HLT 1by
+	case 0xF4: // HLT 1by
+	{
+		m_haltFlag = true;
+		break;
+	}
 	default:
 		Logger::AddInfoMessage(std::format("Unimplemented opcode: {:02X}", m_IR));
+		++m_IP;
 		break;
 	}
 	UpdateIR();
@@ -85,7 +102,8 @@ void CPU::ExecALU()
 		DecodeModRM();
 		if (m_modRM.mod != 0b11) // NOT reg-reg
 		{
-			Logger::AddInfoMessage(std::format("Unimplemented mod: {}", static_cast<uint8_t>(m_modRM.mod)));
+			Logger::AddInfoMessage(std::format("Unimplemented mod: {}",
+				static_cast<uint8_t>(m_modRM.mod)));
 		}
 
 		const bool word		= (form & 0b1) != 0;	// bit 1 of opcode, word = 16-bits, else 8-bits
@@ -242,6 +260,14 @@ void CPU::ExecConditionedJump()
 	}
 
 	}
+}
+
+void CPU::ExecExchange()
+{
+	const uint8_t selector = m_IR & 0b111;
+	std::swap(m_registerFile.AX(),
+		m_registerFile.Get16(static_cast<Reg16>(selector)));
+	++m_IP;
 }
 
 void CPU::Reset()
