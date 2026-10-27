@@ -66,6 +66,10 @@ private:
 
 	void ShortJump(int8_t offset);
 
+	/* Stack Helpers */
+	void Push16(uint16_t value);
+	uint16_t Pop16();
+
 	template<typename RegType>
 	void StackOperation(RegType selector, bool isPush);
 
@@ -76,7 +80,10 @@ private:
 	void ExecConditionedJump();
 	void ExecExchange();
 	void ExecStoreRegIntoFlags();
+	void ExecConvert();
 	void ExecMOVImm();
+	void ExecRet();
+	void ExecRetFar();
 	void ExecMOVModRM();
 	void ExecINCDEC();
 
@@ -100,5 +107,6 @@ private:
 	ModRM m_modRM;
 
 	bool m_haltFlag{ false };
+	bool m_TESTPin{ false };
 };
 

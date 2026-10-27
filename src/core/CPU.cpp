@@ -22,13 +22,13 @@ uint16_t CPU::Fetch16()
 {
 	++m_IP;
 	assert(m_memoryUnit[PhysAddr(m_registerFile.CS(), m_IP)].has_value());
-	uint8_t lo = m_memoryUnit[PhysAddr(m_registerFile.CS(), m_IP)].value();
+	const uint8_t lo = m_memoryUnit[PhysAddr(m_registerFile.CS(), m_IP)].value();
 	
 	++m_IP;
 	assert(m_memoryUnit[PhysAddr(m_registerFile.CS(), m_IP)].has_value());
-	uint8_t hi = m_memoryUnit[PhysAddr(m_registerFile.CS(), m_IP)].value();
+	const uint8_t hi = m_memoryUnit[PhysAddr(m_registerFile.CS(), m_IP)].value();
 
-	return (static_cast<uint16_t>(hi) << 8) | static_cast<uint16_t>(lo);
+	return static_cast<uint16_t>((hi << 8) | lo);
 }
 
 void CPU::Step()
@@ -53,13 +53,36 @@ void CPU::Step()
 	else if ((m_IR & 0xF0) == 0x50)					 ExecPushPopGP(); // opcodes: 50 -> 5F (16 instr) 
 	// opcodes 60-6f are undefined 
 	else if ((m_IR & 0xF0) == 0x70)					 ExecConditionedJump(); // opcodes: 70 -> 7F (16 instr)
+	else if ((m_IR & 0xFC) == 0x88)					 ExecMOVModRM();		// opcodes: 88 -> 8B (4 instr)
 	else if ((m_IR & 0xF8) == 0x90)					 ExecExchange();		// opcodes: 90 -> 97 (8 instr)
+	else if ((m_IR & 0xFE) == 0x98)					 ExecConvert();			// opcodes: 98, 99 (CBW, CWD)
 	else if ((m_IR & 0xFE) == 0x9C)					 ExecPushPopFlags();	// opcodes: 9C, 9D (PUSHF, POPF) 
 	else if ((m_IR & 0xFE) == 0x9E)					 ExecStoreRegIntoFlags(); // opcodes: 9E, 9F (SAHF, LAHF)
 	else if ((m_IR & 0xF0) == 0xB0)					 ExecMOVImm();			// opcodes: B0 -> BF (16 instr)
-	else if ((m_IR & 0xFC) == 0x88)					 ExecMOVModRM();		// opcodes: 88 -> 8B (4 instr)
+	else if ((m_IR & 0xFE) == 0xC2)					 ExecRet();				// opcodes: C2, C3 (RET Iw, RET)
+	else if ((m_IR & 0xFE) == 0xCA)					 ExecRetFar();			// opcodes: CA, CB (RETF Iw, RETF)
 	else switch (m_IR)
 	{
+	case 0x9A:			// CALL Ap (Address pointer)
+	{
+		const uint16_t segment = Fetch16();
+		const uint16_t offset = Fetch16();
+		++m_IP;
+
+		Push16(m_registerFile.CS());
+		Push16(m_IP);
+
+		m_IP = offset;
+		m_registerFile.CS() = segment;
+
+		break;
+	}
+	case 0x9B:			// WAIT
+	{
+		if (!m_TESTPin) ++m_IP;
+
+		break;
+	}
 	case 0xE9:			// JMP Jv (Near jump)
 	{
 		const int16_t offset = static_cast<int16_t>(Fetch16());
@@ -197,6 +220,34 @@ void CPU::ExecMOVImm()
 	++m_IP;
 }
 
+void CPU::ExecRet()
+{
+	const bool isRetIw = (m_IR & 1) == 0;
+	const uint16_t returnAddr = Pop16();
+
+	if (isRetIw)
+	{
+		const uint16_t value = Fetch16();
+		m_registerFile.SP() += value;
+	}
+	m_IP = returnAddr;
+}
+
+void CPU::ExecRetFar()
+{
+	const bool isRetIw = (m_IR & 1) == 0;
+	const uint16_t offset = Pop16();
+	const uint16_t segment = Pop16();
+
+	if (isRetIw)
+	{
+		const uint16_t value = Fetch16();
+		m_registerFile.SP() += value;
+	}
+	m_IP = offset;
+	m_registerFile.CS() = segment;
+}
+
 void CPU::ExecMOVModRM()
 {
 	DecodeModRM();
@@ -319,11 +370,42 @@ void CPU::ExecStoreRegIntoFlags()
 	++m_IP;
 }
 
+void CPU::ExecConvert()
+{
+	const bool isConvertByte = (m_IR & 1) == 0;
+	if (isConvertByte)
+	{
+		const int8_t al = static_cast<int8_t>(m_registerFile.AL());
+		if (al < 0)
+		{
+			m_registerFile.Set8(Reg8::AH, std::numeric_limits<uint8_t>::max());
+		}
+		else
+		{
+			m_registerFile.Set8(Reg8::AH, 0u);
+		}
+	}
+	else
+	{
+		const int16_t ax = static_cast<int16_t>(m_registerFile.AX());
+		if (ax < 0)
+		{
+			m_registerFile.Set16(Reg16::DX, std::numeric_limits<uint16_t>::max());
+		}
+		else
+		{
+			m_registerFile.Set16(Reg16::DX, 0u);
+		}
+	}
+	++m_IP;
+}
+
 void CPU::Reset()
 {
 	m_registerFile.Reset();
 	m_statusRegister.Reset();
 	m_haltFlag = false;
+	m_TESTPin = false;
 
 	m_IP = m_memoryUnit.GetStartAddress();
 
@@ -491,21 +573,32 @@ void CPU::ShortJump(int8_t offset)
 	m_IP = m_IP + offset;
 }
 
+void CPU::Push16(uint16_t value)
+{
+	const uint16_t sp = static_cast<uint16_t>(m_registerFile.SP() - 2);
+	m_registerFile.Set16(Reg16::SP, sp);
+
+	const uint8_t lo = static_cast<uint8_t>(value & 0xFF);
+	const uint8_t hi = static_cast<uint8_t>(value >> 8);
+
+	m_memoryUnit[PhysAddr(m_registerFile.SS(), sp)]= lo;
+	m_memoryUnit[PhysAddr(m_registerFile.SS(), sp + 1)] = hi;
+}
+
+uint16_t CPU::Pop16()
+{
+	const uint16_t word = ReadStackWord(m_registerFile.SP());
+	m_registerFile.SP() += 2;
+	return word;
+}
+
 template<typename RegType>
 void CPU::StackOperation(RegType regType, bool isPush)
 {
 	if (isPush)
 	{
-		const uint16_t sp = static_cast<uint16_t>(m_registerFile.SP() - 2);
-		m_registerFile.Set16(Reg16::SP, sp);
-
 		const uint16_t value = m_registerFile.Get16(regType);
-
-		const uint8_t lo = static_cast<uint8_t>(value & 0xFF);
-		const uint8_t hi = static_cast<uint8_t>(value >> 8);
-
-		m_memoryUnit[PhysAddr(m_registerFile.SS(), sp)] = lo;
-		m_memoryUnit[PhysAddr(m_registerFile.SS(), static_cast<uint16_t>(sp + 1))] = hi;
+		Push16(value);
 	}
 	else	
 	{

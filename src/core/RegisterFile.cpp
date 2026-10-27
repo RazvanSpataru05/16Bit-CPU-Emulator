@@ -48,7 +48,7 @@ uint8_t RegisterFile::Get8(Reg8 reg) const noexcept
 
 void RegisterFile::Set8(Reg8 reg, uint8_t value)
 {
-	size_t idx = static_cast<size_t>(reg);
+	const size_t idx = static_cast<size_t>(reg);
 	if (idx < 4) // lo part of GP reg (AL, CL, DL, BL)
 	{
 		uint16_t newValue = (m_generalPurproseReg[idx] & 0xFF00) | value;
