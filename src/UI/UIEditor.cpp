@@ -140,7 +140,7 @@ namespace UIEditor
 
 		ImGui::Separator();
 
-		ImGui::TextUnformatted("\nFlags Register\n");
+		ImGui::TextUnformatted(std::format("Flags Register: {:#016b}", cpu.GetStatusRegister().GetFlags()).c_str());
 		ImGui::TextUnformatted("Status Flags");
 		ImGui::SameLine(kSecondColumnX);
 		ImGui::TextUnformatted("Control Flags");

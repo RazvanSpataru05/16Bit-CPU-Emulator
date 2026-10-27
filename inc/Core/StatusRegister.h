@@ -16,7 +16,13 @@ public:
 
 	void UpdateFrom(const Result& r) noexcept;
 
-	[[nodiscard]]	uint16_t GetFlags()			const noexcept;
+	[[nodiscard]] uint8_t  GetLoFlags()		const noexcept;
+	[[nodiscard]] uint8_t GetHiFlags()		const noexcept;
+	[[nodiscard]] uint16_t GetFlags()		const noexcept;
+
+	void SetLoFlags(uint8_t loFlags) noexcept;
+	void SetHiFlags(uint8_t hiFlags) noexcept;
+	void SetFlags(uint16_t flags) noexcept;
 
 	[[nodiscard]]	uint8_t Carry()				const noexcept;
 	[[nodiscard]]	uint8_t Overflow()			const noexcept;

@@ -25,7 +25,9 @@ namespace Utils
 		constexpr uint16_t STATUS_MASK{ CF_MASK | PF_MASK | AF_MASK | ZF_MASK | SF_MASK | OF_MASK };
 		constexpr uint16_t CONTROL_MASK{ TF_MASK | IF_MASK | DF_MASK };
 
-		constexpr uint16_t FLAGS_DEFAULT_VALUE{ 0b0000000000101010 };
+		constexpr uint16_t AH_MASK{ SF_MASK | ZF_MASK | AF_MASK | PF_MASK | CF_MASK };
+
+		constexpr uint16_t FLAGS_DEFAULT_VALUE{ 0b0000000000000010 };
 
 		constexpr float MENU_WINDOW_WIDTH_PROCENT{ 0.6f };
 		constexpr float MENU_WINDOW_HEIGHT_PROCENT{ 0.05f };

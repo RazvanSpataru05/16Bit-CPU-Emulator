@@ -54,6 +54,8 @@ void CPU::Step()
 	// opcodes 60-6f are undefined 
 	else if ((m_IR & 0xF0) == 0x70)					 ExecConditionedJump(); // opcodes: 70 -> 7F (16 instr)
 	else if ((m_IR & 0xF8) == 0x90)					 ExecExchange();		// opcodes: 90 -> 97 (8 instr)
+	else if ((m_IR & 0xFE) == 0x9C)					 ExecPushPopFlags();	// opcodes: 9C, 9D (PUSHF, POPF) 
+	else if ((m_IR & 0xFE) == 0x9E)					 ExecStoreRegIntoFlags(); // opcodes: 9E, 9F (SAHF, LAHF)
 	else if ((m_IR & 0xF0) == 0xB0)					 ExecMOVImm();			// opcodes: B0 -> BF (16 instr)
 	else if ((m_IR & 0xFC) == 0x88)					 ExecMOVModRM();		// opcodes: 88 -> 8B (4 instr)
 	else switch (m_IR)
@@ -152,6 +154,31 @@ void CPU::ExecPushPopSeg()
 	const uint8_t selector = (m_IR >> 3) & 0b11;
 	const bool isPush = (m_IR & 1) == 0;
 	StackOperation(static_cast<SegmentReg>(selector), isPush);
+}
+
+void CPU::ExecPushPopFlags()
+{
+	const bool isPush = (m_IR & 1) == 0;
+	if (isPush)
+	{
+		const uint16_t sp = static_cast<uint16_t>(m_registerFile.Get16(Reg16::SP) - 2);
+		const uint16_t flags = m_statusRegister.GetFlags();
+		m_registerFile.Set16(Reg16::SP, sp);
+
+		const uint8_t lo = static_cast<uint8_t>(flags & 0xFF);
+		const uint8_t hi = static_cast<uint8_t>(flags >> 8);
+
+		m_memoryUnit[PhysAddr(m_registerFile.SS(), sp)] = lo;
+		m_memoryUnit[PhysAddr(m_registerFile.SS(), static_cast<uint16_t>(sp + 1))] = hi;
+	}
+	else
+	{
+		const uint16_t sp = static_cast<uint16_t>(m_registerFile.SP());
+		const uint16_t word = ReadStackWord(sp);
+		m_registerFile.Set16(Reg16::SP, sp + 2);
+		m_statusRegister.SetFlags(word);
+	}
+	++m_IP;
 }
 
 void CPU::ExecMOVImm()
@@ -273,6 +300,22 @@ void CPU::ExecExchange()
 	const uint8_t selector = m_IR & 0b111;
 	std::swap(m_registerFile.AX(),
 		m_registerFile.Get16(static_cast<Reg16>(selector)));
+	++m_IP;
+}
+
+void CPU::ExecStoreRegIntoFlags()
+{
+	const bool isStore = (m_IR & 1) == 0;
+	if (isStore)
+	{
+		const uint8_t value = (m_registerFile.AH() & Utils::Constants::AH_MASK) | (1u << 1);
+		m_statusRegister.SetLoFlags(value);
+	}
+	else
+	{
+		const uint8_t loFlags = m_statusRegister.GetLoFlags();
+		m_registerFile.Set8(Reg8::AL, loFlags);
+	}
 	++m_IP;
 }
 

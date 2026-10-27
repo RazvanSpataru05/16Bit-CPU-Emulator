@@ -72,8 +72,10 @@ private:
 	void ExecALU();
 	void ExecPushPopGP();
 	void ExecPushPopSeg();
+	void ExecPushPopFlags();
 	void ExecConditionedJump();
 	void ExecExchange();
+	void ExecStoreRegIntoFlags();
 	void ExecMOVImm();
 	void ExecMOVModRM();
 	void ExecINCDEC();

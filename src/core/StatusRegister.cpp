@@ -18,9 +18,36 @@ void StatusRegister::UpdateFrom(const Result& r) noexcept
 	std::cout << "Flags: " << flags << "\n";
 }
 
+uint8_t StatusRegister::GetLoFlags() const noexcept
+{
+	return static_cast<uint8_t>(m_flags & 0xFF);
+}
+
+uint8_t StatusRegister::GetHiFlags() const noexcept
+{
+	return static_cast<uint8_t>(m_flags >> 8);
+}
+
 uint16_t StatusRegister::GetFlags() const noexcept
 {
 	return m_flags;
+}
+
+void StatusRegister::SetLoFlags(uint8_t loFlags) noexcept
+{
+	const uint8_t hiFlags = GetHiFlags();
+	m_flags = static_cast<uint16_t>((hiFlags << 8) | loFlags);
+}
+
+void StatusRegister::SetHiFlags(uint8_t hiFlags) noexcept
+{
+	const uint8_t loFlags = GetLoFlags();
+	m_flags = static_cast<uint16_t>((hiFlags << 8) | loFlags);
+}
+
+void StatusRegister::SetFlags(uint16_t flags) noexcept
+{
+	m_flags = flags;
 }
 
 uint8_t StatusRegister::Zero() const noexcept
