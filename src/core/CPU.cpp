@@ -38,7 +38,7 @@ void CPU::Step()
 
 	if ((m_IR & 0xC0) == 0x00 && (m_IR & 0b111) < 6) ExecALU();
 	/*
-	^	opcodes:	00 -> 05 (ADD); 
+	^	opcodes:	00 -> 05 (ADD);
 					08 -> 0D (OR);
 					10 -> 15 (ADC);
 					18 -> 1D (SBB);
@@ -48,8 +48,9 @@ void CPU::Step()
 					38 -> 3D (CMP);
 		total: 48 instructions
 	*/
+	else if ((m_IR & 0xE6) == 0x06)					 ExecPushPopSeg(); // opcodes: {06, 07, 0E, 0F, 16, 17, 1E, 1F} (8 instr)
 	else if ((m_IR & 0xF0) == 0x40)					 ExecINCDEC(); // opcodes: 40 -> 4F (16 instr)
-	else if ((m_IR & 0xF0) == 0x50)					 ExecPushPop(); // opcodes: 50 -> 5F (16 instr) 
+	else if ((m_IR & 0xF0) == 0x50)					 ExecPushPopGP(); // opcodes: 50 -> 5F (16 instr) 
 	// opcodes 60-6f are undefined 
 	else if ((m_IR & 0xF0) == 0x70)					 ExecConditionedJump(); // opcodes: 70 -> 7F (16 instr)
 	else if ((m_IR & 0xF8) == 0x90)					 ExecExchange();		// opcodes: 90 -> 97 (8 instr)
@@ -68,7 +69,7 @@ void CPU::Step()
 	{
 		const uint16_t offset = Fetch16();
 		const uint16_t segment = Fetch16();
-		m_registerFile.SetSEG(SegmentReg::CS, segment);
+		m_registerFile.Set16(SegmentReg::CS, segment);
 		m_IP = offset;
 		break;
 	}
@@ -132,19 +133,25 @@ void CPU::ExecALU()
 
 		if (operation != 0b111) // not CMP
 		{
-			if (word) m_registerFile.SetGP16(Reg16::AX, static_cast<uint16_t>(r.value));
-			else m_registerFile.SetGP8(Reg8::AL, static_cast<uint8_t>(r.value));
+			if (word) m_registerFile.Set16(Reg16::AX, static_cast<uint16_t>(r.value));
+			else m_registerFile.Set8(Reg8::AL, static_cast<uint8_t>(r.value));
 		}
 	}
 	++m_IP;
 }
 
-void CPU::ExecPushPop()
+void CPU::ExecPushPopGP()
 {
 	const uint8_t selector = m_IR & 0b111;
-	const bool operation = ((m_IR >> 3) & 1) == 0; // PUSH = 0 ; POP = 1
-	StackOperation(selector, operation);
-	
+	const bool isPush = ((m_IR >> 3) & 1) == 0;
+	StackOperation(static_cast<Reg16>(selector), isPush);
+}
+
+void CPU::ExecPushPopSeg()
+{
+	const uint8_t selector = (m_IR >> 3) & 0b11;
+	const bool isPush = (m_IR & 1) == 0;
+	StackOperation(static_cast<SegmentReg>(selector), isPush);
 }
 
 void CPU::ExecMOVImm()
@@ -154,11 +161,11 @@ void CPU::ExecMOVImm()
 
 	if (word)
 	{
-		m_registerFile.SetGP16(static_cast<Reg16>(selector), Fetch16());
+		m_registerFile.Set16(static_cast<Reg16>(selector), Fetch16());
 	}
 	else
 	{
-		m_registerFile.SetGP8(static_cast<Reg8>(selector), Fetch8());
+		m_registerFile.Set8(static_cast<Reg8>(selector), Fetch8());
 	}
 	++m_IP;
 }
@@ -198,7 +205,7 @@ void CPU::ExecINCDEC()
 	}
 
 	m_statusRegister.UpdateFrom(r);
-	m_registerFile.SetGP16(static_cast<Reg16>(selector), r.value);
+	m_registerFile.Set16(static_cast<Reg16>(selector), r.value);
 	++m_IP;
 }
 
@@ -422,10 +429,10 @@ void CPU::WriteReg(uint8_t selector, uint16_t value, bool word)
 {
 	if (word)
 	{
-		m_registerFile.SetGP16(static_cast<Reg16>(selector), value);
+		m_registerFile.Set16(static_cast<Reg16>(selector), value);
 		return;
 	}
-	m_registerFile.SetGP8(static_cast<Reg8>(selector), static_cast<uint8_t>(value));
+	m_registerFile.Set8(static_cast<Reg8>(selector), static_cast<uint8_t>(value));
 }
 
 uint16_t CPU::ReadStackWord(uint16_t stackPointer)
@@ -441,15 +448,15 @@ void CPU::ShortJump(int8_t offset)
 	m_IP = m_IP + offset;
 }
 
-void CPU::StackOperation(uint8_t selector, bool operation)
+template<typename RegType>
+void CPU::StackOperation(RegType regType, bool isPush)
 {
-	if (operation)	// PUSH
+	if (isPush)
 	{
-
 		const uint16_t sp = static_cast<uint16_t>(m_registerFile.SP() - 2);
-		m_registerFile.SetGP16(Reg16::SP, sp);
+		m_registerFile.Set16(Reg16::SP, sp);
 
-		const uint16_t value = m_registerFile.Get16(static_cast<Reg16>(selector));
+		const uint16_t value = m_registerFile.Get16(regType);
 
 		const uint8_t lo = static_cast<uint8_t>(value & 0xFF);
 		const uint8_t hi = static_cast<uint8_t>(value >> 8);
@@ -457,12 +464,12 @@ void CPU::StackOperation(uint8_t selector, bool operation)
 		m_memoryUnit[PhysAddr(m_registerFile.SS(), sp)] = lo;
 		m_memoryUnit[PhysAddr(m_registerFile.SS(), static_cast<uint16_t>(sp + 1))] = hi;
 	}
-	else			// POP
+	else	
 	{
 		const uint16_t sp = static_cast<uint16_t>(m_registerFile.SP());
 		const uint16_t word = ReadStackWord(sp);
-		m_registerFile.SetGP16(Reg16::SP, sp + 2);
-		m_registerFile.SetGP16(static_cast<Reg16>(selector), word);
+		m_registerFile.Set16(Reg16::SP, sp + 2);
+		m_registerFile.Set16(static_cast<Reg16>(regType), word);
 	}
 	++m_IP;
 }

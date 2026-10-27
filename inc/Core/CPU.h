@@ -65,10 +65,13 @@ private:
 	uint16_t ReadStackWord(uint16_t stackPointer);
 
 	void ShortJump(int8_t offset);
-	void StackOperation(uint8_t selector, bool operation);
+
+	template<typename RegType>
+	void StackOperation(RegType selector, bool isPush);
 
 	void ExecALU();
-	void ExecPushPop();
+	void ExecPushPopGP();
+	void ExecPushPopSeg();
 	void ExecConditionedJump();
 	void ExecExchange();
 	void ExecMOVImm();

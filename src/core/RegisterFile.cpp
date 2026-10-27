@@ -46,17 +46,7 @@ uint8_t RegisterFile::Get8(Reg8 reg) const noexcept
 	}
 }
 
-uint16_t RegisterFile::Get16(Reg16 reg) const noexcept
-{
-	return m_generalPurproseReg[static_cast<size_t>(reg)];
-}
-
-uint16_t& RegisterFile::Get16(Reg16 reg) noexcept
-{
-	return m_generalPurproseReg[static_cast<size_t>(reg)];
-}
-
-void RegisterFile::SetGP8(Reg8 reg, uint8_t value)
+void RegisterFile::Set8(Reg8 reg, uint8_t value)
 {
 	size_t idx = static_cast<size_t>(reg);
 	if (idx < 4) // lo part of GP reg (AL, CL, DL, BL)
@@ -69,26 +59,6 @@ void RegisterFile::SetGP8(Reg8 reg, uint8_t value)
 		uint16_t newValue = static_cast<uint16_t>(value << 8) | static_cast<uint16_t>(m_generalPurproseReg[idx - 4] & 0x00FF);
 		m_generalPurproseReg[idx - 4] = newValue;
 	}
-}
-
-void RegisterFile::SetGP16(Reg16 selector, uint16_t value)
-{
-	m_generalPurproseReg[static_cast<size_t>(selector)] = value;
-}
-
-void RegisterFile::SetSEG(SegmentReg reg, uint16_t value)
-{
-	m_segmentReg[static_cast<size_t>(reg)] = value;
-}
-
-void RegisterFile::IncrementSP()
-{
-	++m_segmentReg[SP_SELECTOR];
-}
-
-void RegisterFile::DecrementSP()
-{
-	--m_segmentReg[SP_SELECTOR];
 }
 
 uint8_t RegisterFile::AL() const noexcept
