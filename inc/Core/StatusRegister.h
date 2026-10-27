@@ -10,6 +10,8 @@
 class StatusRegister
 {
 public:
+
+public:
 	StatusRegister();
 
 	void Reset();
@@ -34,6 +36,9 @@ public:
 	[[nodiscard]]	uint8_t Trap()				const noexcept;
 	[[nodiscard]]	uint8_t Interrupt()			const noexcept;
 	[[nodiscard]]	uint8_t Directional()		const noexcept;
+
+	void SetFlagOn(uint16_t mask) noexcept;
+	void SetFlagOff(uint16_t mask) noexcept;
 
 	void DisableInterrupts() noexcept;
 

@@ -1,4 +1,4 @@
-#include "StatusRegister.h"
+#include "Core/StatusRegister.h"
 
 StatusRegister::StatusRegister()
 {
@@ -93,6 +93,16 @@ uint8_t StatusRegister::Interrupt() const noexcept
 uint8_t StatusRegister::Directional() const noexcept
 {
 	return (m_flags & Utils::Constants::DF_MASK) != 0;
+}
+
+void StatusRegister::SetFlagOn(uint16_t mask) noexcept
+{
+	m_flags |= mask;
+}
+
+void StatusRegister::SetFlagOff(uint16_t mask) noexcept
+{
+	m_flags &= ~(mask);
 }
 
 void StatusRegister::DisableInterrupts() noexcept

@@ -64,6 +64,26 @@ void CPU::Step()
 	else if ((m_IR & 0xFC) == 0xE0)					 ExecLoop();			// opcodes: E0 -> E4 (LOOPNZ / LOOPNE, LOOPE / LOOPZ, LOOP, JCXZ)
 	else switch (m_IR)
 	{
+	case 0x37:			// AAA (ASCII Adjust after Addition)
+	{
+		const uint8_t lowNibble = m_registerFile.AL() & Utils::Constants::LOW_NIBBLE_MASK;
+		if (lowNibble > 9 || m_statusRegister.Auxiliary())
+		{
+			m_registerFile.Set8(Reg8::AL, m_registerFile.AL() + 6);
+			m_registerFile.Set8(Reg8::AH, m_registerFile.AH() + 1);
+			m_statusRegister.SetFlagOn(Utils::Constants::AF_MASK);
+			m_statusRegister.SetFlagOn(Utils::Constants::CF_MASK);
+		}
+		else
+		{
+			m_statusRegister.SetFlagOff(Utils::Constants::AF_MASK);
+			m_statusRegister.SetFlagOff(Utils::Constants::CF_MASK);
+		}
+		m_registerFile.Set8(Reg8::AL, m_registerFile.AL() & ~(Utils::Constants::HIGH_NIBBLE_MASK));
+		++m_IP;
+
+		break;
+	}
 	case 0x9A:			// CALL Ap (Address pointer)
 	{
 		const uint16_t segment = Fetch16();

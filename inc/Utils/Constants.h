@@ -27,7 +27,10 @@ namespace Utils
 
 		constexpr uint16_t AH_MASK{ SF_MASK | ZF_MASK | AF_MASK | PF_MASK | CF_MASK };
 
-		constexpr uint16_t FLAGS_DEFAULT_VALUE{ 0b0000000000000010 };
+		constexpr uint16_t FLAGS_DEFAULT_VALUE{ 0b0000000000010010 };
+		
+		constexpr uint8_t LOW_NIBBLE_MASK{ 0x0F };
+		constexpr uint8_t HIGH_NIBBLE_MASK{ 0xF0 };
 
 		constexpr float MENU_WINDOW_WIDTH_PROCENT{ 0.6f };
 		constexpr float MENU_WINDOW_HEIGHT_PROCENT{ 0.05f };
