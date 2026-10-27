@@ -86,6 +86,7 @@ private:
 	void ExecRetFar();
 	void ExecMOVModRM();
 	void ExecINCDEC();
+	void ExecLoop();
 
 	void DecodeModRM();
 

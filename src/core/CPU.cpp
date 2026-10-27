@@ -61,6 +61,7 @@ void CPU::Step()
 	else if ((m_IR & 0xF0) == 0xB0)					 ExecMOVImm();			// opcodes: B0 -> BF (16 instr)
 	else if ((m_IR & 0xFE) == 0xC2)					 ExecRet();				// opcodes: C2, C3 (RET Iw, RET)
 	else if ((m_IR & 0xFE) == 0xCA)					 ExecRetFar();			// opcodes: CA, CB (RETF Iw, RETF)
+	else if ((m_IR & 0xFC) == 0xE0)					 ExecLoop();			// opcodes: E0 -> E4 (LOOPNZ / LOOPNE, LOOPE / LOOPZ, LOOP, JCXZ)
 	else switch (m_IR)
 	{
 	case 0x9A:			// CALL Ap (Address pointer)
@@ -80,6 +81,15 @@ void CPU::Step()
 	case 0x9B:			// WAIT
 	{
 		if (!m_TESTPin) ++m_IP;
+
+		break;
+	}
+	case 0xE8:			// CALL Jv (Near Call)
+	{
+		const int16_t disp = static_cast<int16_t>(Fetch16());
+		++m_IP;
+		Push16(m_IP);
+		m_IP += disp;
 
 		break;
 	}
@@ -285,6 +295,46 @@ void CPU::ExecINCDEC()
 	m_statusRegister.UpdateFrom(r);
 	m_registerFile.Set16(static_cast<Reg16>(selector), r.value);
 	++m_IP;
+}
+
+void CPU::ExecLoop()
+{
+	const uint8_t loopType = (m_IR & 0b11);
+	const int8_t disp = static_cast<int8_t>(Fetch8());
+	bool condition{ false };
+	++m_IP;
+
+	switch (loopType)
+	{
+	case 0b00: // LOOPNZ / LOOPNE (E0)
+	{
+		--m_registerFile.CX();
+		condition = m_registerFile.CX() != 0 && m_statusRegister.Zero() == 0;
+		break;
+	}
+	case 0b01: // LOOPZ / LOOPE (E1)
+	{
+		--m_registerFile.CX();
+		condition = m_registerFile.CX() != 0 && m_statusRegister.Zero() == 1;
+		break;
+	}
+	case 0b10: // LOOP (E2)
+	{
+		--m_registerFile.CX();
+		condition = m_registerFile.CX() != 0;
+		break;
+	}
+	case 0b11: // JCXZ (E3)
+	{
+		condition = m_registerFile.CX() == 0;
+		break;
+	}
+	}
+
+	if (condition)
+	{
+		m_IP += disp;
+	}
 }
 
 void CPU::ExecConditionedJump()
