@@ -577,7 +577,7 @@ namespace UIEditor
 			const std::string line{ consoleBuffer };
 			if (emulator.GetCPU().GetStatusRegister().Interrupt())
 			{
-				emulator.GetCPU().GetStatusRegister().DisableInterrupts();
+				emulator.GetCPU().GetStatusRegister().SetFlagOff(Utils::Constants::IF_MASK);
 				emulator.GetInterruptController().RaiseInterrupt(KEYBOARD_INTERRUPT_LINE);
 
 				for (uint16_t key : line)

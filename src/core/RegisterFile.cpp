@@ -15,16 +15,6 @@ void RegisterFile::Write(uint16_t selector, uint16_t value)
 	m_generalPurproseReg[selector] = value;
 }
 
-void RegisterFile::UpdateAX(uint16_t value)
-{
-	m_generalPurproseReg[AX_SELECTOR] += value;
-}
-
-void RegisterFile::UpdateCS(uint16_t value)
-{
-	m_segmentReg[CS_SELECTOR] += value;
-}
-
 void RegisterFile::Reset()
 {
 	std::fill(m_generalPurproseReg.begin(), m_generalPurproseReg.end(), 0x0000);

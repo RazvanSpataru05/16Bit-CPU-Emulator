@@ -13,13 +13,7 @@
 class CPU
 {
 public:
-	const size_t MEMORY_UNIT_SIZE{ 65536 };
-
-public:
 	explicit CPU(InterruptController& interruptContrroller);
-
-	CPU(CPU&&) = default;
-	CPU& operator=(CPU&&) = default;
 
 	uint20_t	PhysAddr(uint16_t segment, uint16_t offset)		const noexcept;
 
@@ -30,8 +24,6 @@ public:
 	void Reset();
 
 	void HandleInterrupt();
-
-	uint16_t ComputeAddress(uint16_t address);
 
 	//Registry getters
 	uint16_t		GetIP()			const noexcept;
@@ -88,11 +80,14 @@ private:
 	void ExecINCDEC();
 	void ExecLoop();
 
-	void DecodeModRM();
+	ModRM DecodeModRM();
 
 private:
 	CPU(const CPU&) = delete;
 	CPU& operator=(const CPU&) = delete;
+
+	CPU(CPU&&) = delete;
+	CPU& operator=(CPU&&) = delete;
 
 private:
 
@@ -104,8 +99,6 @@ private:
 
 	uint16_t	m_IP{};		// Instruction Pointer Registry (offset, 16 bits) 
 	uint8_t		m_IR{};		// Instruction Registry
-
-	ModRM m_modRM;
 
 	bool m_haltFlag{ false };
 	bool m_TESTPin{ false };

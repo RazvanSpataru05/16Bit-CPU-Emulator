@@ -21,7 +21,7 @@ namespace Utils
 		std::string RemoveWhiteSpace(std::string_view word)
 		{
 			std::string s{ word };
-			std::remove_if(s.begin(), s.end(), [](unsigned char c) {
+			auto it = std::remove_if(s.begin(), s.end(), [](unsigned char c) {
 				return c == ' ';
 				});
 			return s;

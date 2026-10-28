@@ -40,8 +40,6 @@ public:
 	void SetFlagOn(uint16_t mask) noexcept;
 	void SetFlagOff(uint16_t mask) noexcept;
 
-	void DisableInterrupts() noexcept;
-
 private:
 
 	uint16_t m_flags{};

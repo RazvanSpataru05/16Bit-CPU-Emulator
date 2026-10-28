@@ -104,8 +104,3 @@ void StatusRegister::SetFlagOff(uint16_t mask) noexcept
 {
 	m_flags &= ~(mask);
 }
-
-void StatusRegister::DisableInterrupts() noexcept
-{
-	m_flags &= ~(Utils::Constants::IF_MASK);
-}

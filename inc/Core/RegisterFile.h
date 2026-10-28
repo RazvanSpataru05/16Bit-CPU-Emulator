@@ -32,9 +32,6 @@ public:
 	uint16_t Read(uint16_t selector) const;
 	void	 Write(uint16_t selector, uint16_t value);
 
-	void UpdateAX(uint16_t value);
-	void UpdateCS(uint16_t value);
-
 	void Reset();
 
 	// const ref getters for 8-bit / 16-bit

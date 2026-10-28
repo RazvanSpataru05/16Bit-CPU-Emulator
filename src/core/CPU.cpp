@@ -155,18 +155,18 @@ void CPU::ExecALU()
 	const uint8_t form = m_IR & 0b111;
 	if (form < 4)
 	{
-		DecodeModRM();
-		if (m_modRM.mod != 0b11) // NOT reg-reg
+		ModRM modRM = DecodeModRM();
+		if (modRM.mod != 0b11) // NOT reg-reg
 		{
 			Logger::AddInfoMessage(std::format("Unimplemented mod: {}",
-				static_cast<uint8_t>(m_modRM.mod)));
+				static_cast<uint8_t>(modRM.mod)));
 		}
 
 		const bool word		= (form & 0b1) != 0;	// bit 1 of opcode, word = 16-bits, else 8-bits
 		const bool toReg	= (form & 0b10) != 0;	// if bit 1 is true, dest is reg
 
-		const uint8_t destination	= toReg ? m_modRM.reg : m_modRM.rm;
-		const uint8_t source		= toReg ? m_modRM.rm  : m_modRM.reg;
+		const uint8_t destination	= toReg ? modRM.reg : modRM.rm;
+		const uint8_t source		= toReg ? modRM.rm  : modRM.reg;
 
 		const Result r = ALU::Execute(operation, ReadReg(destination, word), ReadReg(source, word),
 			word, m_statusRegister.Carry());
@@ -280,18 +280,18 @@ void CPU::ExecRetFar()
 
 void CPU::ExecMOVModRM()
 {
-	DecodeModRM();
-	if (m_modRM.mod != 0b11)
+	ModRM modRM = DecodeModRM();
+	if (modRM.mod != 0b11)
 	{
-		Logger::AddInfoMessage(std::format("Unimplemented mod: {}", static_cast<uint8_t>(m_modRM.mod)));
+		Logger::AddInfoMessage(std::format("Unimplemented mod: {}", static_cast<uint8_t>(modRM.mod)));
 		return;
 	}
 
 	const bool word		= (m_IR & 0b1) != 0;
 	const bool toReg	= (m_IR & 0b10) != 0;
 
-	const uint8_t destination	= toReg ? m_modRM.reg	: m_modRM.rm;
-	const uint8_t source		= toReg ? m_modRM.rm	: m_modRM.reg;
+	const uint8_t destination	= toReg ? modRM.reg	: modRM.rm;
+	const uint8_t source		= toReg ? modRM.rm	: modRM.reg;
 
 	WriteReg(destination, ReadReg(source, word), word);
 	++m_IP;
@@ -490,19 +490,20 @@ void CPU::Reset()
 
 }
 
-void CPU::DecodeModRM()
+ModRM CPU::DecodeModRM()
 {
-	m_modRM.raw = Fetch8();
-	std::cout << std::hex << static_cast<int>(m_modRM.raw) << '\n';
+	ModRM modRM;
+	modRM.raw = Fetch8();
 	
-	m_modRM.rm = m_modRM.raw & 0b111;
-	m_modRM.reg = (m_modRM.raw >> 3) & 0b111;
-	m_modRM.mod = (m_modRM.raw >> 6) & 0b11;
+	modRM.rm = modRM.raw & 0b111;
+	modRM.reg = (modRM.raw >> 3) & 0b111;
+	modRM.mod = (modRM.raw >> 6) & 0b11;
+	return modRM;
 }
 
 void CPU::HandleInterrupt()
 {
-	if (auto result = m_interruptController.PollPendingInterrupt(); result.has_value())
+	if (const auto result = m_interruptController.PollPendingInterrupt(); result.has_value())
 	{
 		const uint16_t line = result.value();
 
@@ -514,7 +515,7 @@ void CPU::HandleInterrupt()
 		m_memoryUnit[m_registerFile.SP()--] = loPC;
 
 		const uint16_t vectorAddress = line * 2;
-		m_IP = ComputeAddress(vectorAddress);
+		m_IP = m_memoryUnit[PhysAddr(m_registerFile.CS(), m_IP)].value();
 	}
 }
 
@@ -678,11 +679,4 @@ void CPU::StackOperation(RegType regType, bool isPush)
 		m_registerFile.Set16(static_cast<Reg16>(regType), word);
 	}
 	++m_IP;
-}
-
-uint16_t CPU::ComputeAddress(uint16_t address)
-{
-	uint16_t high = m_memoryUnit[++address].value();
-	uint16_t low = m_memoryUnit[++address].value();
-	return (high << 8) | low;
 }
