@@ -79,6 +79,7 @@ private:
 	void ExecMOVModRM();
 	void ExecINCDEC();
 	void ExecLoop();
+	void ExecClearStoreFlags();
 
 	ModRM DecodeModRM();
 

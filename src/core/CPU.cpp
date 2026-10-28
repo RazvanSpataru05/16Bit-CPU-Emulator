@@ -23,7 +23,7 @@ uint16_t CPU::Fetch16()
 	++m_IP;
 	assert(m_memoryUnit[PhysAddr(m_registerFile.CS(), m_IP)].has_value());
 	const uint8_t lo = m_memoryUnit[PhysAddr(m_registerFile.CS(), m_IP)].value();
-	
+
 	++m_IP;
 	assert(m_memoryUnit[PhysAddr(m_registerFile.CS(), m_IP)].has_value());
 	const uint8_t hi = m_memoryUnit[PhysAddr(m_registerFile.CS(), m_IP)].value();
@@ -62,6 +62,7 @@ void CPU::Step()
 	else if ((m_IR & 0xFE) == 0xC2)					 ExecRet();				// opcodes: C2, C3 (RET Iw, RET)
 	else if ((m_IR & 0xFE) == 0xCA)					 ExecRetFar();			// opcodes: CA, CB (RETF Iw, RETF)
 	else if ((m_IR & 0xFC) == 0xE0)					 ExecLoop();			// opcodes: E0 -> E4 (LOOPNZ / LOOPNE, LOOPE / LOOPZ, LOOP, JCXZ)
+	else if ((m_IR & 0xFC) == 0xF8)					 ExecClearStoreFlags(); // opcodes: F8 -> FD (CLC, STC, CLI, STI, CLD, STD)
 	else switch (m_IR)
 	{
 	case 0x37:			// AAA (ASCII Adjust after Addition)
@@ -79,9 +80,28 @@ void CPU::Step()
 			m_statusRegister.SetFlagOff(Utils::Constants::AF_MASK);
 			m_statusRegister.SetFlagOff(Utils::Constants::CF_MASK);
 		}
-		m_registerFile.Set8(Reg8::AL, m_registerFile.AL() & ~(Utils::Constants::HIGH_NIBBLE_MASK));
+		m_registerFile.Set8(Reg8::AL, m_registerFile.AL() & Utils::Constants::LOW_NIBBLE_MASK);
 		++m_IP;
 
+		break;
+	}
+	case 0x3F:		// AAS (ASCII Adjust after Subtraction)
+	{
+		const uint8_t lowNibble = m_registerFile.AL() & Utils::Constants::LOW_NIBBLE_MASK;
+		if (lowNibble > 9 || m_statusRegister.Auxiliary())
+		{
+			m_registerFile.Set8(Reg8::AL, m_registerFile.AL() - 6);
+			m_registerFile.Set8(Reg8::AH, m_registerFile.AH() - 1);
+			m_statusRegister.SetFlagOn(Utils::Constants::AF_MASK);
+			m_statusRegister.SetFlagOn(Utils::Constants::CF_MASK);
+		}
+		else
+		{
+			m_statusRegister.SetFlagOff(Utils::Constants::AF_MASK);
+			m_statusRegister.SetFlagOff(Utils::Constants::CF_MASK);
+		}
+		m_registerFile.Set8(Reg8::AL, m_registerFile.AL() & Utils::Constants::LOW_NIBBLE_MASK);
+		++m_IP;
 		break;
 	}
 	case 0x9A:			// CALL Ap (Address pointer)
@@ -141,6 +161,51 @@ void CPU::Step()
 		m_haltFlag = true;
 		break;
 	}
+	case 0xF5: // CMC 1by (Complement Carry Flag)
+	{
+		m_statusRegister.Carry() ? m_statusRegister.SetFlagOff(Utils::Constants::CF_MASK)
+			: m_statusRegister.SetFlagOn(Utils::Constants::CF_MASK);
+		++m_IP;
+		break;
+	}
+	case 0xFE: // GRP4 Eb (INC, DEC)
+	case 0xFF: // GRP5 Ev (INC, DEC, CALL Ev, CALL Mp, JMP Ev, JMP Mp, PUSH Ev)
+	{
+		const bool isWord = (m_IR & 1) == 1;
+		ModRM modRM = DecodeModRM();
+		++m_IP;
+		if (isWord)
+		{
+
+		}
+		else
+		/*
+		* ModRM structure: ab cde fgh
+		* ModRM notation:
+		* ab -> mod (only set to 11 for this instruction)
+		* cde -> reg (000 -> Increment 8-bit reg | 001 -> Decrement 8-bit reg)
+		* fgh -> rm (selector for 8-bit reg (AL = 000 ...... BH = 111))
+		*/
+		{
+			const uint8_t reg = ReadReg(modRM.rm, isWord);
+			Result r;
+
+			if (modRM.reg == 0)
+			{
+				r = ALU::INC(reg, isWord);
+			}
+			else
+			{
+				r = ALU::DEC(reg, isWord);
+			}
+
+			WriteReg(modRM.rm, r.value, isWord);
+			m_statusRegister.UpdateFrom(r);
+		}
+
+		break;
+	}
+
 	default:
 		Logger::AddInfoMessage(std::format("Unimplemented opcode: {:02X}", m_IR));
 		++m_IP;
@@ -162,11 +227,11 @@ void CPU::ExecALU()
 				static_cast<uint8_t>(modRM.mod)));
 		}
 
-		const bool word		= (form & 0b1) != 0;	// bit 1 of opcode, word = 16-bits, else 8-bits
-		const bool toReg	= (form & 0b10) != 0;	// if bit 1 is true, dest is reg
+		const bool word = (form & 0b1) != 0;	// bit 1 of opcode, word = 16-bits, else 8-bits
+		const bool toReg = (form & 0b10) != 0;	// if bit 1 is true, dest is reg
 
-		const uint8_t destination	= toReg ? modRM.reg : modRM.rm;
-		const uint8_t source		= toReg ? modRM.rm  : modRM.reg;
+		const uint8_t destination = toReg ? modRM.reg : modRM.rm;
+		const uint8_t source = toReg ? modRM.rm : modRM.reg;
 
 		const Result r = ALU::Execute(operation, ReadReg(destination, word), ReadReg(source, word),
 			word, m_statusRegister.Carry());
@@ -287,11 +352,11 @@ void CPU::ExecMOVModRM()
 		return;
 	}
 
-	const bool word		= (m_IR & 0b1) != 0;
-	const bool toReg	= (m_IR & 0b10) != 0;
+	const bool word = (m_IR & 0b1) != 0;
+	const bool toReg = (m_IR & 0b10) != 0;
 
-	const uint8_t destination	= toReg ? modRM.reg	: modRM.rm;
-	const uint8_t source		= toReg ? modRM.rm	: modRM.reg;
+	const uint8_t destination = toReg ? modRM.reg : modRM.rm;
+	const uint8_t source = toReg ? modRM.rm : modRM.reg;
 
 	WriteReg(destination, ReadReg(source, word), word);
 	++m_IP;
@@ -355,6 +420,40 @@ void CPU::ExecLoop()
 	{
 		m_IP += disp;
 	}
+}
+
+void CPU::ExecClearStoreFlags()
+{
+	const bool isClear = (m_IR & 1) == 0;
+	const uint8_t flag = (m_IR >> 1) & 0b11;
+
+	switch (flag)
+	{
+	case 0b00: // Carry Flag
+	{
+		isClear ? m_statusRegister.SetFlagOff(Utils::Constants::CF_MASK)
+			: m_statusRegister.SetFlagOn(Utils::Constants::CF_MASK);
+		break;
+	}
+	case 0b01: // Interrupt Flag
+	{
+		isClear ? m_statusRegister.SetFlagOff(Utils::Constants::IF_MASK)
+			: m_statusRegister.SetFlagOn(Utils::Constants::IF_MASK);
+		break;
+	}
+	case 0b10: // Directional Flag
+	{
+		isClear ? m_statusRegister.SetFlagOff(Utils::Constants::DF_MASK)
+			: m_statusRegister.SetFlagOn(Utils::Constants::DF_MASK);
+		break;
+	}
+	default:
+	{
+		std::cout << "Unknown opcode: " << std::hex << static_cast<int>(m_IR) << '\n';
+		break;
+	}
+	}
+	++m_IP;
 }
 
 void CPU::ExecConditionedJump()
@@ -494,7 +593,7 @@ ModRM CPU::DecodeModRM()
 {
 	ModRM modRM;
 	modRM.raw = Fetch8();
-	
+
 	modRM.rm = modRM.raw & 0b111;
 	modRM.reg = (modRM.raw >> 3) & 0b111;
 	modRM.mod = (modRM.raw >> 6) & 0b11;
@@ -562,7 +661,7 @@ void CPU::UpdateIR()
 	{
 		m_IR = 0x00;
 	}
-	
+
 }
 
 bool CPU::IsReadingInstruction() const noexcept
@@ -652,7 +751,7 @@ void CPU::Push16(uint16_t value)
 	const uint8_t lo = static_cast<uint8_t>(value & 0xFF);
 	const uint8_t hi = static_cast<uint8_t>(value >> 8);
 
-	m_memoryUnit[PhysAddr(m_registerFile.SS(), sp)]= lo;
+	m_memoryUnit[PhysAddr(m_registerFile.SS(), sp)] = lo;
 	m_memoryUnit[PhysAddr(m_registerFile.SS(), sp + 1)] = hi;
 }
 
@@ -671,11 +770,10 @@ void CPU::StackOperation(RegType regType, bool isPush)
 		const uint16_t value = m_registerFile.Get16(regType);
 		Push16(value);
 	}
-	else	
+	else
 	{
 		const uint16_t sp = static_cast<uint16_t>(m_registerFile.SP());
-		const uint16_t word = ReadStackWord(sp);
-		m_registerFile.Set16(Reg16::SP, sp + 2);
+		const uint16_t word = Pop16();
 		m_registerFile.Set16(static_cast<Reg16>(regType), word);
 	}
 	++m_IP;
