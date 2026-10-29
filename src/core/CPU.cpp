@@ -63,6 +63,7 @@ void CPU::Step()
 	else if ((m_IR & 0xFE) == 0xCA)					 ExecRetFar();			// opcodes: CA, CB (RETF Iw, RETF)
 	else if ((m_IR & 0xFC) == 0xE0)					 ExecLoop();			// opcodes: E0 -> E4 (LOOPNZ / LOOPNE, LOOPE / LOOPZ, LOOP, JCXZ)
 	else if ((m_IR & 0xFC) == 0xF8)					 ExecClearStoreFlags(); // opcodes: F8 -> FD (CLC, STC, CLI, STI, CLD, STD)
+	else if ((m_IR & 0xFE) == 0xFE)					 ExecGRP4_GRP5();		// opcodes: FE, FF (GRP4 & GRP5)
 	else switch (m_IR)
 	{
 	case 0x37:			// AAA (ASCII Adjust after Addition)
@@ -110,8 +111,8 @@ void CPU::Step()
 		const uint16_t offset = Fetch16();
 		++m_IP;
 
-		Push16(m_registerFile.CS());
-		Push16(m_IP);
+		Push16(m_registerFile.CS(), true);
+		Push16(m_IP, true);
 
 		m_IP = offset;
 		m_registerFile.CS() = segment;
@@ -128,7 +129,7 @@ void CPU::Step()
 	{
 		const int16_t disp = static_cast<int16_t>(Fetch16());
 		++m_IP;
-		Push16(m_IP);
+		Push16(m_IP, true);
 		m_IP += disp;
 
 		break;
@@ -168,44 +169,6 @@ void CPU::Step()
 		++m_IP;
 		break;
 	}
-	case 0xFE: // GRP4 Eb (INC, DEC)
-	case 0xFF: // GRP5 Ev (INC, DEC, CALL Ev, CALL Mp, JMP Ev, JMP Mp, PUSH Ev)
-	{
-		const bool isWord = (m_IR & 1) == 1;
-		ModRM modRM = DecodeModRM();
-		++m_IP;
-		if (isWord)
-		{
-
-		}
-		else
-		/*
-		* ModRM structure: ab cde fgh
-		* ModRM notation:
-		* ab -> mod (only set to 11 for this instruction)
-		* cde -> reg (000 -> Increment 8-bit reg | 001 -> Decrement 8-bit reg)
-		* fgh -> rm (selector for 8-bit reg (AL = 000 ...... BH = 111))
-		*/
-		{
-			const uint8_t reg = ReadReg(modRM.rm, isWord);
-			Result r;
-
-			if (modRM.reg == 0)
-			{
-				r = ALU::INC(reg, isWord);
-			}
-			else
-			{
-				r = ALU::DEC(reg, isWord);
-			}
-
-			WriteReg(modRM.rm, r.value, isWord);
-			m_statusRegister.UpdateFrom(r);
-		}
-
-		break;
-	}
-
 	default:
 		Logger::AddInfoMessage(std::format("Unimplemented opcode: {:02X}", m_IR));
 		++m_IP;
@@ -301,10 +264,10 @@ void CPU::ExecPushPopFlags()
 
 void CPU::ExecMOVImm()
 {
-	const bool word = (m_IR >> 3) & 1; // word == 1 -> full reg / word == 0 -> Hi / Lo
+	const bool isWord = (m_IR >> 3) & 1; // word == 1 -> full reg / word == 0 -> Hi / Lo
 	const uint8_t selector = m_IR & 0b111;
 
-	if (word)
+	if (isWord)
 	{
 		m_registerFile.Set16(static_cast<Reg16>(selector), Fetch16());
 	}
@@ -454,6 +417,63 @@ void CPU::ExecClearStoreFlags()
 	}
 	}
 	++m_IP;
+}
+
+void CPU::ExecGRP4_GRP5()
+{
+	const bool isWord = (m_IR & 1) == 1;
+	ModRM modRM = DecodeModRM();
+	++m_IP;
+
+	if (modRM.mod != 0b11)
+	{
+		Logger::AddInfoMessage(std::format("Unimplemented ModRM mod = {:#b}", static_cast<int>(modRM.mod)));
+		return;
+	}
+
+	const uint16_t value = ReadReg(modRM.rm, isWord);
+	Result r;
+
+	switch (modRM.reg)
+	{
+	case 0b000: // INC
+	{
+		r = ALU::INC(value, isWord);
+		WriteReg(modRM.rm, r.value, isWord);
+		m_statusRegister.UpdateFrom(r);
+		break;
+	}
+	case 0b001: // DEC 
+	{
+		r = ALU::DEC(value, isWord);
+		WriteReg(modRM.rm, r.value, isWord);
+		m_statusRegister.UpdateFrom(r);
+		break;
+	}
+	case 0b010: // CALL Mp
+	{
+		Push16(m_IP, isWord);
+		m_IP = value; // Approximation: Will be updated when hardware test will be made
+		break;
+	}
+	case 0b100: // JMP Ev
+	{
+		m_IP = value; // Approximation: Will be updated when hardware test will be made
+		break;
+	}
+	case 0b011: // CALL Mp
+	case 0b101: // JMP  Mp
+	{
+		std::cout << "Unimplemented ModRM reg = " << static_cast<int>(modRM.reg) << '\n';
+		break;
+	}
+	case 0b110: // PUSH (Eb, Ev)
+	case 0b111: // Alias for 0b110
+	{
+		Push16(value, isWord);
+		break;
+	}
+	}
 }
 
 void CPU::ExecConditionedJump()
@@ -732,8 +752,8 @@ void CPU::WriteReg(uint8_t selector, uint16_t value, bool word)
 
 uint16_t CPU::ReadStackWord(uint16_t stackPointer)
 {
-	const uint8_t lo = m_memoryUnit[PhysAddr(m_registerFile.SS(), stackPointer)].value();
-	const uint8_t hi = m_memoryUnit[PhysAddr(m_registerFile.SS(), stackPointer + 1)].value();
+	const uint8_t lo = m_memoryUnit[PhysAddr(m_registerFile.SS(), stackPointer)].value_or(0x00);
+	const uint8_t hi = m_memoryUnit[PhysAddr(m_registerFile.SS(), static_cast<uint16_t>(stackPointer + 1))].value_or(0x00);
 
 	return static_cast<uint16_t>((hi << 8) | lo);
 }
@@ -743,16 +763,19 @@ void CPU::ShortJump(int8_t offset)
 	m_IP = m_IP + offset;
 }
 
-void CPU::Push16(uint16_t value)
+void CPU::Push16(uint16_t value, bool isWord)
 {
 	const uint16_t sp = static_cast<uint16_t>(m_registerFile.SP() - 2);
 	m_registerFile.Set16(Reg16::SP, sp);
 
-	const uint8_t lo = static_cast<uint8_t>(value & 0xFF);
-	const uint8_t hi = static_cast<uint8_t>(value >> 8);
+	// Lo byte is always written on the stack
+	m_memoryUnit[PhysAddr(m_registerFile.SS(), sp)] = static_cast<uint8_t>(value & 0xFF);
 
-	m_memoryUnit[PhysAddr(m_registerFile.SS(), sp)] = lo;
-	m_memoryUnit[PhysAddr(m_registerFile.SS(), sp + 1)] = hi;
+	if (isWord)
+	{
+		// Hi byte is only written in word mode
+		m_memoryUnit[PhysAddr(m_registerFile.SS(), static_cast<uint16_t>(sp + 1))] = static_cast<uint8_t>(value >> 8);
+	}
 }
 
 uint16_t CPU::Pop16()
@@ -768,7 +791,7 @@ void CPU::StackOperation(RegType regType, bool isPush)
 	if (isPush)
 	{
 		const uint16_t value = m_registerFile.Get16(regType);
-		Push16(value);
+		Push16(value, true);
 	}
 	else
 	{

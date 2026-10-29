@@ -59,7 +59,7 @@ private:
 	void ShortJump(int8_t offset);
 
 	/* Stack Helpers */
-	void Push16(uint16_t value);
+	void Push16(uint16_t value, bool isWord);
 	uint16_t Pop16();
 
 	template<typename RegType>
@@ -80,6 +80,7 @@ private:
 	void ExecINCDEC();
 	void ExecLoop();
 	void ExecClearStoreFlags();
+	void ExecGRP4_GRP5();
 
 	ModRM DecodeModRM();
 
