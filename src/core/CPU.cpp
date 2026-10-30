@@ -66,7 +66,43 @@ void CPU::Step()
 	else if ((m_IR & 0xFE) == 0xFE)					 ExecGRP4_GRP5();		// opcodes: FE, FF (GRP4 & GRP5)
 	else switch (m_IR)
 	{
-	case 0x37:			// AAA (ASCII Adjust after Addition)
+	case 0x27:  // DAA (Decimal adjust After Addition)
+	{
+		const uint8_t lowNibble = m_registerFile.AL() & Utils::Constants::LOW_NIBBLE_MASK;
+		if (lowNibble > 9 || m_statusRegister.Auxiliary())
+		{
+			m_registerFile.Set8(Reg8::AL, m_registerFile.AL() + 6);
+			m_statusRegister.SetFlagOn(Utils::Constants::AF_MASK);
+		}
+
+		if (m_registerFile.AL() > 0x9F || m_statusRegister.Carry())
+		{
+			m_registerFile.Set8(Reg8::AL, m_registerFile.AL() + 0x60);
+			m_statusRegister.SetFlagOn(Utils::Constants::CF_MASK);
+		}
+
+		++m_IP;
+		break;
+	}
+	case 0x2F:			// DAS (Decimal adjust After Subtraction)
+	{
+		const uint8_t lowNibble = m_registerFile.AL() & Utils::Constants::LOW_NIBBLE_MASK;
+		if (lowNibble > 9 || m_statusRegister.Auxiliary())
+		{
+			m_registerFile.Set8(Reg8::AL, m_registerFile.AL() - 6);
+			m_statusRegister.SetFlagOn(Utils::Constants::AF_MASK);
+		}
+
+		if (m_registerFile.AL() > 0x9F || m_statusRegister.Carry())
+		{
+			m_registerFile.Set8(Reg8::AL, m_registerFile.AL() - 0x60);
+			m_statusRegister.SetFlagOn(Utils::Constants::CF_MASK);
+		}
+
+		++m_IP;
+		break;
+	}
+	case 0x37:			// AAA (ASCII Adjust After Addition)
 	{
 		const uint8_t lowNibble = m_registerFile.AL() & Utils::Constants::LOW_NIBBLE_MASK;
 		if (lowNibble > 9 || m_statusRegister.Auxiliary())

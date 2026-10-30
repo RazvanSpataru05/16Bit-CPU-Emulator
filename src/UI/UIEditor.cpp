@@ -101,7 +101,7 @@ namespace UIEditor
 				regFile.CS(), cpu.GetIP(), 
 				cpu.PhysAddr(regFile.CS(), cpu.GetIP()).index()).c_str());
 		ImGui::TextUnformatted(
-			Utils::String::TextFormat("Instruction Register: 0x{:04X}", cpu.GetIR()).c_str());
+			Utils::String::TextFormat("Instruction Register: 0x{:02X}", cpu.GetIR()).c_str());
 		ImGui::Separator();
 
 		ImGui::TextUnformatted("General Purpose Registers");
