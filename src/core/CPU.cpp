@@ -58,6 +58,7 @@ void CPU::Step()
 	else if ((m_IR & 0xFE) == 0x98)					 ExecConvert();			// opcodes: 98, 99 (CBW, CWD)
 	else if ((m_IR & 0xFE) == 0x9C)					 ExecPushPopFlags();	// opcodes: 9C, 9D (PUSHF, POPF) 
 	else if ((m_IR & 0xFE) == 0x9E)					 ExecStoreRegIntoFlags(); // opcodes: 9E, 9F (SAHF, LAHF)
+	else if ((m_IR & 0xFC) == 0xA0)					 ExecMOVAccumulator();	// opcodes: A0 -> A3 (4 instr)
 	else if ((m_IR & 0xF0) == 0xB0)					 ExecMOVImm();			// opcodes: B0 -> BF (16 instr)
 	else if ((m_IR & 0xFE) == 0xC2)					 ExecRet();				// opcodes: C2, C3 (RET Iw, RET)
 	else if ((m_IR & 0xFE) == 0xCA)					 ExecRetFar();			// opcodes: CA, CB (RETF Iw, RETF)
@@ -340,6 +341,30 @@ void CPU::ExecRetFar()
 	}
 	m_IP = offset;
 	m_registerFile.CS() = segment;
+}
+
+void CPU::ExecMOVAccumulator()
+{
+	const bool isWord = (m_IR & 1) == 1;
+	const bool copyFromMem = (m_IR >> 1) == 0;
+	const uint16_t reg = isWord ? m_registerFile.AX() : m_registerFile.AL();
+	const uint16_t value = isWord ? Fetch8() : Fetch16();
+
+	if (copyFromMem)
+	{
+		isWord ? m_registerFile.Set16(Reg16::AX, value)
+			: m_registerFile.Set8(Reg8::AL, value);
+	}
+	else
+	{
+		if (isWord)
+		{
+			m_memoryUnit[PhysAddr(m_registerFile.CS(), m_IP)] = static_cast<uint8_t>(value >> 8); // hi byte
+			
+		}
+		m_memoryUnit[PhysAddr(m_registerFile.CS(), static_cast<uint16_t>(m_IP + 1))] = static_cast<uint8_t>(value & 0xFF); // lo byte
+	}
+	++m_IP;
 }
 
 void CPU::ExecMOVModRM()

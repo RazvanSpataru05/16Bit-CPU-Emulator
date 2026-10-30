@@ -76,6 +76,7 @@ private:
 	void ExecMOVImm();
 	void ExecRet();
 	void ExecRetFar();
+	void ExecMOVAccumulator();
 	void ExecMOVModRM();
 	void ExecINCDEC();
 	void ExecLoop();
