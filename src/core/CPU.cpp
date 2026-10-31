@@ -142,6 +142,24 @@ void CPU::Step()
 		++m_IP;
 		break;
 	}
+	case 0x8F:			// POP Ev
+	{
+		ModRM modRM = DecodeModRM();
+		if (modRM.mod == 0b11)
+		{
+			if (modRM.reg != 0b000)
+			{
+				Logger::AddInfoMessage(std::format("Invalid registry code: {}", static_cast<uint8_t>(modRM.reg)));
+				break;
+			}
+
+			const uint16_t word = ReadStackWord(m_registerFile.SP());
+			WriteReg(modRM.rm, word, true);
+		}
+
+		++m_IP;
+		break;
+	}
 	case 0x9A:			// CALL Ap (Address pointer)
 	{
 		const uint16_t segment = Fetch16();
