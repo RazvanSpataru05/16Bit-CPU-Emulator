@@ -6,6 +6,7 @@
 #include "Core/StatusRegister.h"
 #include "Core/MemoryUnit.h"
 #include "Core/ModRM.h"
+#include "Core/RMOperand.h"
 
 #include <string>
 #include <assert.h>
@@ -56,6 +57,15 @@ private:
 
 	uint16_t ReadStackWord(uint16_t stackPointer);
 
+	uint8_t ReadMem8(uint16_t segment, uint16_t offset);
+	uint16_t ReadMem16(uint16_t segment, uint16_t offset);
+
+	void WriteMem8(uint16_t segment, uint16_t offset, uint8_t value);
+	void WriteMem16(uint16_t segment, uint16_t offset, uint16_t value);
+
+	uint16_t ReadRM(const RMOperand& operand, bool word);
+	void WriteRM(const RMOperand& operand, uint16_t value, bool word);
+
 	void ShortJump(int8_t offset);
 
 	/* Stack Helpers */
@@ -84,6 +94,9 @@ private:
 	void ExecGRP4_GRP5();
 
 	ModRM DecodeModRM();
+	uint16_t DecodeEffectiveAddress(uint8_t rm, uint8_t mod);
+
+	RMOperand ResolveRM(ModRM modRM);
 
 private:
 	CPU(const CPU&) = delete;
