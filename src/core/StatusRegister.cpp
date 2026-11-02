@@ -13,9 +13,6 @@ void StatusRegister::Reset()
 void StatusRegister::UpdateFrom(const Result& r) noexcept
 {
 	m_flags = static_cast<uint16_t>((m_flags & ~r.affected) | (r.flags & r.affected));
-
-	std::bitset<16> flags(m_flags);
-	std::cout << "Flags: " << flags << "\n";
 }
 
 uint8_t StatusRegister::GetLoFlags() const noexcept

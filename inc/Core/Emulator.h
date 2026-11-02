@@ -5,7 +5,6 @@
 #include "Core/Keyboard.h"
 #include "Core/Terminal.h"
 
-
 class Emulator
 {
 public:

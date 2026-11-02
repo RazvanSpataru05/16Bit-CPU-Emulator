@@ -145,16 +145,16 @@ void CPU::Step()
 	case 0x8F:			// POP Ev
 	{
 		ModRM modRM = DecodeModRM();
-		if (modRM.mod == 0b11)
+		if (modRM.Mod() == 0b11)
 		{
-			if (modRM.reg != 0b000)
+			if (modRM.Reg() != 0b000)
 			{
-				Logger::AddInfoMessage(std::format("Invalid registry code: {}", static_cast<uint8_t>(modRM.reg)));
+				Logger::AddInfoMessage(std::format("Invalid registry code: {}", modRM.Reg()));
 				break;
 			}
 
 			const uint16_t word = ReadStackWord(m_registerFile.SP());
-			WriteReg(modRM.rm, word, true);
+			WriteReg(modRM.RM(), word, true);
 		}
 
 		++m_IP;
@@ -176,7 +176,10 @@ void CPU::Step()
 	}
 	case 0x9B:			// WAIT
 	{
-		if (!m_TESTPin) ++m_IP;
+		if (!m_TESTPin)
+		{
+			++m_IP;
+		}
 
 		break;
 	}
@@ -239,17 +242,17 @@ void CPU::ExecALU()
 	if (form < 4)
 	{
 		ModRM modRM = DecodeModRM();
-		if (modRM.mod != 0b11) // NOT reg-reg
+		if (modRM.Mod() != 0b11) // NOT reg-reg
 		{
 			Logger::AddInfoMessage(std::format("Unimplemented mod: {}",
-				static_cast<uint8_t>(modRM.mod)));
+				modRM.Mod()));
 		}
 
 		const bool word = (form & 0b1) != 0;	// bit 1 of opcode, word = 16-bits, else 8-bits
 		const bool toReg = (form & 0b10) != 0;	// if bit 1 is true, dest is reg
 
-		const uint8_t destination = toReg ? modRM.reg : modRM.rm;
-		const uint8_t source = toReg ? modRM.rm : modRM.reg;
+		const uint8_t destination = toReg ? modRM.Reg() : modRM.RM();
+		const uint8_t source = toReg ? modRM.RM() : modRM.Reg();
 
 		const Result r = ALU::Execute(operation, ReadReg(destination, word), ReadReg(source, word),
 			word, m_statusRegister.Carry());
@@ -388,17 +391,17 @@ void CPU::ExecMOVAccumulator()
 void CPU::ExecMOVModRM()
 {
 	ModRM modRM = DecodeModRM();
-	if (modRM.mod != 0b11)
+	if (modRM.Mod() != 0b11)
 	{
-		Logger::AddInfoMessage(std::format("Unimplemented mod: {}", static_cast<uint8_t>(modRM.mod)));
+		Logger::AddInfoMessage(std::format("Unimplemented mod: {}", modRM.Mod()));
 		return;
 	}
 
 	const bool word = (m_IR & 0b1) != 0;
 	const bool toReg = (m_IR & 0b10) != 0;
 
-	const uint8_t destination = toReg ? modRM.reg : modRM.rm;
-	const uint8_t source = toReg ? modRM.rm : modRM.reg;
+	const uint8_t destination = toReg ? modRM.Reg() : modRM.RM();
+	const uint8_t source = toReg ? modRM.RM() : modRM.Reg();
 
 	WriteReg(destination, ReadReg(source, word), word);
 	++m_IP;
@@ -504,28 +507,28 @@ void CPU::ExecGRP4_GRP5()
 	ModRM modRM = DecodeModRM();
 	++m_IP;
 
-	if (modRM.mod != 0b11)
+	if (modRM.Mod() != 0b11)
 	{
-		Logger::AddInfoMessage(std::format("Unimplemented ModRM mod = {:#b}", static_cast<int>(modRM.mod)));
+		Logger::AddInfoMessage(std::format("Unimplemented ModRM mod = {:#b}", modRM.Mod()));
 		return;
 	}
 
-	const uint16_t value = ReadReg(modRM.rm, isWord);
+	const uint16_t value = ReadReg(modRM.RM(), isWord);
 	Result r;
 
-	switch (modRM.reg)
+	switch (modRM.Reg())
 	{
 	case 0b000: // INC
 	{
 		r = ALU::INC(value, isWord);
-		WriteReg(modRM.rm, r.value, isWord);
+		WriteReg(modRM.RM(), r.value, isWord);
 		m_statusRegister.UpdateFrom(r);
 		break;
 	}
 	case 0b001: // DEC 
 	{
 		r = ALU::DEC(value, isWord);
-		WriteReg(modRM.rm, r.value, isWord);
+		WriteReg(modRM.RM(), r.value, isWord);
 		m_statusRegister.UpdateFrom(r);
 		break;
 	}
@@ -543,7 +546,6 @@ void CPU::ExecGRP4_GRP5()
 	case 0b011: // CALL Mp
 	case 0b101: // JMP  Mp
 	{
-		std::cout << "Unimplemented ModRM reg = " << static_cast<int>(modRM.reg) << '\n';
 		break;
 	}
 	case 0b110: // PUSH (Eb, Ev)
@@ -690,12 +692,8 @@ void CPU::Reset()
 
 ModRM CPU::DecodeModRM()
 {
-	ModRM modRM;
-	modRM.raw = Fetch8();
+	ModRM modRM{ Fetch8() };
 
-	modRM.rm = modRM.raw & 0b111;
-	modRM.reg = (modRM.raw >> 3) & 0b111;
-	modRM.mod = (modRM.raw >> 6) & 0b11;
 	return modRM;
 }
 

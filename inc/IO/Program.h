@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Core/uint20_t.h"
 #include "Core/MemoryCellType.h"
 
 #include "IO/AddressValue.h"
@@ -19,7 +18,7 @@ struct Program
 		memoryCellType.insert({ address, cellType });
 	}
 
-	Program() {};
+	Program() = default;
 	Program(uint16_t startAddr, std::span<const AddressValue> addrVal,
 		const std::unordered_map<uint20_t, MemoryCellType>& mem) :
 		startAddress{ startAddr },

@@ -5,16 +5,13 @@
 #include "Debugger/Dissasembler.h"
 
 #include "Core/CPU.h"
-#include "Core/InterruptController.h"
 #include "Core/Terminal.h"
 #include "Core/Keyboard.h"
-#include "Core/MemoryUnit.h"
 
 #include "UI/UICommon.h"
 #include "UI/InstructionTableInfo.h"
 #include "UI/AppConfig.h"
 
-#include "Utils/StringUtils.h"
 #include "Utils/Logger.h"
 #include "Utils/UIUtils.h"
 #include "Utils/Constants.h"
@@ -23,7 +20,6 @@
 #include "ImGui/imgui-SFML.h"
 
 #include <format>
-#include <forward_list>
 
 class Assembler;
 struct AssemblerError;

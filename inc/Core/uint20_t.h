@@ -2,7 +2,6 @@
 
 #include "Utils/Constants.h"
 
-#include <cstdint>
 #include <functional>
 
 class uint20_t

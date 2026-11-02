@@ -1,12 +1,9 @@
 #pragma once
 
 #include "Assembler/InstructionDef.h"
-#include "Assembler/ISAEntry.h"
-#include "Assembler/Token.h"
 #include "Assembler/AssemblerError.h"
 #include "Assembler/AssemblerWarning.h"
 
-#include "Utils/CharacterUtils.h"
 #include "Utils/StringUtils.h"
 
 #include <iostream>

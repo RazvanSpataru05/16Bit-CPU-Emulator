@@ -1,18 +1,12 @@
 #pragma once
 
+#include "Assembler/Assembler.h"
 #include "Assembler/Statement.h"
 
 #include "Utils/Logger.h"
 #include "Utils/Constants.h"
 
 #include "IO/Program.h"
-
-#include <filesystem>
-#include <vector>
-#include <fstream>
-#include <span>
-
-class Assembler;
 
 namespace DataLoader
 {

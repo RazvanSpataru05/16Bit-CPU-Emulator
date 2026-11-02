@@ -2,8 +2,6 @@
 
 #include "Utils/CharacterUtils.h"
 
-#include "UI/UIEditor.h"
-
 #include "Assembler/ISAEntry.h"
 #include "Assembler/Token.h"
 #include "Assembler/ParsedNumber.h"

@@ -1,5 +1,4 @@
 #include "IO/DataLoader.h"
-#include "Assembler/Assembler.h"
 
 std::vector<uint8_t> DataLoader::ParseHexValuesFromFile(const std::filesystem::path& path, bool& hasData)
 {

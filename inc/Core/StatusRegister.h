@@ -4,9 +4,6 @@
 
 #include "Utils/Constants.h"
 
-#include <iostream>
-#include <bitset>
-
 class StatusRegister
 {
 public:

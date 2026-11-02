@@ -1,13 +1,17 @@
 #pragma once
 
-#include "Assembler/Lexer.h"
+#include "Assembler/AssemblerError.h"
+#include "Assembler/AssemblerWarning.h"
+#include "Assembler/InstructionDef.h"
 #include "Assembler/LabelInfo.h"
 #include "Assembler/Statement.h"
-#include "Assembler/ParsedNumber.h"
 
+#include "Utils/StringUtils.h"
 #include "Utils/Logger.h"
 
 #include <span>
+#include <vector>
+#include <functional>
 
 using namespace ISA;
 

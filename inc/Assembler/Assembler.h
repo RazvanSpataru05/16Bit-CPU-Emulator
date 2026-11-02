@@ -1,10 +1,7 @@
 #pragma once
 
-#include "Assembler/AssemblerError.h"
 #include "Assembler/Parser.h"
 #include "Assembler/Lexer.h"
-
-#include <span>
 
 class Assembler
 {

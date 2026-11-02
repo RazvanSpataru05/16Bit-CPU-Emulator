@@ -5,7 +5,6 @@
 #include "Core/SegmentReg.h"
 
 #include <array>
-#include <iostream>
 #include <cstdint>
 
 class RegisterFile

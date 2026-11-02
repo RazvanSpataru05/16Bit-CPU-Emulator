@@ -2,17 +2,16 @@
 
 #include <cstdint>
 
-union ModRM
+struct ModRM
 {
-	uint8_t raw;
-
-	struct
-	{
-		uint8_t rm : 3;
-		uint8_t reg : 3;
-		uint8_t mod : 2;
-	};
+	uint8_t raw{};
 
 	ModRM() = default;
-	ModRM(uint8_t r) : raw{ r } {}
+	explicit ModRM(uint8_t r) :
+		raw{ r } {}
+
+	[[nodiscard]] uint8_t RM() const { return raw & 0b00000111; }
+	[[nodiscard]] uint8_t Reg() const { return (raw >> 3) & 0b00000111; }
+	[[nodiscard]] uint8_t Mod() const { return (raw >> 6) & 0b00000011; }
+
 };

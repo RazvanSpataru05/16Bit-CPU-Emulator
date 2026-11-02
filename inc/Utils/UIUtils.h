@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Assembler/ISAEntry.h"
+#include "Assembler/InstructionDef.h"
 
 #include "Core/MemoryUnit.h"
 

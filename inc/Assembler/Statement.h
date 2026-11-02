@@ -11,8 +11,8 @@
 
 struct Statement
 {
-	std::optional<uint8_t> opcode = std::nullopt;
-	std::optional<uint8_t> modRM = std::nullopt;
+	std::optional<uint8_t> opcode{ std::nullopt };
+	std::optional<uint8_t> modRM{ std::nullopt };
 
 	uint20_t address{};
 	uint8_t length{}; // 1-6 based on the instruction
