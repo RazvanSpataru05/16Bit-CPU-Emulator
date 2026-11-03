@@ -36,6 +36,8 @@ void CPU::Step()
 	if (m_haltFlag || m_memoryUnit.IsMemoryEmpty() ||
 		!m_memoryUnit[PhysAddr(m_registerFile.CS(), m_IP)].has_value()) return;
 
+	m_segmentOverride = DecodeStackOverride();
+
 	if ((m_IR & 0xC0) == 0x00 && (m_IR & 0b111) < 6) ExecALU();
 	/*
 	^	opcodes:	00 -> 05 (ADD);
@@ -242,11 +244,11 @@ void CPU::ExecALU()
 
 	if (form < 4)
 	{
-		ModRM modRM = DecodeModRM();
+		const ModRM modRM = DecodeModRM();
 		const RMOperand rm = ResolveRM(modRM);
 
-		const bool word = (form & 1)		!= 0;		// 0th bit: 16-bytes, else 8-bytes
-		const bool toReg = (form & 0b10)	!= 0;		// if bit 1 is true, dest is reg
+		const bool word  = (form & 1)		!= 0;		// 0th bit: 16-bytes, else 8-bytes
+		const bool toReg = (form & 0b10)	!= 0;		// if bit 1 is true, destination is reg
 
 		const uint16_t regValue = ReadReg(modRM.Reg(), word);
 		const uint16_t rmValue  = ReadRM(rm, word);
@@ -397,11 +399,11 @@ void CPU::ExecMOVModRM()
 		return;
 	}
 
-	const bool word = (m_IR & 0b1) != 0;
+	const bool word  = (m_IR & 0b1) != 0;
 	const bool toReg = (m_IR & 0b10) != 0;
 
 	const uint8_t destination = toReg ? modRM.Reg() : modRM.RM();
-	const uint8_t source = toReg ? modRM.RM() : modRM.Reg();
+	const uint8_t source      = toReg ? modRM.RM()  : modRM.Reg();
 
 	WriteReg(destination, ReadReg(source, word), word);
 	++m_IP;
@@ -676,6 +678,7 @@ void CPU::Reset()
 	m_statusRegister.Reset();
 	m_haltFlag = false;
 	m_TESTPin = false;
+	m_segmentOverride = SegmentOverride::NONE;
 
 	m_IP = m_memoryUnit.GetStartAddress();
 
@@ -749,7 +752,13 @@ RMOperand CPU::ResolveRM(ModRM modRM)
 	const bool usesBP = modRM.RM() == 0b010 || modRM.RM() == 0b011 ||
 						(modRM.RM() == 0b110 && modRM.Mod() != 0b00);
 
-	const uint16_t segment = usesBP ? m_registerFile.SS() : m_registerFile.DS();
+	uint16_t segment = usesBP ? m_registerFile.SS() : m_registerFile.DS();
+
+	if (const auto result = ResolveSegment(); result.has_value()) // When segment override occurs
+	{
+		segment = result.value();
+	}
+
 	return { false, 0, segment, offset };
 }
 
@@ -956,6 +965,35 @@ uint16_t CPU::Pop16()
 	const uint16_t word = ReadStackWord(m_registerFile.SP());
 	m_registerFile.SP() += 2;
 	return word;
+}
+
+SegmentOverride CPU::DecodeStackOverride() noexcept
+{
+	SegmentOverride seg{};
+	switch (m_IR) 
+	{
+	case 0x26: seg = SegmentOverride::ES; break;
+	case 0x2E: seg = SegmentOverride::CS; break;
+	case 0x36: seg = SegmentOverride::SS; break;
+	case 0x3E: seg = SegmentOverride::DS; break;
+	default:   return SegmentOverride::NONE;
+	}
+
+	++m_IP;
+	UpdateIR();
+	return seg;
+}
+
+std::optional<uint16_t> CPU::ResolveSegment() noexcept
+{
+	switch (m_segmentOverride)
+	{
+	case SegmentOverride::NONE: return std::nullopt;
+	case SegmentOverride::ES:	return m_registerFile.ES();
+	case SegmentOverride::CS:	return m_registerFile.CS();
+	case SegmentOverride::SS:	return m_registerFile.SS();
+	case SegmentOverride::DS:	return m_registerFile.DS();
+	}
 }
 
 template<typename RegType>

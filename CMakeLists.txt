@@ -78,6 +78,7 @@ set(HEADERS
     inc/Core/Reg16.h	
     inc/Core/RMOperand.h	
     inc/Core/SegmentReg.h
+    inc/Core/SegmentOverride.h
     inc/Core/StatusRegister.h
     inc/Core/Terminal.h
     inc/Core/TerminalLine.h

@@ -4,6 +4,7 @@
 #include "Core/InterruptController.h"
 #include "Core/RegisterFile.h"
 #include "Core/StatusRegister.h"
+#include "Core/SegmentOverride.h"
 #include "Core/MemoryUnit.h"
 #include "Core/ModRM.h"
 #include "Core/RMOperand.h"
@@ -53,24 +54,27 @@ public:
 
 private:
 	uint16_t ReadReg(uint8_t selector, bool word) const;
-	void WriteReg(uint8_t selector, uint16_t value, bool word);
+	void     WriteReg(uint8_t selector, uint16_t value, bool word);
 
 	uint16_t ReadStackWord(uint16_t stackPointer);
 
-	uint8_t ReadMem8(uint16_t segment, uint16_t offset);
+	uint8_t  ReadMem8(uint16_t segment, uint16_t offset);
 	uint16_t ReadMem16(uint16_t segment, uint16_t offset);
 
 	void WriteMem8(uint16_t segment, uint16_t offset, uint8_t value);
 	void WriteMem16(uint16_t segment, uint16_t offset, uint16_t value);
 
 	uint16_t ReadRM(const RMOperand& operand, bool word);
-	void WriteRM(const RMOperand& operand, uint16_t value, bool word);
+	void     WriteRM(const RMOperand& operand, uint16_t value, bool word);
 
 	void ShortJump(int8_t offset);
 
 	/* Stack Helpers */
 	void Push16(uint16_t value, bool isWord);
 	uint16_t Pop16();
+
+	[[nodiscard]] SegmentOverride				  DecodeStackOverride() noexcept;
+	[[nodiscard]] std::optional<uint16_t>		  ResolveSegment()		noexcept;
 
 	template<typename RegType>
 	void StackOperation(RegType selector, bool isPush);
@@ -93,10 +97,10 @@ private:
 	void ExecClearStoreFlags();
 	void ExecGRP4_GRP5();
 
-	ModRM DecodeModRM();
-	uint16_t DecodeEffectiveAddress(uint8_t rm, uint8_t mod);
+	[[nodiscard]] ModRM DecodeModRM();
+	[[nodiscard]] uint16_t DecodeEffectiveAddress(uint8_t rm, uint8_t mod);
 
-	RMOperand ResolveRM(ModRM modRM);
+	[[nodiscard]] RMOperand ResolveRM(ModRM modRM);
 
 private:
 	CPU(const CPU&) = delete;
@@ -115,6 +119,8 @@ private:
 
 	uint16_t	m_IP{};		// Instruction Pointer Registry (offset, 16 bits) 
 	uint8_t		m_IR{};		// Instruction Registry
+
+	SegmentOverride m_segmentOverride{};
 
 	bool m_haltFlag{ false };
 	bool m_TESTPin{ false };
