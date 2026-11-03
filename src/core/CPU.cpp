@@ -392,20 +392,17 @@ void CPU::ExecMOVAccumulator()
 
 void CPU::ExecMOVModRM()
 {
-	ModRM modRM = DecodeModRM();
-	if (modRM.Mod() != 0b11)
-	{
-		Logger::AddInfoMessage(std::format("Unimplemented mod: {}", modRM.Mod()));
-		return;
-	}
+	const ModRM modRM  = DecodeModRM();
+	const RMOperand rm = ResolveRM(modRM);
 
-	const bool word  = (m_IR & 0b1) != 0;
-	const bool toReg = (m_IR & 0b10) != 0;
+	const bool word  = (m_IR & 1)    != 0; // bit 0 is 1, then operate on 16-bits, else 8-bits
+	const bool toReg = (m_IR & 0b10) != 0; 
 
-	const uint8_t destination = toReg ? modRM.Reg() : modRM.RM();
-	const uint8_t source      = toReg ? modRM.RM()  : modRM.Reg();
+	const uint16_t value = toReg ? ReadRM(rm, word) : ReadReg(modRM.Reg(), word);
 
-	WriteReg(destination, ReadReg(source, word), word);
+	if (toReg) WriteReg(modRM.Reg(), value, word);
+	else WriteRM(rm, value, word);
+
 	++m_IP;
 }
 
@@ -702,6 +699,7 @@ ModRM CPU::DecodeModRM()
 uint16_t CPU::DecodeEffectiveAddress(uint8_t rm, uint8_t mod)
 {
 	uint16_t effectiveAddress{};
+	std::cout << "got here" << static_cast<int>(rm) << '\n';
 	switch (rm) 
 	{
 	case 0b000:		effectiveAddress = static_cast<uint16_t>(m_registerFile.BX() + m_registerFile.SI());	break;
