@@ -50,23 +50,22 @@ void CPU::Step()
 					38 -> 3D (CMP);
 		total: 48 instructions
 	*/
-	else if ((m_IR & 0xE6) == 0x06)					 ExecPushPopSeg(); // opcodes: {06, 07, 0E, 0F, 16, 17, 1E, 1F} (8 instr)
-	else if ((m_IR & 0xF0) == 0x40)					 ExecINCDEC(); // opcodes: 40 -> 4F (16 instr)
-	else if ((m_IR & 0xF0) == 0x50)					 ExecPushPopGP(); // opcodes: 50 -> 5F (16 instr) 
-	// opcodes 60-6f are undefined 
-	else if ((m_IR & 0xF0) == 0x70)					 ExecConditionedJump(); // opcodes: 70 -> 7F (16 instr)
-	else if ((m_IR & 0xFC) == 0x88)					 ExecMOVModRM();		// opcodes: 88 -> 8B (4 instr)
-	else if ((m_IR & 0xF8) == 0x90)					 ExecExchange();		// opcodes: 90 -> 97 (8 instr)
-	else if ((m_IR & 0xFE) == 0x98)					 ExecConvert();			// opcodes: 98, 99 (CBW, CWD)
-	else if ((m_IR & 0xFE) == 0x9C)					 ExecPushPopFlags();	// opcodes: 9C, 9D (PUSHF, POPF) 
-	else if ((m_IR & 0xFE) == 0x9E)					 ExecStoreRegIntoFlags(); // opcodes: 9E, 9F (SAHF, LAHF)
-	else if ((m_IR & 0xFC) == 0xA0)					 ExecMOVAccumulator();	// opcodes: A0 -> A3 (4 instr)
-	else if ((m_IR & 0xF0) == 0xB0)					 ExecMOVImm();			// opcodes: B0 -> BF (16 instr)
-	else if ((m_IR & 0xFE) == 0xC2)					 ExecRet();				// opcodes: C2, C3 (RET Iw, RET)
-	else if ((m_IR & 0xFE) == 0xCA)					 ExecRetFar();			// opcodes: CA, CB (RETF Iw, RETF)
-	else if ((m_IR & 0xFC) == 0xE0)					 ExecLoop();			// opcodes: E0 -> E4 (LOOPNZ / LOOPNE, LOOPE / LOOPZ, LOOP, JCXZ)
-	else if ((m_IR & 0xFC) == 0xF8)					 ExecClearStoreFlags(); // opcodes: F8 -> FD (CLC, STC, CLI, STI, CLD, STD)
-	else if ((m_IR & 0xFE) == 0xFE)					 ExecGRP4_GRP5();		// opcodes: FE, FF (GRP4 & GRP5)
+	else if ((m_IR & 0xE6) == 0x06)												 ExecPushPopSeg(); // opcodes: {06, 07, 0E, 0F, 16, 17, 1E, 1F} (8 instr)
+	else if ((m_IR & 0xF0) == 0x40)												 ExecINCDEC(); // opcodes: 40 -> 4F (16 instr)
+	else if ((m_IR & 0xF0) == 0x50)												 ExecPushPopGP(); // opcodes: 50 -> 5F (16 instr) 
+	else if ((m_IR & 0xF0) == 0x60 || (m_IR & 0xF0) == 0x70)					 ExecConditionedJump(); // opcodes: 70 -> 7F (16 instr)
+	else if ((m_IR & 0xFC) == 0x88)												 ExecMOVModRM();		// opcodes: 88 -> 8B (4 instr)
+	else if ((m_IR & 0xF8) == 0x90)												 ExecExchange();		// opcodes: 90 -> 97 (8 instr)
+	else if ((m_IR & 0xFE) == 0x98)												 ExecConvert();			// opcodes: 98, 99 (CBW, CWD)
+	else if ((m_IR & 0xFE) == 0x9C)												 ExecPushPopFlags();	// opcodes: 9C, 9D (PUSHF, POPF) 
+	else if ((m_IR & 0xFE) == 0x9E)												 ExecStoreRegIntoFlags(); // opcodes: 9E, 9F (SAHF, LAHF)
+	else if ((m_IR & 0xFC) == 0xA0)												 ExecMOVAccumulator();	// opcodes: A0 -> A3 (4 instr)
+	else if ((m_IR & 0xF0) == 0xB0)												 ExecMOVImm();			// opcodes: B0 -> BF (16 instr)
+	else if ((m_IR & 0xFE) == 0xC2)											     ExecRet();				// opcodes: C2, C3 (RET Iw, RET)
+	else if ((m_IR & 0xFE) == 0xCA)												 ExecRetFar();			// opcodes: CA, CB (RETF Iw, RETF)
+	else if ((m_IR & 0xFC) == 0xE0)												 ExecLoop();			// opcodes: E0 -> E4 (LOOPNZ / LOOPNE, LOOPE / LOOPZ, LOOP, JCXZ)
+	else if ((m_IR & 0xFC) == 0xF8)												 ExecClearStoreFlags(); // opcodes: F8 -> FD (CLC, STC, CLI, STI, CLD, STD)
+	else if ((m_IR & 0xFE) == 0xFE)												 ExecGRP4_GRP5();		// opcodes: FE, FF (GRP4 & GRP5)
 	else switch (m_IR)
 	{
 	case 0x27:  // DAA (Decimal adjust After Addition)
@@ -183,6 +182,31 @@ void CPU::Step()
 			++m_IP;
 		}
 
+		break;
+	}
+	case 0xD4:			// AAM (ASCII Adjust After Multiplication)
+	{
+		m_registerFile.Set8(Reg8::AH, static_cast<uint8_t>(m_registerFile.AL() / 10));
+		m_registerFile.Set8(Reg8::AL, static_cast<uint8_t>(m_registerFile.AL() % 10));
+
+		++m_IP;
+		break;
+	}
+	case 0xD5:			// AAD (ASCII Adjust After Division)
+	{
+		m_registerFile.Set8(Reg8::AL, static_cast<uint8_t>(m_registerFile.AH() * 10) + m_registerFile.AL());
+		m_registerFile.Set8(Reg8::AH, 0u);
+
+		++m_IP;
+		break;
+	}
+	case 0xD7:			// XLAT (1by)
+	{
+		const uint16_t offset = static_cast<uint16_t>(m_registerFile.BX(), m_registerFile.AL());
+		if (const auto result = m_memoryUnit[PhysAddr(m_registerFile.DS(), offset)]; result.has_value())
+		{
+			m_registerFile.Set8(Reg8::AL, result.value());
+		}
 		break;
 	}
 	case 0xE8:			// CALL Jv (Near Call)
