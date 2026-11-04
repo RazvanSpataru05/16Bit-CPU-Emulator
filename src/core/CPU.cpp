@@ -36,7 +36,7 @@ void CPU::Step()
 	if (m_haltFlag || m_memoryUnit.IsMemoryEmpty() ||
 		!m_memoryUnit[PhysAddr(m_registerFile.CS(), m_IP)].has_value()) return;
 
-	m_segmentOverride = DecodeStackOverride();
+	m_segmentOverride = DecodeSegmentOverride();
 
 	if ((m_IR & 0xC0) == 0x00 && (m_IR & 0b111) < 6) ExecALU();
 	/*
@@ -679,15 +679,13 @@ void CPU::Reset()
 
 	m_IP = m_memoryUnit.GetStartAddress();
 
-	if (m_memoryUnit[m_IP].has_value())
+	if (IsPrefixOverride(m_memoryUnit[m_IP].value_or(0x00)))
 	{
-		m_IR = m_memoryUnit[m_IP].value();
-	}
-	else
-	{
-		m_IR = 0x00;
-	}
+		++m_IP;
+		m_segmentOverride = DecodeSegmentOverride();
 
+	}
+	m_IR = m_memoryUnit[m_IP].value_or(0x00);
 }
 
 ModRM CPU::DecodeModRM()
@@ -699,7 +697,7 @@ ModRM CPU::DecodeModRM()
 uint16_t CPU::DecodeEffectiveAddress(uint8_t rm, uint8_t mod)
 {
 	uint16_t effectiveAddress{};
-	std::cout << "got here" << static_cast<int>(rm) << '\n';
+
 	switch (rm) 
 	{
 	case 0b000:		effectiveAddress = static_cast<uint16_t>(m_registerFile.BX() + m_registerFile.SI());	break;
@@ -800,10 +798,18 @@ void CPU::SetInstructionPointer(uint16_t address)
 
 void CPU::SetInstructionRegister()
 {
+	std::cout << "hereee\n";
 	if (!m_memoryUnit[m_IP].has_value())
 	{
 		m_haltFlag = true;
 		return;
+	}
+	
+	if (IsPrefixOverride(m_memoryUnit[PhysAddr(m_registerFile.CS(), m_IP)].value_or(0x00)))
+	{
+		std::cout << "heree\n";
+		m_segmentOverride = DecodeSegmentOverride();
+		++m_IP;
 	}
 	m_IR = m_memoryUnit[PhysAddr(m_registerFile.CS(), m_IP)].value();
 }
@@ -965,7 +971,15 @@ uint16_t CPU::Pop16()
 	return word;
 }
 
-SegmentOverride CPU::DecodeStackOverride() noexcept
+bool CPU::IsPrefixOverride(uint8_t value) const noexcept
+{
+	return value == 0x26
+		|| value == 0x2E
+		|| value == 0x36
+		|| value == 0x3E;
+}
+
+SegmentOverride CPU::DecodeSegmentOverride() noexcept
 {
 	SegmentOverride seg{};
 	switch (m_IR) 

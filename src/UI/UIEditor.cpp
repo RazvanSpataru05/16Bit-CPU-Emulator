@@ -206,6 +206,7 @@ namespace UIEditor
 			emulator.GetCPU().GetMemoryUnit().LoadBytesIntoMemory(bytes);
 			emulator.GetCPU().SetInstructionRegister();
 		}
+
 		DrawOutput(emulator, config);
 		ImGui::End();
 	}

@@ -73,8 +73,9 @@ private:
 	void Push16(uint16_t value, bool isWord);
 	uint16_t Pop16();
 
-	[[nodiscard]] SegmentOverride				  DecodeStackOverride() noexcept;
-	[[nodiscard]] std::optional<uint16_t>		  ResolveSegment()		noexcept;
+	[[nodiscard]] bool							  IsPrefixOverride(uint8_t value)		const noexcept;
+	[[nodiscard]] SegmentOverride				  DecodeSegmentOverride()				noexcept;
+	[[nodiscard]] std::optional<uint16_t>		  ResolveSegment()						noexcept;
 
 	template<typename RegType>
 	void StackOperation(RegType selector, bool isPush);
