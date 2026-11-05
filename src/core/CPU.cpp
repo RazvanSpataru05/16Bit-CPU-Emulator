@@ -63,43 +63,21 @@ void CPU::Step()
 	else if ((m_IR & 0xF0) == 0xB0)												 ExecMOVImm();			// opcodes: B0 -> BF (16 instr)
 	else if ((m_IR & 0xFE) == 0xC2)											     ExecRet();				// opcodes: C2, C3 (RET Iw, RET)
 	else if ((m_IR & 0xFE) == 0xCA)												 ExecRetFar();			// opcodes: CA, CB (RETF Iw, RETF)
-	else if ((m_IR & 0xFC) == 0xE0)												 ExecLoop();			// opcodes: E0 -> E4 (LOOPNZ / LOOPNE, LOOPE / LOOPZ, LOOP, JCXZ)
-	else if ((m_IR & 0xFC) == 0xF8)												 ExecClearStoreFlags(); // opcodes: F8 -> FD (CLC, STC, CLI, STI, CLD, STD)
+	else if ((m_IR & 0xFC) == 0xE0)												 ExecLoop();			// opcodes: E0 -> E3 (LOOPNZ / LOOPNE, LOOPE / LOOPZ, LOOP, JCXZ)
+	else if ((m_IR & 0xFE) == 0xFC)												 ExecClearStoreFlags(); // opcodes: F8 -> FD (CLC, STC, CLI, STI, CLD, STD)
 	else if ((m_IR & 0xFE) == 0xFE)												 ExecGRP4_GRP5();		// opcodes: FE, FF (GRP4 & GRP5)
 	else switch (m_IR)
 	{
 	case 0x27:  // DAA (Decimal adjust After Addition)
 	{
-		const uint8_t lowNibble = m_registerFile.AL() & Utils::Constants::LOW_NIBBLE_MASK;
-		if (lowNibble > 9 || m_statusRegister.Auxiliary())
-		{
-			m_registerFile.Set8(Reg8::AL, m_registerFile.AL() + 6);
-			m_statusRegister.SetFlagOn(Utils::Constants::AF_MASK);
-		}
-
-		if (m_registerFile.AL() > 0x9F || m_statusRegister.Carry())
-		{
-			m_registerFile.Set8(Reg8::AL, m_registerFile.AL() + 0x60);
-			m_statusRegister.SetFlagOn(Utils::Constants::CF_MASK);
-		}
+		DecimalAdjust(false);
 
 		++m_IP;
 		break;
 	}
 	case 0x2F:			// DAS (Decimal adjust After Subtraction)
 	{
-		const uint8_t lowNibble = m_registerFile.AL() & Utils::Constants::LOW_NIBBLE_MASK;
-		if (lowNibble > 9 || m_statusRegister.Auxiliary())
-		{
-			m_registerFile.Set8(Reg8::AL, m_registerFile.AL() - 6);
-			m_statusRegister.SetFlagOn(Utils::Constants::AF_MASK);
-		}
-
-		if (m_registerFile.AL() > 0x9F || m_statusRegister.Carry())
-		{
-			m_registerFile.Set8(Reg8::AL, m_registerFile.AL() - 0x60);
-			m_statusRegister.SetFlagOn(Utils::Constants::CF_MASK);
-		}
+		DecimalAdjust(true);
 
 		++m_IP;
 		break;
@@ -163,8 +141,8 @@ void CPU::Step()
 	}
 	case 0x9A:			// CALL Ap (Address pointer)
 	{
-		const uint16_t segment = Fetch16();
 		const uint16_t offset = Fetch16();
+		const uint16_t segment = Fetch16();
 		++m_IP;
 
 		Push16(m_registerFile.CS(), true);
@@ -186,15 +164,17 @@ void CPU::Step()
 	}
 	case 0xD4:			// AAM (ASCII Adjust After Multiplication)
 	{
-		m_registerFile.Set8(Reg8::AH, static_cast<uint8_t>(m_registerFile.AL() / 10));
-		m_registerFile.Set8(Reg8::AL, static_cast<uint8_t>(m_registerFile.AL() % 10));
+		const uint8_t base = Fetch8();
+		m_registerFile.Set8(Reg8::AH, static_cast<uint8_t>(m_registerFile.AL() / base));
+		m_registerFile.Set8(Reg8::AL, static_cast<uint8_t>(m_registerFile.AL() % base));
 
 		++m_IP;
 		break;
 	}
 	case 0xD5:			// AAD (ASCII Adjust After Division)
 	{
-		m_registerFile.Set8(Reg8::AL, static_cast<uint8_t>(m_registerFile.AH() * 10) + m_registerFile.AL());
+		const uint8_t base = Fetch8();
+		m_registerFile.Set8(Reg8::AL, static_cast<uint8_t>(m_registerFile.AH() * base) + m_registerFile.AL());
 		m_registerFile.Set8(Reg8::AH, 0u);
 
 		++m_IP;
@@ -207,6 +187,7 @@ void CPU::Step()
 		{
 			m_registerFile.Set8(Reg8::AL, result.value());
 		}
+		++m_IP;
 		break;
 	}
 	case 0xE8:			// CALL Jv (Near Call)
@@ -271,7 +252,7 @@ void CPU::ExecALU()
 		const ModRM modRM = DecodeModRM();
 		const RMOperand rm = ResolveRM(modRM);
 
-		const bool word  = (form & 1)		!= 0;		// 0th bit: 16-bytes, else 8-bytes
+		const bool word  = (form & 1)		!= 0;		// 0th bit: 16-bits, else 8-bits
 		const bool toReg = (form & 0b10)	!= 0;		// if bit 1 is true, destination is reg
 
 		const uint16_t regValue = ReadReg(modRM.Reg(), word);
@@ -580,6 +561,38 @@ void CPU::ExecGRP4_GRP5()
 	}
 }
 
+void CPU::DecimalAdjust(bool isSubtract)
+{
+	const uint8_t oldAL = m_registerFile.AL();
+	const bool oldCF = m_statusRegister.Carry();
+
+	uint8_t al = oldAL;
+	bool carry = false;
+	bool aux = false;
+
+	if ((oldAL & 0x0F) > 9 || m_statusRegister.Auxiliary())
+	{
+		const int result = oldAL + (isSubtract ? -6 : 6);
+		carry = oldCF || result > 0xFF || result < 0;
+		al = static_cast<uint8_t>(result);
+		aux = true;
+	}
+
+	if (oldAL > 0x99 || oldCF)
+	{
+		al = static_cast<uint8_t>(al + (isSubtract ? -0x60 : 0x60));
+		carry = true;
+	}
+
+	m_registerFile.Set8(Reg8::AL, al);
+
+	m_statusRegister.SetFlag(Utils::Constants::CF_MASK, carry);
+	m_statusRegister.SetFlag(Utils::Constants::AF_MASK, aux);
+	m_statusRegister.SetFlag(Utils::Constants::ZF_MASK, al == 0);
+	m_statusRegister.SetFlag(Utils::Constants::SF_MASK, (al & 0x80) != 0);
+	m_statusRegister.SetFlag(Utils::Constants::PF_MASK, (std::popcount(al) % 2) == 0);
+}
+
 void CPU::ExecConditionedJump()
 {
 	const bool negative = (m_IR & 0b1) == 1;
@@ -736,7 +749,6 @@ uint16_t CPU::DecodeEffectiveAddress(uint8_t rm, uint8_t mod)
 		if (mod == 0b00)
 		{
 			const uint16_t directAddr = Fetch16();
-			++m_IP;
 			return directAddr;
 		}
 		effectiveAddress = m_registerFile.BP();
@@ -748,13 +760,11 @@ uint16_t CPU::DecodeEffectiveAddress(uint8_t rm, uint8_t mod)
 	if (mod == 0b01)
 	{
 		const int8_t disp = static_cast<int8_t>(Fetch8());
-		++m_IP;
 		effectiveAddress += disp;
 	}
 	else if (mod == 0b10)
 	{
 		const uint16_t disp = Fetch16();
-		++m_IP;
 		effectiveAddress += disp;
 	}
 
@@ -798,6 +808,11 @@ void CPU::HandleInterrupt()
 		const uint16_t vectorAddress = line * 2;
 		m_IP = m_memoryUnit[PhysAddr(m_registerFile.CS(), m_IP)].value();
 	}
+}
+
+SegmentOverride CPU::GetSegmentOverride() const noexcept
+{
+	return m_segmentOverride;
 }
 
 uint16_t CPU::GetIP() const noexcept

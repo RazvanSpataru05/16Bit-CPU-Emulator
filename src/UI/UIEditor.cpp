@@ -30,6 +30,7 @@ namespace UIEditor
 		PageType currentHelperPage{ PageType::GLOSSARY_PAGE };
 
 		constexpr uint16_t PAGE_SIZE = 256u;
+		constexpr uint16_t PAGE_COUNT = 4096u;
 
 		constexpr uint16_t FIRST_LOAD_INSTRUCTION = 0x01;
 		constexpr uint16_t LAST_LOAD_INSTRUCTION = 0x14;
@@ -273,26 +274,31 @@ namespace UIEditor
 		ImGui::SetNextWindowPos(Utils::UI::CalcMemoryViewPos(), ImGuiCond_Always);
 		ImGui::SetNextWindowSize(Utils::UI::CalcMemoryViewSize(), ImGuiCond_Always);
 
-		const auto memoryFlags = ImGuiWindowFlags_NoResize |
-			ImGuiWindowFlags_NoMove |
-			ImGuiWindowFlags_NoCollapse;
+		const auto memoryFlags = ImGuiWindowFlags_NoResize 
+							   | ImGuiWindowFlags_NoMove
+							   | ImGuiWindowFlags_NoCollapse
+						       | ImGuiWindowFlags_NoTitleBar;
 
-		ImGui::Begin(std::format("Memory View (Page {}/{})", currentPage, PAGE_SIZE - 1).c_str(), nullptr, memoryFlags);
+		ImGui::Begin("Memory View", nullptr, memoryFlags);
+		ImGui::Text(std::format("Memory View (Page {}/{})", currentPage, PAGE_COUNT - 1).c_str());
+		ImGui::SameLine(kSecondColumnX);
+		ImGui::Text(std::format("Current Segment: ", Utils::String::SegmentOverrideToString(emulator.GetCPU().GetSegmentOverride())).c_str());
+
 		if (ImGui::Button("Prev"))
 		{
-			currentPage = currentPage - 1 < 0 ? 255 : currentPage - 1;
+			currentPage = currentPage - 1 < 0 ? (PAGE_COUNT - 1) : currentPage - 1;
 		}
 		ImGui::SameLine();
 
 		if (ImGui::Button("Next"))
 		{
-			currentPage = (currentPage + 1) % 256;
+			currentPage = (currentPage + 1) % PAGE_COUNT;
 		}
 
 		const size_t startAddress = static_cast<size_t>(currentPage * PAGE_SIZE);
 		const size_t endAddress = startAddress + PAGE_SIZE;
 
-		if (ImGui::BeginTable("MemoryTable", 16, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg))
+		if (ImGui::BeginTable("##memoryTable", 16, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg))
 		{
 			for (size_t index = startAddress; index < endAddress; ++index)
 			{

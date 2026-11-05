@@ -92,6 +92,12 @@ uint8_t StatusRegister::Directional() const noexcept
 	return (m_flags & Utils::Constants::DF_MASK) != 0;
 }
 
+void StatusRegister::SetFlag(uint16_t mask, bool on) noexcept
+{
+	if (on) SetFlagOn(mask);
+	else    SetFlagOff(mask);
+}
+
 void StatusRegister::SetFlagOn(uint16_t mask) noexcept
 {
 	m_flags |= mask;

@@ -21,7 +21,7 @@ public:
 
 	void SetLoFlags(uint8_t loFlags) noexcept;
 	void SetHiFlags(uint8_t hiFlags) noexcept;
-	void SetFlags(uint16_t flags) noexcept;
+	void SetFlags(uint16_t flags)	 noexcept;
 
 	[[nodiscard]]	uint8_t Carry()				const noexcept;
 	[[nodiscard]]	uint8_t Overflow()			const noexcept;
@@ -34,7 +34,9 @@ public:
 	[[nodiscard]]	uint8_t Interrupt()			const noexcept;
 	[[nodiscard]]	uint8_t Directional()		const noexcept;
 
-	void SetFlagOn(uint16_t mask) noexcept;
+	void SetFlag(uint16_t mask, bool on) noexcept;
+
+	void SetFlagOn(uint16_t mask)  noexcept;
 	void SetFlagOff(uint16_t mask) noexcept;
 
 private:

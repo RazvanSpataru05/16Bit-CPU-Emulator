@@ -26,12 +26,14 @@ public:
 	void Reset();
 
 	void HandleInterrupt();
+	
+	[[nodiscard]] SegmentOverride GetSegmentOverride() const noexcept;
 
 	//Registry getters
-	uint16_t		GetIP()			const noexcept;
-	uint8_t			GetIR()			const noexcept;
+	[[nodiscard]] uint16_t		GetIP()			const noexcept;
+	[[nodiscard]] uint8_t		GetIR()			const noexcept;
 
-	bool			GetHaltFlag()	const noexcept;
+	[[nodiscard]] bool			GetHaltFlag()	const noexcept;
 
 	void SetInstructionPointer(uint16_t address);
 	void SetInstructionRegister();
@@ -97,6 +99,8 @@ private:
 	void ExecLoop();
 	void ExecClearStoreFlags();
 	void ExecGRP4_GRP5();
+
+	void DecimalAdjust(bool isSubtract);
 
 	[[nodiscard]] ModRM DecodeModRM();
 	[[nodiscard]] uint16_t DecodeEffectiveAddress(uint8_t rm, uint8_t mod);

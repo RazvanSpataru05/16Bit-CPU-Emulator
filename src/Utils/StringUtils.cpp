@@ -117,6 +117,19 @@ namespace Utils
 			}
 		}
 
+		std::string SegmentOverrideToString(SegmentOverride segment)
+		{
+			switch (segment)
+			{
+			case SegmentOverride::ES:			return "ES";
+			case SegmentOverride::CS:			return "CS";
+			case SegmentOverride::SS:			return "SS";
+			case SegmentOverride::DS:
+			case SegmentOverride::NONE:			return "DS";
+			default:							return "ERROR";
+			}
+		}
+
 		std::string TokenTypeToString(const Token& token)
 		{
 			switch (token.type)
