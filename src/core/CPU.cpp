@@ -54,6 +54,7 @@ void CPU::Step()
 	else if ((m_IR & 0xF0) == 0x40)												 ExecINCDEC(); // opcodes: 40 -> 4F (16 instr)
 	else if ((m_IR & 0xF0) == 0x50)												 ExecPushPopGP(); // opcodes: 50 -> 5F (16 instr) 
 	else if ((m_IR & 0xF0) == 0x60 || (m_IR & 0xF0) == 0x70)					 ExecConditionedJump(); // opcodes: 70 -> 7F (16 instr)
+	else if ((m_IR & 0xFC) == 0x80)												 ExecGRP1();			// opcodes: 80 -> 83 (4 instr)
 	else if ((m_IR & 0xFC) == 0x88)												 ExecMOVModRM();		// opcodes: 88 -> 8B (4 instr)
 	else if ((m_IR & 0xF8) == 0x90)												 ExecExchange();		// opcodes: 90 -> 97 (8 instr)
 	else if ((m_IR & 0xFE) == 0x98)												 ExecConvert();			// opcodes: 98, 99 (CBW, CWD)
@@ -123,25 +124,23 @@ void CPU::Step()
 	}
 	case 0x8F:			// POP Ev
 	{
-		ModRM modRM = DecodeModRM();
-		if (modRM.Mod() == 0b11)
-		{
-			if (modRM.Reg() != 0b000)
-			{
-				Logger::AddInfoMessage(std::format("Invalid ModRM registry code: {}", modRM.Reg()));
-				break;
-			}
+		const ModRM modRM  = DecodeModRM();
+		const RMOperand rm = ResolveRM(modRM);
+		++m_IP;
 
-			const uint16_t word = Pop16();
-			WriteReg(modRM.RM(), word, true);
+		if (modRM.Reg() != 0b000)
+		{
+			Logger::AddInfoMessage(std::format("Invalid ModRM Reg field: {}", modRM.Reg()));
+			break;
 		}
 
-		++m_IP;
+		const uint16_t value = Pop16();
+		WriteRM(rm, value, true);
 		break;
 	}
 	case 0x9A:			// CALL Ap (Address pointer)
 	{
-		const uint16_t offset = Fetch16();
+		const uint16_t offset =  Fetch16();
 		const uint16_t segment = Fetch16();
 		++m_IP;
 
@@ -281,7 +280,7 @@ void CPU::ExecALU()
 
 		if (operation != 0b111) // not CMP
 		{
-			if (word) m_registerFile.Set16(Reg16::AX, static_cast<uint16_t>(r.value));
+			if (word) m_registerFile.Set16(Reg16::AX, r.value);
 			else m_registerFile.Set8(Reg8::AL, static_cast<uint8_t>(r.value));
 		}
 	}
@@ -481,19 +480,19 @@ void CPU::ExecClearStoreFlags()
 	case 0b00: // Carry Flag
 	{
 		isClear ? m_statusRegister.SetFlagOff(Utils::Constants::CF_MASK)
-			: m_statusRegister.SetFlagOn(Utils::Constants::CF_MASK);
+			    : m_statusRegister.SetFlagOn(Utils::Constants::CF_MASK);
 		break;
 	}
 	case 0b01: // Interrupt Flag
 	{
 		isClear ? m_statusRegister.SetFlagOff(Utils::Constants::IF_MASK)
-			: m_statusRegister.SetFlagOn(Utils::Constants::IF_MASK);
+			    : m_statusRegister.SetFlagOn(Utils::Constants::IF_MASK);
 		break;
 	}
 	case 0b10: // Directional Flag
 	{
 		isClear ? m_statusRegister.SetFlagOff(Utils::Constants::DF_MASK)
-			: m_statusRegister.SetFlagOn(Utils::Constants::DF_MASK);
+			    : m_statusRegister.SetFlagOn(Utils::Constants::DF_MASK);
 		break;
 	}
 	default:
@@ -505,19 +504,38 @@ void CPU::ExecClearStoreFlags()
 	++m_IP;
 }
 
+void CPU::ExecGRP1()
+{
+	const bool word  = (m_IR & 1) != 0;
+	const bool signExtend = (m_IR & 0b10) != 0 && word;
+	const ModRM modRM  = DecodeModRM();
+	const RMOperand rm = ResolveRM(modRM);
+
+	const uint16_t firstOperand = ReadRM(rm, word);
+	uint16_t secondOperand{};
+
+	if (!word)				secondOperand = Fetch8();
+	else if (signExtend)	secondOperand = static_cast<uint16_t>(static_cast<int8_t>(Fetch8()));
+	else                    secondOperand = Fetch16();
+
+	const Result r = ALU::Execute(modRM.Reg(), firstOperand, secondOperand, word, m_statusRegister.Carry());
+	m_statusRegister.UpdateFrom(r);
+
+	if (modRM.Reg() != 0b111) // Not CMP
+	{
+		WriteRM(rm, r.value, word);
+	}
+	++m_IP;
+}
+
 void CPU::ExecGRP4_GRP5()
 {
 	const bool isWord = (m_IR & 1) == 1;
-	ModRM modRM = DecodeModRM();
+	const ModRM modRM = DecodeModRM();
+	const RMOperand rm = ResolveRM(modRM);
 	++m_IP;
 
-	if (modRM.Mod() != 0b11)
-	{
-		Logger::AddInfoMessage(std::format("Unimplemented ModRM mod = {:#b}", modRM.Mod()));
-		return;
-	}
-
-	const uint16_t value = ReadReg(modRM.RM(), isWord);
+	const uint16_t value = ReadRM(rm, isWord);
 	Result r;
 
 	switch (modRM.Reg())
@@ -525,38 +543,66 @@ void CPU::ExecGRP4_GRP5()
 	case 0b000: // INC
 	{
 		r = ALU::INC(value, isWord);
-		WriteReg(modRM.RM(), r.value, isWord);
+		WriteRM(rm, r.value, isWord);
 		m_statusRegister.UpdateFrom(r);
-		break;
+		return;
 	}
 	case 0b001: // DEC 
 	{
 		r = ALU::DEC(value, isWord);
-		WriteReg(modRM.RM(), r.value, isWord);
+		WriteRM(rm, r.value, isWord);
 		m_statusRegister.UpdateFrom(r);
-		break;
+		return;
 	}
-	case 0b010: // CALL Mp
+	case 0b010: // CALL Ev
 	{
 		Push16(m_IP, isWord);
 		m_IP = value; // Approximation: Will be updated when hardware test will be made
-		break;
+		return;
+	}
+	case 0b011: // CALL Mp
+	{
+		if (rm.isReg)
+		{
+			Logger::AddInfoMessage(std::format("Unimplemented RM operand"));
+			return;
+		}
+
+		const uint16_t offset = ReadMem16(rm.segment, rm.offset);
+		const uint16_t segment = ReadMem16(rm.segment, static_cast<uint16_t>(offset + 2));
+
+		Push16(m_registerFile.CS(), true);
+		Push16(m_IP, true);
+
+		m_IP = offset;
+		m_registerFile.CS() = segment;
+		return;
 	}
 	case 0b100: // JMP Ev
 	{
 		m_IP = value; // Approximation: Will be updated when hardware test will be made
-		break;
+		return;
 	}
-	case 0b011: // CALL Mp
 	case 0b101: // JMP  Mp
 	{
-		break;
+		if (rm.isReg)
+		{
+			Logger::AddInfoMessage(std::format("Unimplemented RM operand"));
+			return;
+		}
+
+		const uint16_t offset  = ReadMem16(rm.segment, rm.offset);
+		const uint16_t segment = ReadMem16(rm.segment, static_cast<uint16_t>(rm.offset + 2));
+
+		m_IP = offset;
+		m_registerFile.CS() = segment;
+		return;
 	}
 	case 0b110: // PUSH (Eb, Ev)
 	case 0b111: // Alias for 0b110
 	{
 		Push16(value, isWord);
-		break;
+		return;
 	}
 	}
 }
@@ -779,7 +825,7 @@ RMOperand CPU::ResolveRM(ModRM modRM)
 	}
 
 	const uint16_t offset = DecodeEffectiveAddress(modRM.RM(), modRM.Mod());
-	const bool usesBP = modRM.RM() == 0b010 || modRM.RM() == 0b011 ||
+	const bool usesBP = modRM.RM()  == 0b010 || modRM.RM()  == 0b011 ||
 						(modRM.RM() == 0b110 && modRM.Mod() != 0b00);
 
 	uint16_t segment = usesBP ? m_registerFile.SS() : m_registerFile.DS();
@@ -1045,21 +1091,4 @@ std::optional<uint16_t> CPU::ResolveSegment() noexcept
 	case SegmentOverride::SS:	return m_registerFile.SS();
 	case SegmentOverride::DS:	return m_registerFile.DS();
 	}
-}
-
-template<typename RegType>
-void CPU::StackOperation(RegType regType, bool isPush)
-{
-	if (isPush)
-	{
-		const uint16_t value = m_registerFile.Get16(regType);
-		Push16(value, true);
-	}
-	else
-	{
-		const uint16_t sp = static_cast<uint16_t>(m_registerFile.SP());
-		const uint16_t word = Pop16();
-		m_registerFile.Set16(static_cast<Reg16>(regType), word);
-	}
-	++m_IP;
 }

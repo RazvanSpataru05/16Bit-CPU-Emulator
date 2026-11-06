@@ -282,7 +282,7 @@ namespace UIEditor
 		ImGui::Begin("Memory View", nullptr, memoryFlags);
 		ImGui::Text(std::format("Memory View (Page {}/{})", currentPage, PAGE_COUNT - 1).c_str());
 		ImGui::SameLine(kSecondColumnX);
-		ImGui::Text(std::format("Current Segment: ", Utils::String::SegmentOverrideToString(emulator.GetCPU().GetSegmentOverride())).c_str());
+		ImGui::Text(std::format("Current Segment: {}", Utils::String::SegmentOverrideToString(emulator.GetCPU().GetSegmentOverride())).c_str());
 
 		if (ImGui::Button("Prev"))
 		{

@@ -30,8 +30,8 @@ namespace Utils
 
 		std::string_view	OperatorKindToString(ISA::OperandKind operatorKind);
 		std::string_view	SlotToString(Slot slot);
-		std::string			SegmentOverrideToString(SegmentOverride segment);
-		std::string			TokenTypeToString(const Token& token);
+		std::string_view	SegmentOverrideToString(SegmentOverride segment);
+		std::string_view	TokenTypeToString(const Token& token);
 		
 		template<typename... Args>
 		std::string TextFormat(std::format_string<Args...> format, Args&&... args)

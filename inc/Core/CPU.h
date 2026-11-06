@@ -17,10 +17,10 @@ class CPU
 public:
 	explicit CPU(InterruptController& interruptContrroller);
 
-	uint20_t	PhysAddr(uint16_t segment, uint16_t offset)		const noexcept;
+	[[nodiscard]] uint20_t	PhysAddr(uint16_t segment, uint16_t offset)		const noexcept;
 
-	uint8_t		Fetch8();
-	uint16_t	Fetch16();
+	[[nodiscard]] uint8_t		Fetch8();
+	[[nodiscard]] uint16_t		Fetch16();
 
 	void Step();
 	void Reset();
@@ -55,32 +55,46 @@ public:
 	[[nodiscard]] StatusRegister& GetStatusRegister()					noexcept;
 
 private:
-	uint16_t ReadReg(uint8_t selector, bool word) const;
-	void     WriteReg(uint8_t selector, uint16_t value, bool word);
+	[[nodiscard]] uint16_t ReadReg(uint8_t selector, bool word) const;
+	void WriteReg(uint8_t selector, uint16_t value, bool word);
 
-	uint16_t ReadStackWord(uint16_t stackPointer);
+	[[nodiscard]] uint16_t ReadStackWord(uint16_t stackPointer);
 
-	uint8_t  ReadMem8(uint16_t segment, uint16_t offset);
-	uint16_t ReadMem16(uint16_t segment, uint16_t offset);
+	[[nodiscard]] uint8_t  ReadMem8(uint16_t segment, uint16_t offset);
+	[[nodiscard]] uint16_t ReadMem16(uint16_t segment, uint16_t offset);
 
 	void WriteMem8(uint16_t segment, uint16_t offset, uint8_t value);
 	void WriteMem16(uint16_t segment, uint16_t offset, uint16_t value);
 
-	uint16_t ReadRM(const RMOperand& operand, bool word);
+	[[nodiscard]] uint16_t ReadRM(const RMOperand& operand, bool word);
 	void     WriteRM(const RMOperand& operand, uint16_t value, bool word);
 
 	void ShortJump(int8_t offset);
 
 	/* Stack Helpers */
 	void Push16(uint16_t value, bool isWord);
-	uint16_t Pop16();
+	[[nodiscard]] uint16_t Pop16();
 
 	[[nodiscard]] bool							  IsPrefixOverride(uint8_t value)		const noexcept;
 	[[nodiscard]] SegmentOverride				  DecodeSegmentOverride()				noexcept;
 	[[nodiscard]] std::optional<uint16_t>		  ResolveSegment()						noexcept;
 
 	template<typename RegType>
-	void StackOperation(RegType selector, bool isPush);
+	void StackOperation(RegType regType, bool isPush)
+	{
+		if (isPush)
+		{
+			const uint16_t value = m_registerFile.Get16(regType);
+			Push16(value, true);
+		}
+		else
+		{
+			const uint16_t sp = static_cast<uint16_t>(m_registerFile.SP());
+			const uint16_t word = Pop16();
+			m_registerFile.Set16(static_cast<Reg16>(regType), word);
+		}
+		++m_IP;
+	}
 
 	void ExecALU();
 	void ExecPushPopGP();
@@ -98,6 +112,7 @@ private:
 	void ExecINCDEC();
 	void ExecLoop();
 	void ExecClearStoreFlags();
+	void ExecGRP1();
 	void ExecGRP4_GRP5();
 
 	void DecimalAdjust(bool isSubtract);

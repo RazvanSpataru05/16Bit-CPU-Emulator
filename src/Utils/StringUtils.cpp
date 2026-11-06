@@ -117,7 +117,7 @@ namespace Utils
 			}
 		}
 
-		std::string SegmentOverrideToString(SegmentOverride segment)
+		std::string_view SegmentOverrideToString(SegmentOverride segment)
 		{
 			switch (segment)
 			{
@@ -130,7 +130,7 @@ namespace Utils
 			}
 		}
 
-		std::string TokenTypeToString(const Token& token)
+		std::string_view TokenTypeToString(const Token& token)
 		{
 			switch (token.type)
 			{
