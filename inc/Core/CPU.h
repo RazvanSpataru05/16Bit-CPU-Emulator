@@ -56,7 +56,7 @@ public:
 
 private:
 	[[nodiscard]] uint16_t ReadReg(uint8_t selector, bool word) const;
-	void WriteReg(uint8_t selector, uint16_t value, bool word);
+	void WriteReg(uint8_t selector, uint16_t value, bool word, bool generalReg);
 
 	[[nodiscard]] uint16_t ReadStackWord(uint16_t stackPointer);
 
@@ -67,7 +67,7 @@ private:
 	void WriteMem16(uint16_t segment, uint16_t offset, uint16_t value);
 
 	[[nodiscard]] uint16_t ReadRM(const RMOperand& operand, bool word);
-	void     WriteRM(const RMOperand& operand, uint16_t value, bool word);
+	void     WriteRM(const RMOperand& operand, uint16_t value, bool word, bool generalReg);
 
 	void ShortJump(int8_t offset);
 
@@ -80,28 +80,15 @@ private:
 	[[nodiscard]] std::optional<uint16_t>		  ResolveSegment()						noexcept;
 
 	template<typename RegType>
-	void StackOperation(RegType regType, bool isPush)
-	{
-		if (isPush)
-		{
-			const uint16_t value = m_registerFile.Get16(regType);
-			Push16(value, true);
-		}
-		else
-		{
-			const uint16_t sp = static_cast<uint16_t>(m_registerFile.SP());
-			const uint16_t word = Pop16();
-			m_registerFile.Set16(static_cast<Reg16>(regType), word);
-		}
-		++m_IP;
-	}
+	void StackOperation(RegType regType, bool isPush);
 
 	void ExecALU();
 	void ExecPushPopGP();
 	void ExecPushPopSeg();
 	void ExecPushPopFlags();
 	void ExecConditionedJump();
-	void ExecExchange();
+	void ExecXCHG();
+	void ExecXCHGModRM();
 	void ExecStoreRegIntoFlags();
 	void ExecConvert();
 	void ExecMOVImm();
@@ -114,6 +101,7 @@ private:
 	void ExecClearStoreFlags();
 	void ExecGRP1();
 	void ExecGRP4_GRP5();
+	void ExecTEST();
 
 	void DecimalAdjust(bool isSubtract);
 
@@ -146,3 +134,29 @@ private:
 	bool m_TESTPin{ false };
 };
 
+template<typename RegType>
+void CPU::StackOperation(RegType regType, bool isPush)
+{
+	if (std::is_same_v<RegType, Reg16>)
+	{
+		std::cout << "stack op for Reg16\n";
+	}
+	else
+	{
+		std::cout << "stack op for SegReg\n";
+	}
+	if (isPush)
+	{
+		const uint16_t value = m_registerFile.Get16(regType);
+		Push16(value, true);
+	}
+	else
+	{
+		const uint16_t sp = static_cast<uint16_t>(m_registerFile.SP());
+		const uint16_t word = Pop16();
+		std::cout << "word: " << std::hex << static_cast<int>(word) << '\n';
+		std::cout << "reg type: " << static_cast<int>(regType) << '\n';
+		m_registerFile.Set16(regType, word);
+	}
+	++m_IP;
+}

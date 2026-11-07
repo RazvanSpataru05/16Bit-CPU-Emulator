@@ -55,8 +55,10 @@ void CPU::Step()
 	else if ((m_IR & 0xF0) == 0x50)												 ExecPushPopGP(); // opcodes: 50 -> 5F (16 instr) 
 	else if ((m_IR & 0xF0) == 0x60 || (m_IR & 0xF0) == 0x70)					 ExecConditionedJump(); // opcodes: 70 -> 7F (16 instr)
 	else if ((m_IR & 0xFC) == 0x80)												 ExecGRP1();			// opcodes: 80 -> 83 (4 instr)
+	else if ((m_IR & 0xFE) == 0x84)												 ExecTEST();			// opcodes: {84, 85} (2 instr)
+	else if ((m_IR & 0xFE) == 0x86)												 ExecXCHGModRM();		// opcodes: {86, 87} (2 instr)
 	else if ((m_IR & 0xFC) == 0x88)												 ExecMOVModRM();		// opcodes: 88 -> 8B (4 instr)
-	else if ((m_IR & 0xF8) == 0x90)												 ExecExchange();		// opcodes: 90 -> 97 (8 instr)
+	else if ((m_IR & 0xF8) == 0x90)												 ExecXCHG();			// opcodes: 90 -> 97 (8 instr)
 	else if ((m_IR & 0xFE) == 0x98)												 ExecConvert();			// opcodes: 98, 99 (CBW, CWD)
 	else if ((m_IR & 0xFE) == 0x9C)												 ExecPushPopFlags();	// opcodes: 9C, 9D (PUSHF, POPF) 
 	else if ((m_IR & 0xFE) == 0x9E)												 ExecStoreRegIntoFlags(); // opcodes: 9E, 9F (SAHF, LAHF)
@@ -122,6 +124,16 @@ void CPU::Step()
 		++m_IP;
 		break;
 	}
+	case 0x8C:			// MOV Ew, Sw (MOV for segment registers)
+	{
+		const ModRM modRM = DecodeModRM();
+		const RMOperand rm = ResolveRM(modRM);
+		const uint16_t value = m_registerFile.Get16(static_cast<SegmentReg>(modRM.Reg()));
+
+		WriteRM(rm, value, true, true);
+		++m_IP;
+		break;
+	}
 	case 0x8F:			// POP Ev
 	{
 		const ModRM modRM  = DecodeModRM();
@@ -135,7 +147,7 @@ void CPU::Step()
 		}
 
 		const uint16_t value = Pop16();
-		WriteRM(rm, value, true);
+		WriteRM(rm, value, true, true);
 		break;
 	}
 	case 0x9A:			// CALL Ap (Address pointer)
@@ -265,8 +277,8 @@ void CPU::ExecALU()
 
 		if (operation != 0b111) // not CMP
 		{
-			if (toReg) WriteReg(modRM.Reg(), r.value, word);
-			else	   WriteRM(rm, r.value, word);
+			if (toReg) WriteReg(modRM.Reg(), r.value, word, true);
+			else	   WriteRM(rm, r.value, word, true);
 		}
 	}
 	else
@@ -296,6 +308,7 @@ void CPU::ExecPushPopGP()
 
 void CPU::ExecPushPopSeg()
 {
+	std::cout << "hereee\n";
 	const uint8_t selector = (m_IR >> 3) & 0b11;
 	const bool isPush = (m_IR & 1) == 0;
 	StackOperation(static_cast<SegmentReg>(selector), isPush);
@@ -399,13 +412,14 @@ void CPU::ExecMOVModRM()
 	const ModRM modRM  = DecodeModRM();
 	const RMOperand rm = ResolveRM(modRM);
 
+	const bool generalReg = true;
 	const bool word  = (m_IR & 1)    != 0; // bit 0 is 1, then operate on 16-bits, else 8-bits
 	const bool toReg = (m_IR & 0b10) != 0; 
 
 	const uint16_t value = toReg ? ReadRM(rm, word) : ReadReg(modRM.Reg(), word);
 
-	if (toReg) WriteReg(modRM.Reg(), value, word);
-	else WriteRM(rm, value, word);
+	if (toReg) WriteReg(modRM.Reg(), value, word, generalReg);
+	else WriteRM(rm, value, word, generalReg);
 
 	++m_IP;
 }
@@ -523,7 +537,7 @@ void CPU::ExecGRP1()
 
 	if (modRM.Reg() != 0b111) // Not CMP
 	{
-		WriteRM(rm, r.value, word);
+		WriteRM(rm, r.value, word, true);
 	}
 	++m_IP;
 }
@@ -543,14 +557,14 @@ void CPU::ExecGRP4_GRP5()
 	case 0b000: // INC
 	{
 		r = ALU::INC(value, isWord);
-		WriteRM(rm, r.value, isWord);
+		WriteRM(rm, r.value, isWord, true);
 		m_statusRegister.UpdateFrom(r);
 		return;
 	}
 	case 0b001: // DEC 
 	{
 		r = ALU::DEC(value, isWord);
-		WriteRM(rm, r.value, isWord);
+		WriteRM(rm, r.value, isWord, true);
 		m_statusRegister.UpdateFrom(r);
 		return;
 	}
@@ -605,6 +619,20 @@ void CPU::ExecGRP4_GRP5()
 		return;
 	}
 	}
+}
+
+void CPU::ExecTEST()
+{
+	const bool word = (m_IR & 1) != 0;
+	const ModRM modRM = DecodeModRM();
+	const RMOperand rm = ResolveRM(modRM);
+
+	const uint16_t reg = ReadReg(modRM.Reg(), word);
+	const uint16_t operand = ReadRM(rm, word);
+
+	const Result r = ALU::AND(operand, reg, word);
+	m_statusRegister.UpdateFrom(r);
+	++m_IP;
 }
 
 void CPU::DecimalAdjust(bool isSubtract)
@@ -698,11 +726,26 @@ void CPU::ExecConditionedJump()
 	}
 }
 
-void CPU::ExecExchange()
+void CPU::ExecXCHG()
 {
 	const uint8_t selector = m_IR & 0b111;
 	std::swap(m_registerFile.AX(),
 		m_registerFile.Get16(static_cast<Reg16>(selector)));
+	++m_IP;
+}
+
+void CPU::ExecXCHGModRM()
+{
+	const bool generalReg = true;
+	const bool word = (m_IR & 1) != 0;
+	const ModRM modRM = DecodeModRM();
+	const RMOperand rm = ResolveRM(modRM);
+
+	const uint16_t operand = ReadRM(rm, word);
+	const uint16_t reg = ReadReg(modRM.Reg(), word);
+
+	WriteRM(rm, reg, word, generalReg);
+	WriteReg(modRM.Reg(), operand, word, generalReg);
 	++m_IP;
 }
 
@@ -883,7 +926,6 @@ void CPU::SetInstructionPointer(uint16_t address)
 
 void CPU::SetInstructionRegister()
 {
-	std::cout << "hereee\n";
 	if (!m_memoryUnit[m_IP].has_value())
 	{
 		m_haltFlag = true;
@@ -892,27 +934,17 @@ void CPU::SetInstructionRegister()
 	
 	if (IsPrefixOverride(m_memoryUnit[PhysAddr(m_registerFile.CS(), m_IP)].value_or(0x00)))
 	{
-		std::cout << "heree\n";
 		m_segmentOverride = DecodeSegmentOverride();
 		++m_IP;
 	}
-	m_IR = m_memoryUnit[PhysAddr(m_registerFile.CS(), m_IP)].value();
+	m_IR = m_memoryUnit[PhysAddr(m_registerFile.CS(), m_IP)].value_or(0x00);
 }
 
 void CPU::UpdateIR()
 {
 	if (m_haltFlag) return;
 
-	//assert(m_memoryUnit[PhysAddr()].has_value());
-	if (m_memoryUnit[PhysAddr(m_registerFile.CS(), m_IP)].has_value())
-	{
-		m_IR = m_memoryUnit[PhysAddr(m_registerFile.CS(), m_IP)].value();
-	}
-	else
-	{
-		m_IR = 0x00;
-	}
-
+	m_IR = m_memoryUnit[PhysAddr(m_registerFile.CS(), m_IP)].value_or(0x00);
 }
 
 bool CPU::IsReadingInstruction() const noexcept
@@ -971,11 +1003,12 @@ uint16_t CPU::ReadReg(uint8_t selector, bool word) const
 	return m_registerFile.Get8(static_cast<Reg8>(selector));
 }
 
-void CPU::WriteReg(uint8_t selector, uint16_t value, bool word)
+void CPU::WriteReg(uint8_t selector, uint16_t value, bool word, bool generalReg)
 {
 	if (word)
 	{
-		m_registerFile.Set16(static_cast<Reg16>(selector), value);
+		generalReg  ? m_registerFile.Set16(static_cast<Reg16>(selector), value)
+					: m_registerFile.Set16(static_cast<SegmentReg>(selector), value);
 		return;
 	}
 	m_registerFile.Set8(static_cast<Reg8>(selector), static_cast<uint8_t>(value));
@@ -1018,11 +1051,11 @@ uint16_t CPU::ReadRM(const RMOperand& operand, bool word)
 	return word ? ReadMem16(operand.segment, operand.offset) : ReadMem8(operand.segment, operand.offset);
 }
 
-void CPU::WriteRM(const RMOperand& operand, uint16_t value, bool word)
+void CPU::WriteRM(const RMOperand& operand, uint16_t value, bool word, bool generalReg)
 {
 	if (operand.isReg)
 	{
-		WriteReg(operand.reg, value, word);
+		WriteReg(operand.reg, value, word, generalReg);
 		return;
 	}
 	if (word) WriteMem16(operand.segment, operand.offset, value);

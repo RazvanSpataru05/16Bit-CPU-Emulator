@@ -6,6 +6,7 @@
 
 #include <array>
 #include <cstdint>
+#include <iostream>
 
 class RegisterFile
 {
@@ -34,7 +35,7 @@ public:
 	void Reset();
 
 	// const ref getters for 8-bit / 16-bit
-	[[nodiscard]]	uint8_t		Get8(Reg8 reg)			const noexcept;
+	[[nodiscard]] uint8_t Get8(Reg8 reg) const noexcept;
 
 	void Set8(Reg8 reg, uint8_t value);
 
@@ -138,10 +139,12 @@ void RegisterFile::Set16(RegType regType, uint16_t value) noexcept
 {
 	if constexpr (std::is_same_v<RegType, Reg16>)
 	{
+		std::cout << "we just assigned value to GP\n";
 		m_generalPurproseReg[static_cast<size_t>(regType)] = value;
 	}
 	else
 	{
+		std::cout << "we just assigned value to segment\n";
 		m_segmentReg[static_cast<size_t>(regType)] = value;
 	}
 }
