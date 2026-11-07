@@ -102,6 +102,12 @@ private:
 	void ExecGRP1();
 	void ExecGRP4_GRP5();
 	void ExecTEST();
+	void ExecTESTModRM();
+	void ExecMOVS();
+	void ExecCMPS();
+	void ExecSTOS();
+	void ExecLODS();
+	void ExecSCAS();
 
 	void DecimalAdjust(bool isSubtract);
 
@@ -109,6 +115,8 @@ private:
 	[[nodiscard]] uint16_t DecodeEffectiveAddress(uint8_t rm, uint8_t mod);
 
 	[[nodiscard]] RMOperand ResolveRM(ModRM modRM);
+
+	void UpdateDirection(bool directionalFlag, bool updateSource, bool updateDest, uint8_t value) noexcept;
 
 private:
 	CPU(const CPU&) = delete;
@@ -137,14 +145,6 @@ private:
 template<typename RegType>
 void CPU::StackOperation(RegType regType, bool isPush)
 {
-	if (std::is_same_v<RegType, Reg16>)
-	{
-		std::cout << "stack op for Reg16\n";
-	}
-	else
-	{
-		std::cout << "stack op for SegReg\n";
-	}
 	if (isPush)
 	{
 		const uint16_t value = m_registerFile.Get16(regType);
@@ -154,8 +154,6 @@ void CPU::StackOperation(RegType regType, bool isPush)
 	{
 		const uint16_t sp = static_cast<uint16_t>(m_registerFile.SP());
 		const uint16_t word = Pop16();
-		std::cout << "word: " << std::hex << static_cast<int>(word) << '\n';
-		std::cout << "reg type: " << static_cast<int>(regType) << '\n';
 		m_registerFile.Set16(regType, word);
 	}
 	++m_IP;

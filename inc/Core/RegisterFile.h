@@ -139,12 +139,10 @@ void RegisterFile::Set16(RegType regType, uint16_t value) noexcept
 {
 	if constexpr (std::is_same_v<RegType, Reg16>)
 	{
-		std::cout << "we just assigned value to GP\n";
 		m_generalPurproseReg[static_cast<size_t>(regType)] = value;
 	}
 	else
 	{
-		std::cout << "we just assigned value to segment\n";
 		m_segmentReg[static_cast<size_t>(regType)] = value;
 	}
 }

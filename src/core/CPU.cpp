@@ -40,14 +40,14 @@ void CPU::Step()
 
 	if ((m_IR & 0xC0) == 0x00 && (m_IR & 0b111) < 6) ExecALU();
 	/*
-	^	opcodes:	00 -> 05 (ADD);
-					08 -> 0D (OR);
-					10 -> 15 (ADC);
-					18 -> 1D (SBB);
-					20 -> 25 (AND);
-					28 -> 2D (SUB);
-					30 -> 35 (XOR);
-					38 -> 3D (CMP);
+	^	opcodes:	00 -> 05 (ADD)
+					08 -> 0D (OR)
+					10 -> 15 (ADC)
+					18 -> 1D (SBB)
+					20 -> 25 (AND)
+					28 -> 2D (SUB)
+					30 -> 35 (XOR)
+					38 -> 3D (CMP)
 		total: 48 instructions
 	*/
 	else if ((m_IR & 0xE6) == 0x06)												 ExecPushPopSeg(); // opcodes: {06, 07, 0E, 0F, 16, 17, 1E, 1F} (8 instr)
@@ -55,7 +55,7 @@ void CPU::Step()
 	else if ((m_IR & 0xF0) == 0x50)												 ExecPushPopGP(); // opcodes: 50 -> 5F (16 instr) 
 	else if ((m_IR & 0xF0) == 0x60 || (m_IR & 0xF0) == 0x70)					 ExecConditionedJump(); // opcodes: 70 -> 7F (16 instr)
 	else if ((m_IR & 0xFC) == 0x80)												 ExecGRP1();			// opcodes: 80 -> 83 (4 instr)
-	else if ((m_IR & 0xFE) == 0x84)												 ExecTEST();			// opcodes: {84, 85} (2 instr)
+	else if ((m_IR & 0xFE) == 0x84)												 ExecTESTModRM();		// opcodes: {84, 85} (2 instr)
 	else if ((m_IR & 0xFE) == 0x86)												 ExecXCHGModRM();		// opcodes: {86, 87} (2 instr)
 	else if ((m_IR & 0xFC) == 0x88)												 ExecMOVModRM();		// opcodes: 88 -> 8B (4 instr)
 	else if ((m_IR & 0xF8) == 0x90)												 ExecXCHG();			// opcodes: 90 -> 97 (8 instr)
@@ -63,6 +63,12 @@ void CPU::Step()
 	else if ((m_IR & 0xFE) == 0x9C)												 ExecPushPopFlags();	// opcodes: 9C, 9D (PUSHF, POPF) 
 	else if ((m_IR & 0xFE) == 0x9E)												 ExecStoreRegIntoFlags(); // opcodes: 9E, 9F (SAHF, LAHF)
 	else if ((m_IR & 0xFC) == 0xA0)												 ExecMOVAccumulator();	// opcodes: A0 -> A3 (4 instr)
+	else if ((m_IR & 0xFE) == 0xA4)												 ExecMOVS();			// opcodes: {A4, A5} (2 instr)
+	else if ((m_IR & 0xFE) == 0xA6)												 ExecCMPS();			// opcodes: {A6, A7} (2 instr)
+	else if ((m_IR & 0xFE) == 0xA8)											     ExecTEST();			// opcodes: {A8, A9} (2 instr)
+	else if ((m_IR & 0xFE) == 0xAA)												 ExecSTOS();			// opcodes: {AA, AB} (2 instr)
+	else if ((m_IR & 0xFE) == 0xAC)												 ExecLODS();			// opcodes: {AC, AD} (2 instr)
+	else if ((m_IR & 0xFE) == 0xAE)												 ExecSCAS();			// opcodes: {AE, AF} (2 instr)
 	else if ((m_IR & 0xF0) == 0xB0)												 ExecMOVImm();			// opcodes: B0 -> BF (16 instr)
 	else if ((m_IR & 0xFE) == 0xC2)											     ExecRet();				// opcodes: C2, C3 (RET Iw, RET)
 	else if ((m_IR & 0xFE) == 0xCA)												 ExecRetFar();			// opcodes: CA, CB (RETF Iw, RETF)
@@ -125,12 +131,33 @@ void CPU::Step()
 		break;
 	}
 	case 0x8C:			// MOV Ew, Sw (MOV for segment registers)
+	case 0x8E:			// MOV Sw, Ew
+	{
+		const bool isSegDest = ((m_IR >> 1) & 1) != 0;
+		const ModRM modRM = DecodeModRM();
+		const RMOperand rm = ResolveRM(modRM);
+		uint16_t value{};
+
+		if (isSegDest)
+		{
+			value = ReadRM(rm, true);
+			WriteReg(modRM.Reg(), value, true, false);
+		}
+		else
+		{
+			value = m_registerFile.Get16(static_cast<SegmentReg>(modRM.Reg()));
+			WriteRM(rm, value, true, true);
+		}
+
+		++m_IP;
+		break;
+	}
+	case 0x8D:			// LEA Gv, M (Load Effective Address)
 	{
 		const ModRM modRM = DecodeModRM();
 		const RMOperand rm = ResolveRM(modRM);
-		const uint16_t value = m_registerFile.Get16(static_cast<SegmentReg>(modRM.Reg()));
 
-		WriteRM(rm, value, true, true);
+		m_registerFile.Set16(static_cast<Reg16>(modRM.Reg()), rm.offset);
 		++m_IP;
 		break;
 	}
@@ -308,7 +335,6 @@ void CPU::ExecPushPopGP()
 
 void CPU::ExecPushPopSeg()
 {
-	std::cout << "hereee\n";
 	const uint8_t selector = (m_IR >> 3) & 0b11;
 	const bool isPush = (m_IR & 1) == 0;
 	StackOperation(static_cast<SegmentReg>(selector), isPush);
@@ -385,24 +411,25 @@ void CPU::ExecRetFar()
 
 void CPU::ExecMOVAccumulator()
 {
-	const bool isWord = (m_IR & 1) == 1;
+	const bool word = (m_IR & 1) == 1;
 	const bool copyFromMem = (m_IR >> 1) == 0;
-	const uint16_t reg = isWord ? m_registerFile.AX() : m_registerFile.AL();
-	const uint16_t value = isWord ? Fetch8() : Fetch16();
+	const uint16_t reg = word ? m_registerFile.AX() : m_registerFile.AL();
+	const uint16_t offset = word ? Fetch16() : Fetch8();
+
+	if (!word) ++m_IP;
 
 	if (copyFromMem)
 	{
-		isWord ? m_registerFile.Set16(Reg16::AX, value)
-			: m_registerFile.Set8(Reg8::AL, static_cast<uint8_t>(value));
+		word ? m_registerFile.Set16(Reg16::AX, offset)
+			 : m_registerFile.Set8(Reg8::AL, static_cast<uint8_t>(offset));
 	}
 	else
 	{
-		if (isWord)
+		m_memoryUnit[PhysAddr(m_registerFile.CS(), offset)] = static_cast<uint8_t>(reg & 0xFF); // lo byte
+		if (word)
 		{
-			m_memoryUnit[PhysAddr(m_registerFile.CS(), m_IP)] = static_cast<uint8_t>(value >> 8); // hi byte
-			
+			m_memoryUnit[PhysAddr(m_registerFile.CS(), static_cast<uint16_t>(offset + 1))] = static_cast<uint8_t>(reg >> 8); // hi byte
 		}
-		m_memoryUnit[PhysAddr(m_registerFile.CS(), static_cast<uint16_t>(m_IP + 1))] = static_cast<uint8_t>(value & 0xFF); // lo byte
 	}
 	++m_IP;
 }
@@ -511,7 +538,7 @@ void CPU::ExecClearStoreFlags()
 	}
 	default:
 	{
-		std::cout << "Unknown opcode: " << std::hex << static_cast<int>(m_IR) << '\n';
+		Logger::AddInfoMessage(std::format("Unknown opcode: {}", m_IR));
 		break;
 	}
 	}
@@ -624,14 +651,106 @@ void CPU::ExecGRP4_GRP5()
 void CPU::ExecTEST()
 {
 	const bool word = (m_IR & 1) != 0;
+	const uint16_t value = word ? Fetch16() : Fetch8();
+	const uint16_t reg = word ? m_registerFile.AX() : m_registerFile.AL();
+
+	const Result r = ALU::AND(value, reg, word);
+	m_statusRegister.UpdateFrom(r);
+	++m_IP;
+}
+
+void CPU::ExecTESTModRM()
+{
+	const bool word = (m_IR & 1) != 0;
 	const ModRM modRM = DecodeModRM();
 	const RMOperand rm = ResolveRM(modRM);
 
-	const uint16_t reg = ReadReg(modRM.Reg(), word);
 	const uint16_t operand = ReadRM(rm, word);
+	const uint16_t reg = ReadReg(modRM.Reg(), word);
 
 	const Result r = ALU::AND(operand, reg, word);
 	m_statusRegister.UpdateFrom(r);
+	++m_IP;
+}
+
+void CPU::ExecMOVS()
+{
+	const bool word = (m_IR & 1) != 0;
+	const uint8_t inc = word ? 2u : 1u;
+	const uint16_t value = word ? ReadMem16(m_registerFile.DS(), m_registerFile.SI())
+								: ReadMem8(m_registerFile.DS(), m_registerFile.SI());
+
+	if (word) WriteMem16(m_registerFile.ES(), m_registerFile.DI(), value);
+	else      WriteMem8(m_registerFile.ES(), m_registerFile.DI(), static_cast<uint8_t>(value));
+
+	UpdateDirection(m_statusRegister.Directional(), true, true, inc);
+	++m_IP;
+}
+
+void CPU::ExecCMPS()
+{
+	const bool word = (m_IR & 1) != 0;
+	const uint8_t inc = word ? 2u : 1u;
+	const uint16_t source = word ? ReadMem16(m_registerFile.DS(), m_registerFile.SI())
+								 : ReadMem8(m_registerFile.DS(), m_registerFile.SI());
+
+	const uint16_t dest = word ? ReadMem16(m_registerFile.ES(), m_registerFile.DI())
+								: ReadMem8(m_registerFile.ES(), m_registerFile.DI());
+
+	const Result r = ALU::Sub(source, dest, false, word);
+	m_statusRegister.UpdateFrom(r);
+	UpdateDirection(m_statusRegister.Directional(), true, true, inc);
+
+	++m_IP;
+}
+
+void CPU::ExecSTOS()
+{
+	const bool word = (m_IR & 1) != 0;
+	const uint8_t inc = word ? 2u : 1u;
+	const uint16_t value = word ? m_registerFile.AX()
+								: m_registerFile.AL();
+
+	if (word) WriteMem16(m_registerFile.ES(), m_registerFile.DI(), value);
+	else      WriteMem8(m_registerFile.ES(), m_registerFile.DI(), static_cast<uint8_t>(value));
+
+	UpdateDirection(m_statusRegister.Directional(), false, true, inc);
+	++m_IP;
+}
+
+void CPU::ExecLODS()
+{
+	std::cout << "lods\n";
+	const bool word = (m_IR & 1) != 0;
+	const uint8_t inc = word ? 2u : 1u;
+	const uint16_t value = word ? ReadMem16(m_registerFile.DS(), m_registerFile.SI())
+								: ReadMem8(m_registerFile.DS(), m_registerFile.SI());
+	std::cout << "value: " << std::hex << static_cast<int>(value) << '\n';
+
+	if (word) m_registerFile.AX() = value;
+	else
+	{
+		std::cout << "byte\n";
+		m_registerFile.Set8(Reg8::AL, static_cast<uint8_t>(value));
+	}
+
+	UpdateDirection(m_statusRegister.Directional(), true, false, inc);
+	++m_IP;
+}
+
+void CPU::ExecSCAS()
+{
+	const bool word = (m_IR & 1) != 0;
+	const uint8_t inc = word ? 2u : 1u;
+	const uint16_t reg = word ? m_registerFile.AX()
+							  : m_registerFile.AL();
+
+	const uint16_t operand = word ? ReadMem16(m_registerFile.ES(), m_registerFile.DI())
+								  : ReadMem8(m_registerFile.ES(), m_registerFile.DI());
+	const Result r = ALU::Sub(reg, operand, false, word);
+	m_statusRegister.UpdateFrom(r);
+
+	UpdateDirection(m_statusRegister.Directional(), false, true, inc);
 	++m_IP;
 }
 
@@ -879,6 +998,20 @@ RMOperand CPU::ResolveRM(ModRM modRM)
 	}
 
 	return { false, 0, segment, offset };
+}
+
+void CPU::UpdateDirection(bool directionalFlag, bool updateSource, bool updateDest, uint8_t value) noexcept
+{
+	if (!directionalFlag)
+	{
+		if (updateSource) m_registerFile.SI() += value;
+		if (updateDest)   m_registerFile.DI() += value;
+	}
+	else
+	{
+		if (updateSource) m_registerFile.SI() -= value;
+		if (updateDest)   m_registerFile.DI() -= value;
+	}
 }
 
 void CPU::HandleInterrupt()
