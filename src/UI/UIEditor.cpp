@@ -591,7 +591,6 @@ namespace UIEditor
 				{
 					emulator.GetKeyboard().AddKey(key);
 				}
-				emulator.GetCPU().HandleInterrupt();
 			}
 			else
 			{

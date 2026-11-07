@@ -24,8 +24,6 @@ public:
 
 	void Step();
 	void Reset();
-
-	void HandleInterrupt();
 	
 	[[nodiscard]] SegmentOverride GetSegmentOverride() const noexcept;
 
@@ -72,7 +70,7 @@ private:
 	void ShortJump(int8_t offset);
 
 	/* Stack Helpers */
-	void Push16(uint16_t value, bool isWord);
+	void Push16(uint16_t value, bool word);
 	[[nodiscard]] uint16_t Pop16();
 
 	[[nodiscard]] bool							  IsPrefixOverride(uint8_t value)		const noexcept;
@@ -100,6 +98,7 @@ private:
 	void ExecLoop();
 	void ExecClearStoreFlags();
 	void ExecGRP1();
+	void ExecGRP2();
 	void ExecGRP4_GRP5();
 	void ExecTEST();
 	void ExecTESTModRM();
@@ -108,6 +107,9 @@ private:
 	void ExecSTOS();
 	void ExecLODS();
 	void ExecSCAS();
+	void ExecDoubleWord();
+	void ExecMOVRMImm();
+	void ExecInterrupt(uint8_t interrupt);
 
 	void DecimalAdjust(bool isSubtract);
 

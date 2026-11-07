@@ -51,18 +51,34 @@ namespace ALU
 	{
 		switch (operation) 
 		{
-		case 0: return Add(a, b, false,		word); // ADD
-		case 1: return OR(a, b,				word); // OR
-		case 2: return Add(a, b, carryIn,	word); // ADC 
-		case 3: return Sub(a, b, carryIn,	word); // SBB
-		case 4: return AND(a, b,			word); // AND
-		case 5: return Sub(a, b, false,		word); // SUB
-		case 6: return XOR(a, b,			word); // XOR
-		case 7: return Sub(a, b, false,		word); // CMP
+		case 0b000: return ADD(a, b, false,		word); // ADD
+		case 0b001: return OR(a, b,				word); // OR
+		case 0b010: return ADD(a, b, carryIn,	word); // ADC 
+		case 0b011: return SUB(a, b, carryIn,	word); // SBB
+		case 0b100: return AND(a, b,			word); // AND
+		case 0b101: return SUB(a, b, false,		word); // SUB
+		case 0b110: return XOR(a, b,			word); // XOR
+		case 0b111: return SUB(a, b, false,		word); // CMP
 		}
 	}
 
-	Result Add(uint16_t a, uint16_t b, bool carryIn, bool word)
+	Result Shift(uint8_t operation, uint16_t value, uint8_t count, bool word, bool carryIn)
+	{
+		switch (operation)
+		{
+		case 0b000:
+		case 0b001:
+		case 0b010:
+		case 0b011:
+		case 0b100:
+		case 0b101:
+		case 0b110:
+		case 0b111:
+			return Result();
+		}
+	}
+
+	Result ADD(uint16_t a, uint16_t b, bool carryIn, bool word)
 	{
 		const Width w = W(word);
 		const uint32_t sum = static_cast<uint32_t>(a) + b + (carryIn ? 1u : 0u);
@@ -83,7 +99,7 @@ namespace ALU
 		return r;
 	}
 
-	Result Sub(uint16_t a, uint16_t b, bool borrowIn, bool word)
+	Result SUB(uint16_t a, uint16_t b, bool borrowIn, bool word)
 	{
 		const Width w = W(word);
 		const uint32_t bw = borrowIn ? 1u : 0u;
@@ -185,6 +201,40 @@ namespace ALU
 		r.value = result;
 		SetLogicFlags(r, result, w);
 
+		return r;
+	}
+
+	Result RotateLeft(uint16_t value, uint8_t count, bool word)
+	{
+		const Width w = W(word);
+		const uint32_t bits = word ? 16u : 8u;
+		Result r;
+
+		if (count == 0u)
+		{
+			r.value = static_cast<uint16_t>(value & w.mask);
+			r.affected = 0;
+			return r;
+		}
+
+		const uint32_t effective = count % bits;
+		const uint32_t input = value & w.mask;
+
+		const uint32_t result = effective == 0u
+			? input
+			: ((input << effective) | (input >> (bits - effective))) & w.mask;
+
+		const bool carryCondition = (result & 1u) != 0;
+		SetFlag(r, Utils::Constants::CF_MASK, carryCondition);
+
+		if (count == 1u)
+		{
+			const bool overflowCondition = ((result & w.sign) != 0) != carryCondition;
+			SetFlag(r, Utils::Constants::OF_MASK, overflowCondition);
+		}
+
+		r.value = static_cast<uint16_t>(result);
+		r.affected = Utils::Constants::CF_MASK | Utils::Constants::OF_MASK;
 		return r;
 	}
 

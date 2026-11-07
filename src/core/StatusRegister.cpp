@@ -44,7 +44,8 @@ void StatusRegister::SetHiFlags(uint8_t hiFlags) noexcept
 
 void StatusRegister::SetFlags(uint16_t flags) noexcept
 {
-	m_flags = flags;
+	constexpr uint16_t definedMask = Utils::Constants::STATUS_MASK | Utils::Constants::CONTROL_MASK;
+	m_flags = static_cast<uint16_t>((flags & definedMask) | 0x0002);
 }
 
 uint8_t StatusRegister::Zero() const noexcept
