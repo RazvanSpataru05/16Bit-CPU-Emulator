@@ -13,11 +13,9 @@ namespace ALU
 
 	Result ADD(uint16_t a, uint16_t b, bool carryIn, bool word);
 	Result SUB(uint16_t a, uint16_t b, bool borrowIn, bool word);
-
 	Result INC(uint16_t a, bool word);
 	Result DEC(uint16_t a, bool word);
 
-	/* Logical operations */
 	Result AND(uint16_t a, uint16_t b, bool word);
 	Result OR(uint16_t a, uint16_t b, bool word);
 	Result XOR(uint16_t a, uint16_t b, bool word);
@@ -25,7 +23,12 @@ namespace ALU
 
 	Result RotateLeft(uint16_t value, uint8_t count, bool word);
 	Result RotateRight(uint16_t value, uint8_t count, bool word);
+	Result RotateCarryLeft(uint16_t value, uint8_t count, bool word, bool carryIn);
+	Result RotateCarryRight(uint16_t value, uint8_t count, bool word, bool carryIn);
 
-	Result ShiftLeft(uint16_t a, bool word);
-	Result ShiftRight(uint16_t a, bool word);
+	Result ShiftLeft(uint16_t value, uint8_t count, bool word, bool carryIn);
+	Result ShiftRight(uint16_t value, uint8_t count, bool word, bool carryIn);
+	Result ShiftRightArithmetic(uint16_t value, uint8_t count, bool word, bool carryIn);
+
+	Result SetMinusOne(bool word);
 }

@@ -590,11 +590,11 @@ void CPU::ExecGRP2()
 	const bool countCL = ((m_IR >> 1) & 1) != 0;
 	const ModRM modRM = DecodeModRM();
 	const RMOperand rm = ResolveRM(modRM);
-
 	const uint8_t count = countCL ? m_registerFile.CL() : 1u;
-	const uint16_t imm = word ? Fetch16() : Fetch8();
 
-
+	const Result r = ALU::Shift(modRM.Reg(), ReadRM(rm, word), count, word, m_statusRegister.Carry());
+	WriteRM(rm, r.value, word, true);
+	m_statusRegister.UpdateFrom(r);
 
 	++m_IP;
 }
