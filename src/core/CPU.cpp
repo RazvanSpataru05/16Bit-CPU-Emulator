@@ -40,6 +40,7 @@ void CPU::Step()
 		!m_memoryUnit[PhysAddr(m_registerFile.CS(), m_IP)].has_value()) return;
 
 	m_segmentOverride = DecodeSegmentOverride();
+	DecodeRepeatPrefix();
 
 	if ((m_IR & 0xC0) == 0x00 && (m_IR & 0b111) < 6) ExecALU();
 	/*
@@ -544,27 +545,27 @@ void CPU::ExecLoop()
 
 void CPU::ExecClearStoreFlags()
 {
-	const bool isClear = (m_IR & 1) == 0;
+	const bool clear = (m_IR & 1) == 0;
 	const uint8_t flag = (m_IR >> 1) & 0b11;
 
 	switch (flag)
 	{
 	case 0b00: // Carry Flag
 	{
-		isClear ? m_statusRegister.SetFlagOff(Utils::Constants::CF_MASK)
-			    : m_statusRegister.SetFlagOn(Utils::Constants::CF_MASK);
+		clear ? m_statusRegister.SetFlagOff(Utils::Constants::CF_MASK)
+			  : m_statusRegister.SetFlagOn(Utils::Constants::CF_MASK);
 		break;
 	}
 	case 0b01: // Interrupt Flag
 	{
-		isClear ? m_statusRegister.SetFlagOff(Utils::Constants::IF_MASK)
-			    : m_statusRegister.SetFlagOn(Utils::Constants::IF_MASK);
+		clear ? m_statusRegister.SetFlagOff(Utils::Constants::IF_MASK)
+			  : m_statusRegister.SetFlagOn(Utils::Constants::IF_MASK);
 		break;
 	}
 	case 0b10: // Directional Flag
 	{
-		isClear ? m_statusRegister.SetFlagOff(Utils::Constants::DF_MASK)
-			    : m_statusRegister.SetFlagOn(Utils::Constants::DF_MASK);
+		clear ? m_statusRegister.SetFlagOff(Utils::Constants::DF_MASK)
+			  : m_statusRegister.SetFlagOn(Utils::Constants::DF_MASK);
 		break;
 	}
 	default:
@@ -747,7 +748,8 @@ void CPU::ExecCMPS()
 	m_statusRegister.UpdateFrom(r);
 	UpdateDirection(m_statusRegister.Directional(), true, true, inc);
 
-	++m_IP;
+	if (RepeatInstruction()) m_IP = m_repeatedIP;
+	else                     ++m_IP;
 }
 
 void CPU::ExecSTOS()
@@ -761,6 +763,7 @@ void CPU::ExecSTOS()
 	else      WriteMem8(m_registerFile.ES(), m_registerFile.DI(), static_cast<uint8_t>(value));
 
 	UpdateDirection(m_statusRegister.Directional(), false, true, inc);
+
 	++m_IP;
 }
 
@@ -797,12 +800,13 @@ void CPU::ExecSCAS()
 	m_statusRegister.UpdateFrom(r);
 
 	UpdateDirection(m_statusRegister.Directional(), false, true, inc);
-	++m_IP;
+
+	if (RepeatInstruction()) m_IP = m_repeatedIP;
+	else                     ++m_IP;
 }
 
 void CPU::ExecDoubleWord()
 {
-	std::cout << "double word\n";
 	const bool dataSeg = (m_IR & 1) != 0;
 	const ModRM modRM = DecodeModRM();
 
@@ -1075,11 +1079,13 @@ void CPU::Reset()
 	m_statusRegister.Reset();
 	m_haltFlag = false;
 	m_TESTPin = false;
+	m_repeatPrefix = false;
+	m_repeatedIP = 0x0000;
 	m_segmentOverride = SegmentOverride::NONE;
 
 	m_IP = m_memoryUnit.GetStartAddress();
 
-	if (IsPrefixOverride(m_memoryUnit[m_IP].value_or(0x00)))
+	if (IsOverridePrefix(m_memoryUnit[m_IP].value_or(0x00)))
 	{
 		++m_IP;
 		m_segmentOverride = DecodeSegmentOverride();
@@ -1202,7 +1208,7 @@ void CPU::SetInstructionRegister()
 		return;
 	}
 	
-	if (IsPrefixOverride(m_memoryUnit[PhysAddr(m_registerFile.CS(), m_IP)].value_or(0x00)))
+	if (IsOverridePrefix(m_memoryUnit[PhysAddr(m_registerFile.CS(), m_IP)].value_or(0x00)))
 	{
 		m_segmentOverride = DecodeSegmentOverride();
 		++m_IP;
@@ -1359,12 +1365,18 @@ uint16_t CPU::Pop16()
 	return word;
 }
 
-bool CPU::IsPrefixOverride(uint8_t value) const noexcept
+bool CPU::IsOverridePrefix(uint8_t value) const noexcept
 {
 	return value == 0x26
 		|| value == 0x2E
 		|| value == 0x36
 		|| value == 0x3E;
+}
+
+bool CPU::IsRepeatPrefix(uint8_t value) const noexcept
+{
+	return value == 0xF2	// REPNZ / REPNE
+		|| value == 0xF3;	// REPZ  / REPE
 }
 
 SegmentOverride CPU::DecodeSegmentOverride() noexcept
@@ -1384,6 +1396,15 @@ SegmentOverride CPU::DecodeSegmentOverride() noexcept
 	return seg;
 }
 
+void CPU::DecodeRepeatPrefix() noexcept
+{
+	if (!IsRepeatPrefix(m_IR)) return;
+
+	m_repeatPrefix = true;
+	m_repeatedIP = ++m_IP;
+	UpdateIR();
+}
+
 std::optional<uint16_t> CPU::ResolveSegment() noexcept
 {
 	switch (m_segmentOverride)
@@ -1395,4 +1416,15 @@ std::optional<uint16_t> CPU::ResolveSegment() noexcept
 	case SegmentOverride::DS:	return m_registerFile.DS();
 	default:					return std::nullopt;
 	}
+}
+
+bool CPU::RepeatInstruction() noexcept
+{
+	if (!m_repeatPrefix) return false;
+
+	--m_registerFile.CX();
+	m_statusRegister.SetFlag(Utils::Constants::ZF_MASK, m_registerFile.CX() == 0);
+	m_repeatPrefix = !m_statusRegister.Zero();
+
+	return m_repeatPrefix;
 }

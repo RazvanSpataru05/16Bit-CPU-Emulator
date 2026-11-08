@@ -74,9 +74,13 @@ private:
 	void Push16(uint16_t value, bool word);
 	[[nodiscard]] uint16_t Pop16();
 
-	[[nodiscard]] bool							  IsPrefixOverride(uint8_t value)		const noexcept;
+	[[nodiscard]] bool							  IsOverridePrefix(uint8_t value)		const noexcept;
+	[[nodiscard]] bool							  IsRepeatPrefix(uint8_t value)			const noexcept;
 	[[nodiscard]] SegmentOverride				  DecodeSegmentOverride()				noexcept;
+	void										  DecodeRepeatPrefix()					noexcept;
 	[[nodiscard]] std::optional<uint16_t>		  ResolveSegment()						noexcept;
+
+	[[nodiscard]] bool							 RepeatInstruction()					noexcept;
 
 	template<typename RegType>
 	void StackOperation(RegType regType, bool isPush);
@@ -149,6 +153,9 @@ private:
 
 	bool m_haltFlag{ false };
 	bool m_TESTPin{ false };
+
+	bool m_repeatPrefix{ false };
+	uint16_t m_repeatedIP{};
 };
 
 template<typename RegType>
