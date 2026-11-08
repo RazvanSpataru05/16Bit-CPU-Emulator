@@ -2,6 +2,7 @@
 
 #include "Core/ALU.h"
 #include "Core/InterruptController.h"
+#include "Core/IOPortSpace.h"
 #include "Core/RegisterFile.h"
 #include "Core/StatusRegister.h"
 #include "Core/SegmentOverride.h"
@@ -111,6 +112,10 @@ private:
 	void ExecMOVRMImm();
 	void ExecInterrupt(uint8_t interrupt);
 	void ExecESC();
+	void ExecINImm();
+	void ExecOUTImm();
+	void ExecINDX();
+	void ExecOUTDX();
 
 	void DecimalAdjust(bool isSubtract);
 
@@ -132,6 +137,7 @@ private:
 
 	MemoryUnit m_memoryUnit;
 	InterruptController& m_interruptController;
+	IOPortSpace m_portSpace;
 
 	RegisterFile m_registerFile;
 	StatusRegister m_statusRegister;
@@ -146,9 +152,9 @@ private:
 };
 
 template<typename RegType>
-void CPU::StackOperation(RegType regType, bool isPush)
+void CPU::StackOperation(RegType regType, bool push)
 {
-	if (isPush)
+	if (push)
 	{
 		const uint16_t value = m_registerFile.Get16(regType);
 		Push16(value, true);

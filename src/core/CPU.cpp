@@ -1,7 +1,8 @@
 #include "Core/CPU.h"
 
 CPU::CPU(InterruptController& interruptController) :
-	m_interruptController{ interruptController }
+	m_interruptController{ interruptController },
+	m_portSpace{ IOPortSpace() }
 {
 	Reset();
 }
@@ -21,10 +22,12 @@ uint8_t CPU::Fetch8()
 uint16_t CPU::Fetch16()
 {
 	++m_IP;
+
 	assert(m_memoryUnit[PhysAddr(m_registerFile.CS(), m_IP)].has_value());
 	const uint8_t lo = m_memoryUnit[PhysAddr(m_registerFile.CS(), m_IP)].value();
 
 	++m_IP;
+
 	assert(m_memoryUnit[PhysAddr(m_registerFile.CS(), m_IP)].has_value());
 	const uint8_t hi = m_memoryUnit[PhysAddr(m_registerFile.CS(), m_IP)].value();
 
@@ -78,6 +81,10 @@ void CPU::Step()
 	else if ((m_IR & 0xFE) == 0xD0)										         ExecGRP2();			// opcodes: D0 -> D3 (4 instr for GRP2)
 	else if ((m_IR & 0xFE) == 0xD8)												 ExecESC();				// opcodes: D8 -> DF (8 instr)
 	else if ((m_IR & 0xFC) == 0xE0)												 ExecLoop();			// opcodes: E0 -> E3 (LOOPNZ / LOOPNE, LOOPE / LOOPZ, LOOP, JCXZ)
+	else if ((m_IR & 0xFE) == 0xE4)												 ExecINImm();			// opcodes: {E4, E5} (IN; port space)
+	else if ((m_IR & 0xFE) == 0xE6)												 ExecOUTImm();			// opcodes: {E6, E7} (OUT; port space)
+	else if ((m_IR & 0xFE) == 0xEC)												 ExecINDX();			// opcodes: {EC, ED} (IN DX: port space)
+	else if ((m_IR & 0xFE) == 0xEE)												 ExecOUTDX();			// opcodes: {EE, EF} (OUT DX: port space)
 	else if ((m_IR & 0xFE) == 0xFC)												 ExecClearStoreFlags(); // opcodes: F8 -> FD (CLC, STC, CLI, STI, CLD, STD)
 	else if ((m_IR & 0xFE) == 0xFE)												 ExecGRP4_GRP5();		// opcodes: FE, FF (GRP4 & GRP5)
 	else switch (m_IR)
@@ -857,6 +864,48 @@ void CPU::ExecESC()
 
 	const ModRM modRM = DecodeModRM();
 	const RMOperand rm = ResolveRM(modRM);
+	++m_IP;
+}
+
+void CPU::ExecINImm()
+{
+	const bool word = (m_IR & 1) != 0;
+	const uint8_t port = Fetch8();
+
+	if (word) m_registerFile.Set16(Reg16::AX, m_portSpace.ReadPort16(port));
+	else      m_registerFile.Set8(Reg8::AL, m_portSpace.ReadPort8(port));
+
+	++m_IP;
+}
+
+void CPU::ExecOUTImm()
+{
+	const bool word = (m_IR & 1) != 0;
+	const uint8_t port = Fetch8();
+
+	if (word) m_portSpace.WritePort16(port, m_registerFile.AX());
+	else      m_portSpace.WritePort8(port, m_registerFile.AL());
+
+	++m_IP;
+}
+
+void CPU::ExecINDX()
+{
+	const bool word = (m_IR & 1) != 0;
+	
+	if (word) m_registerFile.Set16(Reg16::AX, m_portSpace.ReadPort16(m_registerFile.DX()));
+	else      m_registerFile.Set8(Reg8::AL, m_portSpace.ReadPort8(m_registerFile.DX()));
+
+	++m_IP;
+}
+
+void CPU::ExecOUTDX()
+{
+	const bool word = (m_IR & 1) != 0;
+
+	if (word) m_portSpace.WritePort16(m_registerFile.DX(), m_registerFile.AX());
+	else      m_portSpace.WritePort8(m_registerFile.DX(), m_registerFile.AL());
+
 	++m_IP;
 }
 

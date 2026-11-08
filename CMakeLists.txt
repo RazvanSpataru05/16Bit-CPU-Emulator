@@ -27,6 +27,7 @@ set(SOURCES
     src/Core/Keyboard.cpp
     src/Core/MemoryUnit.cpp
     src/Core/InterruptController.cpp
+    src/Core/IOPortSpace.cpp
     src/Core/RegisterFile.cpp
     src/Core/StatusRegister.cpp
     src/Core/Terminal.cpp
@@ -72,6 +73,7 @@ set(HEADERS
     inc/Core/ModRM.h
     inc/Core/Keyboard.h
     inc/Core/InterruptController.h
+    inc/Core/IOPortSpace.h
     inc/Core/RegisterFile.h
     inc/Core/Result.h
     inc/Core/Reg8.h
