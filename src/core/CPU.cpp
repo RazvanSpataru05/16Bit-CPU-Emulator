@@ -76,6 +76,7 @@ void CPU::Step()
 	else if ((m_IR & 0xFE) == 0xC8)												 ExecRetFar();			// opcodes: CA, CB (RETF Iw, RETF) Note: {C8, C9} are aliases for {C8, C9}
 	else if ((m_IR & 0xFE) == 0xCC)												 ExecInterrupt(Fetch8()); // opcodes: {CC, CD} (INT)
 	else if ((m_IR & 0xFE) == 0xD0)										         ExecGRP2();			// opcodes: D0 -> D3 (4 instr for GRP2)
+	else if ((m_IR & 0xFE) == 0xD8)												 ExecESC();				// opcodes: D8 -> DF (8 instr)
 	else if ((m_IR & 0xFC) == 0xE0)												 ExecLoop();			// opcodes: E0 -> E3 (LOOPNZ / LOOPNE, LOOPE / LOOPZ, LOOP, JCXZ)
 	else if ((m_IR & 0xFE) == 0xFC)												 ExecClearStoreFlags(); // opcodes: F8 -> FD (CLC, STC, CLI, STI, CLD, STD)
 	else if ((m_IR & 0xFE) == 0xFE)												 ExecGRP4_GRP5();		// opcodes: FE, FF (GRP4 & GRP5)
@@ -235,6 +236,14 @@ void CPU::Step()
 		const uint8_t base = Fetch8();
 		m_registerFile.Set8(Reg8::AL, static_cast<uint8_t>(m_registerFile.AH() * base) + m_registerFile.AL());
 		m_registerFile.Set8(Reg8::AH, 0u);
+
+		++m_IP;
+		break;
+	}
+	case 0xD6:			// SALC (1by)
+	{
+		if (m_statusRegister.Carry()) m_registerFile.Set8(Reg8::AL, 0xFF);
+		else						  m_registerFile.Set8(Reg8::AL, 0x00);
 
 		++m_IP;
 		break;
@@ -840,6 +849,15 @@ void CPU::ExecInterrupt(uint8_t interrupt)
 		m_IP = IVT[interrupt * 4];
 		m_registerFile.CS() = IVT[interrupt * 4 + 2];
 	* */
+}
+
+void CPU::ExecESC()
+{
+	/* Intel 8087 coprocessor instructions */
+
+	const ModRM modRM = DecodeModRM();
+	const RMOperand rm = ResolveRM(modRM);
+	++m_IP;
 }
 
 void CPU::DecimalAdjust(bool isSubtract)

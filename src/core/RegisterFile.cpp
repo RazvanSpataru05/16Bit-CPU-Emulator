@@ -21,7 +21,7 @@ void RegisterFile::Reset()
 	std::fill(m_segmentReg.begin(), m_segmentReg.end(), 0x0000);
 
 	m_generalPurproseReg[SP_SELECTOR] = 0x0100;
-	m_segmentReg[CS_SELECTOR] = 0xFFFF;
+	//m_segmentReg[CS_SELECTOR] = 0xFFFF;
 }
 
 uint8_t RegisterFile::Get8(Reg8 reg) const noexcept

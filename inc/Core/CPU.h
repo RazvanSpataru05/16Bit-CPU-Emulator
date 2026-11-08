@@ -110,6 +110,7 @@ private:
 	void ExecDoubleWord();
 	void ExecMOVRMImm();
 	void ExecInterrupt(uint8_t interrupt);
+	void ExecESC();
 
 	void DecimalAdjust(bool isSubtract);
 
