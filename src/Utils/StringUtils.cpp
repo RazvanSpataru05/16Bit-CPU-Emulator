@@ -156,5 +156,15 @@ namespace Utils
 			default:						return "error";
 			}
 		}
+
+		std::string_view PrefixToString(uint8_t instruction)
+		{
+			switch (instruction)
+			{
+			case 0xF2:						return "REPNZ";
+			case 0xF3:						return "REPZ";
+			default:						return "ERRROR";
+			}
+		}
 	}
 }

@@ -32,6 +32,7 @@ namespace Utils
 		std::string_view	SlotToString(Slot slot);
 		std::string_view	SegmentOverrideToString(SegmentOverride segment);
 		std::string_view	TokenTypeToString(const Token& token);
+		std::string_view	PrefixToString(uint8_t istruction);
 		
 		template<typename... Args>
 		std::string TextFormat(std::format_string<Args...> format, Args&&... args)

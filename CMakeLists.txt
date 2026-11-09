@@ -76,6 +76,7 @@ set(HEADERS
     inc/Core/IOPortSpace.h
     inc/Core/RegisterFile.h
     inc/Core/Result.h
+    inc/Core/RepeatState.h
     inc/Core/Reg8.h
     inc/Core/Reg16.h	
     inc/Core/RMOperand.h	

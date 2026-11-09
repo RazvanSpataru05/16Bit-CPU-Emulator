@@ -15,6 +15,7 @@ uint20_t CPU::PhysAddr(uint16_t segment, uint16_t offset) const noexcept
 uint8_t CPU::Fetch8()
 {
 	++m_IP;
+
 	assert(m_memoryUnit[PhysAddr(m_registerFile.CS(), m_IP)].has_value());
 	return m_memoryUnit[PhysAddr(m_registerFile.CS(), m_IP)].value();
 }
@@ -41,6 +42,17 @@ void CPU::Step()
 
 	m_segmentOverride = DecodeSegmentOverride();
 	DecodeRepeatPrefix();
+	
+	if (m_repeatState.canGoBack && !IsStringInstruction())
+	{
+		Logger::AddInfoMessage(std::format("Prefix {} was used for a non-string instruction. Prefix will be ignored.", 
+			Utils::String::PrefixToString(m_IR)));
+
+		++m_IP;
+		UpdateIR();
+		m_repeatState.Reset();
+		return;
+	}
 
 	if ((m_IR & 0xC0) == 0x00 && (m_IR & 0b111) < 6) ExecALU();
 	/*
@@ -722,6 +734,13 @@ void CPU::ExecTESTModRM()
 
 void CPU::ExecMOVS()
 {
+	if (!CheckRepeatCondition())
+	{
+		m_repeatState.Reset();
+		++m_IP;
+		return;
+	}
+
 	const bool word = (m_IR & 1) != 0;
 	const uint8_t inc = word ? 2u : 1u;
 	const uint16_t value = word ? ReadMem16(m_registerFile.DS(), m_registerFile.SI())
@@ -731,11 +750,24 @@ void CPU::ExecMOVS()
 	else      WriteMem8(m_registerFile.ES(), m_registerFile.DI(), static_cast<uint8_t>(value));
 
 	UpdateDirection(m_statusRegister.Directional(), true, true, inc);
-	++m_IP;
+
+	if (ShouldRepeat()) m_IP = m_repeatState.IP;
+	else
+	{
+		m_repeatState.Reset();
+		++m_IP;
+	}
 }
 
 void CPU::ExecCMPS()
 {
+	if (!CheckRepeatCondition())
+	{
+		m_repeatState.Reset();
+		++m_IP;
+		return;
+	}
+
 	const bool word = (m_IR & 1) != 0;
 	const uint8_t inc = word ? 2u : 1u;
 	const uint16_t source = word ? ReadMem16(m_registerFile.DS(), m_registerFile.SI())
@@ -748,12 +780,23 @@ void CPU::ExecCMPS()
 	m_statusRegister.UpdateFrom(r);
 	UpdateDirection(m_statusRegister.Directional(), true, true, inc);
 
-	if (RepeatInstruction()) m_IP = m_repeatedIP;
-	else                     ++m_IP;
+	if (ShouldRepeatOnZF())  m_IP = m_repeatState.IP;
+	else
+	{
+		m_repeatState.Reset();
+		++m_IP;
+	}
 }
 
 void CPU::ExecSTOS()
 {
+	if (!CheckRepeatCondition())
+	{
+		m_repeatState.Reset();
+		++m_IP;
+		return;
+	}
+
 	const bool word = (m_IR & 1) != 0;
 	const uint8_t inc = word ? 2u : 1u;
 	const uint16_t value = word ? m_registerFile.AX()
@@ -764,31 +807,53 @@ void CPU::ExecSTOS()
 
 	UpdateDirection(m_statusRegister.Directional(), false, true, inc);
 
-	++m_IP;
+	if (ShouldRepeat()) m_IP = m_repeatState.IP;
+	else
+	{
+		m_repeatState.Reset();
+		++m_IP;
+	}
 }
 
 void CPU::ExecLODS()
 {
-	std::cout << "lods\n";
+	if (!CheckRepeatCondition())
+	{
+		m_repeatState.Reset();
+		++m_IP;
+		return;
+	}
+
 	const bool word = (m_IR & 1) != 0;
 	const uint8_t inc = word ? 2u : 1u;
 	const uint16_t value = word ? ReadMem16(m_registerFile.DS(), m_registerFile.SI())
 								: ReadMem8(m_registerFile.DS(), m_registerFile.SI());
-	std::cout << "value: " << std::hex << static_cast<int>(value) << '\n';
 
 	if (word) m_registerFile.AX() = value;
 	else
 	{
-		std::cout << "byte\n";
 		m_registerFile.Set8(Reg8::AL, static_cast<uint8_t>(value));
 	}
 
 	UpdateDirection(m_statusRegister.Directional(), true, false, inc);
-	++m_IP;
+
+	if (ShouldRepeat()) m_IP = m_repeatState.IP;
+	else
+	{
+		m_repeatState.Reset();
+		++m_IP;
+	}
 }
 
 void CPU::ExecSCAS()
 {
+	if (!CheckRepeatCondition())
+	{
+		m_repeatState.Reset();
+		++m_IP;
+		return;
+	}
+
 	const bool word = (m_IR & 1) != 0;
 	const uint8_t inc = word ? 2u : 1u;
 	const uint16_t reg = word ? m_registerFile.AX()
@@ -801,8 +866,12 @@ void CPU::ExecSCAS()
 
 	UpdateDirection(m_statusRegister.Directional(), false, true, inc);
 
-	if (RepeatInstruction()) m_IP = m_repeatedIP;
-	else                     ++m_IP;
+	if (ShouldRepeatOnZF()) m_IP = m_repeatState.IP;
+	else
+	{
+		m_repeatState.Reset();
+		++m_IP;
+	}
 }
 
 void CPU::ExecDoubleWord()
@@ -1077,10 +1146,9 @@ void CPU::Reset()
 {
 	m_registerFile.Reset();
 	m_statusRegister.Reset();
+	m_repeatState.Reset();
 	m_haltFlag = false;
 	m_TESTPin = false;
-	m_repeatPrefix = false;
-	m_repeatedIP = 0x0000;
 	m_segmentOverride = SegmentOverride::NONE;
 
 	m_IP = m_memoryUnit.GetStartAddress();
@@ -1379,6 +1447,15 @@ bool CPU::IsRepeatPrefix(uint8_t value) const noexcept
 		|| value == 0xF3;	// REPZ  / REPE
 }
 
+bool CPU::IsStringInstruction() const noexcept
+{
+	return ((m_IR & 0xFE) == 0xA4)
+		|| ((m_IR & 0xFE) == 0xAA)
+		|| ((m_IR & 0xFE) == 0xAC)
+		|| ((m_IR & 0xFE) == 0xA6)
+		|| ((m_IR & 0xFE) == 0xAE);
+}
+
 SegmentOverride CPU::DecodeSegmentOverride() noexcept
 {
 	SegmentOverride seg{};
@@ -1400,9 +1477,14 @@ void CPU::DecodeRepeatPrefix() noexcept
 {
 	if (!IsRepeatPrefix(m_IR)) return;
 
-	m_repeatPrefix = true;
-	m_repeatedIP = ++m_IP;
-	UpdateIR();
+	m_repeatState.canGoBack = true;
+	m_repeatState.repeatIfZero = (m_IR == 0xF3); // opcode for REPZ (repeat if result is zero)
+	m_repeatState.IP = static_cast<uint16_t>(m_IP + 1);
+}
+
+bool CPU::CheckRepeatCondition() const noexcept
+{
+	return m_repeatState.canGoBack && m_registerFile.CX() != 0u;
 }
 
 std::optional<uint16_t> CPU::ResolveSegment() noexcept
@@ -1418,13 +1500,29 @@ std::optional<uint16_t> CPU::ResolveSegment() noexcept
 	}
 }
 
-bool CPU::RepeatInstruction() noexcept
+bool CPU::ShouldRepeat() noexcept
 {
-	if (!m_repeatPrefix) return false;
+	if (!m_repeatState.canGoBack) return false;
 
 	--m_registerFile.CX();
-	m_statusRegister.SetFlag(Utils::Constants::ZF_MASK, m_registerFile.CX() == 0);
-	m_repeatPrefix = !m_statusRegister.Zero();
+	m_repeatState.canGoBack = (m_registerFile.CX() != 0u);
+	return m_repeatState.canGoBack;
+}
 
-	return m_repeatPrefix;
+bool CPU::ShouldRepeatOnZF() noexcept
+{
+	if (!m_repeatState.canGoBack) return false;
+
+	--m_registerFile.CX();
+
+	if (m_repeatState.repeatIfZero)
+	{
+		m_repeatState.canGoBack = (m_registerFile.CX() != 0u) && m_statusRegister.Zero();
+	}
+	else
+	{
+		m_repeatState.canGoBack = (m_registerFile.CX() != 0u) && !m_statusRegister.Zero();
+	}
+
+	return m_repeatState.canGoBack;
 }

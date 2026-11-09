@@ -9,6 +9,7 @@
 #include "Core/MemoryUnit.h"
 #include "Core/ModRM.h"
 #include "Core/RMOperand.h"
+#include "Core/RepeatState.h"
 
 #include <string>
 #include <assert.h>
@@ -75,12 +76,17 @@ private:
 	[[nodiscard]] uint16_t Pop16();
 
 	[[nodiscard]] bool							  IsOverridePrefix(uint8_t value)		const noexcept;
-	[[nodiscard]] bool							  IsRepeatPrefix(uint8_t value)			const noexcept;
 	[[nodiscard]] SegmentOverride				  DecodeSegmentOverride()				noexcept;
-	void										  DecodeRepeatPrefix()					noexcept;
 	[[nodiscard]] std::optional<uint16_t>		  ResolveSegment()						noexcept;
 
-	[[nodiscard]] bool							 RepeatInstruction()					noexcept;
+	[[nodiscard]] bool							  IsRepeatPrefix(uint8_t value)			const noexcept;
+	[[nodiscard]] bool							  IsStringInstruction()					const noexcept;
+	void										  DecodeRepeatPrefix()					noexcept;
+
+	[[nodiscard]] bool							  CheckRepeatCondition()				const noexcept;
+
+	[[nodiscard]] bool							  ShouldRepeat()						noexcept;
+	[[nodiscard]] bool							  ShouldRepeatOnZF()					noexcept;
 
 	template<typename RegType>
 	void StackOperation(RegType regType, bool isPush);
@@ -123,7 +129,7 @@ private:
 
 	void DecimalAdjust(bool isSubtract);
 
-	[[nodiscard]] ModRM DecodeModRM();
+	[[nodiscard]] ModRM    DecodeModRM();
 	[[nodiscard]] uint16_t DecodeEffectiveAddress(uint8_t rm, uint8_t mod);
 
 	[[nodiscard]] RMOperand ResolveRM(ModRM modRM);
@@ -154,8 +160,7 @@ private:
 	bool m_haltFlag{ false };
 	bool m_TESTPin{ false };
 
-	bool m_repeatPrefix{ false };
-	uint16_t m_repeatedIP{};
+	RepeatState m_repeatState;
 };
 
 template<typename RegType>
@@ -168,7 +173,7 @@ void CPU::StackOperation(RegType regType, bool push)
 	}
 	else
 	{
-		const uint16_t sp = static_cast<uint16_t>(m_registerFile.SP());
+		const uint16_t sp = m_registerFile.SP();
 		const uint16_t word = Pop16();
 		m_registerFile.Set16(regType, word);
 	}
