@@ -19,7 +19,7 @@ class CPU
 public:
 	explicit CPU(InterruptController& interruptContrroller);
 
-	[[nodiscard]] uint20_t	PhysAddr(uint16_t segment, uint16_t offset)		const noexcept;
+	[[nodiscard]] uint20_t	    PhysAddr(uint16_t segment, uint16_t offset)	const noexcept;
 
 	[[nodiscard]] uint8_t		Fetch8();
 	[[nodiscard]] uint16_t		Fetch16();
@@ -27,7 +27,8 @@ public:
 	void Step();
 	void Reset();
 	
-	[[nodiscard]] SegmentOverride GetSegmentOverride() const noexcept;
+	[[nodiscard]] SegmentOverride GetSegmentOverride()	const noexcept;
+	[[nodiscard]] uint16_t		  GetSegment()			const noexcept;
 
 	//Registry getters
 	[[nodiscard]] uint16_t		GetIP()			const noexcept;
@@ -67,20 +68,19 @@ private:
 	void WriteMem16(uint16_t segment, uint16_t offset, uint16_t value);
 
 	[[nodiscard]] uint16_t ReadRM(const RMOperand& operand, bool word);
-	void     WriteRM(const RMOperand& operand, uint16_t value, bool word, bool generalReg);
+	void WriteRM(const RMOperand& operand, uint16_t value, bool word, bool generalReg);
 
-	void ShortJump(int8_t offset);
+	void ShortJump(int8_t offset) noexcept;
 
 	/* Stack Helpers */
 	void Push16(uint16_t value, bool word);
 	[[nodiscard]] uint16_t Pop16();
 
 	[[nodiscard]] bool							  IsOverridePrefix(uint8_t value)		const noexcept;
-	[[nodiscard]] SegmentOverride				  DecodeSegmentOverride()				noexcept;
-	[[nodiscard]] std::optional<uint16_t>		  ResolveSegment()						noexcept;
+	void										  DecodeSegmentOverride()				noexcept;
 
 	[[nodiscard]] bool							  IsRepeatPrefix(uint8_t value)			const noexcept;
-	[[nodiscard]] bool							  IsStringInstruction()					const noexcept;
+	[[nodiscard]] bool							  IsStringInstruction(uint16_t address) const noexcept;
 	void										  DecodeRepeatPrefix()					noexcept;
 
 	[[nodiscard]] bool							  CheckRepeatCondition()				const noexcept;

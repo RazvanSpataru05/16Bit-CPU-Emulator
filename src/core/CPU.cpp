@@ -37,21 +37,27 @@ uint16_t CPU::Fetch16()
 
 void CPU::Step()
 {
-	if (m_haltFlag || m_memoryUnit.IsMemoryEmpty() ||
-		!m_memoryUnit[PhysAddr(m_registerFile.CS(), m_IP)].has_value()) return;
+	if (m_haltFlag
+	||  m_memoryUnit.IsMemoryEmpty()
+	|| !m_memoryUnit[PhysAddr(m_registerFile.CS(), m_IP)].has_value()) return;
 
-	m_segmentOverride = DecodeSegmentOverride();
+	DecodeSegmentOverride();
 	DecodeRepeatPrefix();
 	
-	if (m_repeatState.canGoBack && !IsStringInstruction())
+	if (m_repeatState.canGoBack) // is prefix
 	{
-		Logger::AddInfoMessage(std::format("Prefix {} was used for a non-string instruction. Prefix will be ignored.", 
-			Utils::String::PrefixToString(m_IR)));
+		std::cout << "repeated IP: " << std::hex << static_cast<uint16_t>(m_repeatState.IP) << '\n';
+		if (!IsStringInstruction(m_repeatState.IP))
+		{
+			Logger::AddInfoMessage(std::format("Prefix {} was used for a non-string instruction. Prefix will be ignored.",
+				Utils::String::PrefixToString(m_IR)));
 
-		++m_IP;
+			m_repeatState.Reset();
+			return;
+		}
+
+		m_IP = m_repeatState.IP;
 		UpdateIR();
-		m_repeatState.Reset();
-		return;
 	}
 
 	if ((m_IR & 0xC0) == 0x00 && (m_IR & 0b111) < 6) ExecALU();
@@ -327,6 +333,7 @@ void CPU::Step()
 		++m_IP;
 		break;
 	}
+
 	UpdateIR();
 }
 
@@ -734,6 +741,7 @@ void CPU::ExecTESTModRM()
 
 void CPU::ExecMOVS()
 {
+	std::cout << "in MOVS\n\n";
 	if (!CheckRepeatCondition())
 	{
 		m_repeatState.Reset();
@@ -744,19 +752,24 @@ void CPU::ExecMOVS()
 	const bool word = (m_IR & 1) != 0;
 	const uint8_t inc = word ? 2u : 1u;
 	const uint16_t value = word ? ReadMem16(m_registerFile.DS(), m_registerFile.SI())
-								: ReadMem8(m_registerFile.DS(), m_registerFile.SI());
+		: ReadMem8(m_registerFile.DS(), m_registerFile.SI());
 
 	if (word) WriteMem16(m_registerFile.ES(), m_registerFile.DI(), value);
 	else      WriteMem8(m_registerFile.ES(), m_registerFile.DI(), static_cast<uint8_t>(value));
 
 	UpdateDirection(m_statusRegister.Directional(), true, true, inc);
 
-	if (ShouldRepeat()) m_IP = m_repeatState.IP;
+	if (ShouldRepeat())
+	{
+		std::cout << "repeating instruction at pointer: " << std::hex << static_cast<uint16_t>(m_repeatState.IP) << '\n';
+		m_IP = m_repeatState.IP;
+	}
 	else
 	{
-		m_repeatState.Reset();
+		std::cout << "cannot repeat. will go to pointer: " << std::hex << static_cast<uint16_t>(m_repeatState.IP + 1) << '\n';
 		++m_IP;
 	}
+
 }
 
 void CPU::ExecCMPS()
@@ -1153,13 +1166,13 @@ void CPU::Reset()
 
 	m_IP = m_memoryUnit.GetStartAddress();
 
-	if (IsOverridePrefix(m_memoryUnit[m_IP].value_or(0x00)))
+	if (IsOverridePrefix(m_memoryUnit[PhysAddr(GetSegment(), m_IP)].value_or(0x00)))
 	{
 		++m_IP;
-		m_segmentOverride = DecodeSegmentOverride();
+		DecodeSegmentOverride();
 
 	}
-	m_IR = m_memoryUnit[m_IP].value_or(0x00);
+	m_IR = m_memoryUnit[PhysAddr(GetSegment(), m_IP)].value_or(0x00);
 }
 
 ModRM CPU::DecodeModRM()
@@ -1221,9 +1234,9 @@ RMOperand CPU::ResolveRM(ModRM modRM)
 
 	uint16_t segment = usesBP ? m_registerFile.SS() : m_registerFile.DS();
 
-	if (const auto result = ResolveSegment(); result.has_value()) // When segment override occurs
+	if (m_segmentOverride != SegmentOverride::NONE) // When segment override occurs
 	{
-		segment = result.value();
+		segment = GetSegment();
 	}
 
 	return { false, 0, segment, offset };
@@ -1246,6 +1259,19 @@ void CPU::UpdateDirection(bool directionalFlag, bool updateSource, bool updateDe
 SegmentOverride CPU::GetSegmentOverride() const noexcept
 {
 	return m_segmentOverride;
+}
+
+uint16_t CPU::GetSegment() const noexcept
+{
+	switch (m_segmentOverride)
+	{
+	case SegmentOverride::DS:	return m_registerFile.DS();
+	case SegmentOverride::SS:	return m_registerFile.SS();
+	case SegmentOverride::ES:	return m_registerFile.ES();
+	case SegmentOverride::CS:
+	case SegmentOverride::NONE:
+	default:					return m_registerFile.CS();
+	}
 }
 
 uint16_t CPU::GetIP() const noexcept
@@ -1276,19 +1302,19 @@ void CPU::SetInstructionRegister()
 		return;
 	}
 	
-	if (IsOverridePrefix(m_memoryUnit[PhysAddr(m_registerFile.CS(), m_IP)].value_or(0x00)))
+	if (IsOverridePrefix(m_memoryUnit[PhysAddr(GetSegment(), m_IP)].value_or(0x00)))
 	{
-		m_segmentOverride = DecodeSegmentOverride();
+		DecodeSegmentOverride();
 		++m_IP;
 	}
-	m_IR = m_memoryUnit[PhysAddr(m_registerFile.CS(), m_IP)].value_or(0x00);
+	m_IR = m_memoryUnit[PhysAddr(GetSegment(), m_IP)].value_or(0x00);
 }
 
 void CPU::UpdateIR()
 {
 	if (m_haltFlag) return;
 
-	m_IR = m_memoryUnit[PhysAddr(m_registerFile.CS(), m_IP)].value_or(0x00);
+	m_IR = m_memoryUnit[PhysAddr(GetSegment(), m_IP)].value_or(0x00);
 }
 
 bool CPU::IsReadingInstruction() const noexcept
@@ -1406,7 +1432,7 @@ void CPU::WriteRM(const RMOperand& operand, uint16_t value, bool word, bool gene
 	else	  WriteMem8(operand.segment, operand.offset, static_cast<uint8_t>(value));
 }
 
-void CPU::ShortJump(int8_t offset)
+void CPU::ShortJump(int8_t offset) noexcept
 {
 	m_IP = m_IP + offset;
 }
@@ -1447,30 +1473,33 @@ bool CPU::IsRepeatPrefix(uint8_t value) const noexcept
 		|| value == 0xF3;	// REPZ  / REPE
 }
 
-bool CPU::IsStringInstruction() const noexcept
+bool CPU::IsStringInstruction(uint16_t address) const noexcept
 {
-	return ((m_IR & 0xFE) == 0xA4)
-		|| ((m_IR & 0xFE) == 0xAA)
-		|| ((m_IR & 0xFE) == 0xAC)
-		|| ((m_IR & 0xFE) == 0xA6)
-		|| ((m_IR & 0xFE) == 0xAE);
+	const auto result = m_memoryUnit[PhysAddr(GetSegment(), address)];
+	if (!result.has_value()) return false;
+
+	const uint8_t instr = result.value();
+
+	return ((instr & 0xFE) == 0xA4)
+		|| ((instr & 0xFE) == 0xAA)
+		|| ((instr & 0xFE) == 0xAC)
+		|| ((instr & 0xFE) == 0xA6)
+		|| ((instr & 0xFE) == 0xAE);
 }
 
-SegmentOverride CPU::DecodeSegmentOverride() noexcept
+void CPU::DecodeSegmentOverride() noexcept
 {
-	SegmentOverride seg{};
 	switch (m_IR) 
 	{
-	case 0x26: seg = SegmentOverride::ES; break;
-	case 0x2E: seg = SegmentOverride::CS; break;
-	case 0x36: seg = SegmentOverride::SS; break;
-	case 0x3E: seg = SegmentOverride::DS; break;
-	default:   return SegmentOverride::NONE;
+	case 0x26: m_segmentOverride = SegmentOverride::ES; break;
+	case 0x2E: m_segmentOverride = SegmentOverride::CS; break;
+	case 0x36: m_segmentOverride = SegmentOverride::SS; break;
+	case 0x3E: m_segmentOverride = SegmentOverride::DS; break;
+	default:   return;
 	}
 
 	++m_IP;
 	UpdateIR();
-	return seg;
 }
 
 void CPU::DecodeRepeatPrefix() noexcept
@@ -1485,19 +1514,6 @@ void CPU::DecodeRepeatPrefix() noexcept
 bool CPU::CheckRepeatCondition() const noexcept
 {
 	return m_repeatState.canGoBack && m_registerFile.CX() != 0u;
-}
-
-std::optional<uint16_t> CPU::ResolveSegment() noexcept
-{
-	switch (m_segmentOverride)
-	{
-	case SegmentOverride::NONE: return std::nullopt;
-	case SegmentOverride::ES:	return m_registerFile.ES();
-	case SegmentOverride::CS:	return m_registerFile.CS();
-	case SegmentOverride::SS:	return m_registerFile.SS();
-	case SegmentOverride::DS:	return m_registerFile.DS();
-	default:					return std::nullopt;
-	}
 }
 
 bool CPU::ShouldRepeat() noexcept

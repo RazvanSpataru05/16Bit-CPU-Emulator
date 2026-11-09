@@ -122,10 +122,10 @@ namespace Utils
 			switch (segment)
 			{
 			case SegmentOverride::ES:			return "ES";
-			case SegmentOverride::CS:			return "CS";
 			case SegmentOverride::SS:			return "SS";
-			case SegmentOverride::DS:
-			case SegmentOverride::NONE:			return "DS";
+			case SegmentOverride::DS:			return "DS";
+			case SegmentOverride::CS:			
+			case SegmentOverride::NONE:			return "CS";
 			default:							return "ERROR";
 			}
 		}
