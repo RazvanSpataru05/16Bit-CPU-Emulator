@@ -110,6 +110,7 @@ private:
 	void ExecClearStoreFlags();
 	void ExecGRP1();
 	void ExecGRP2();
+	void ExecGRP3();
 	void ExecGRP4_GRP5();
 	void ExecTEST();
 	void ExecTESTModRM();

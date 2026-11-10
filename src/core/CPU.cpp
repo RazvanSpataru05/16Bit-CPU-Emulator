@@ -104,6 +104,7 @@ void CPU::Step()
 	else if ((m_IR & 0xFE) == 0xE6)												 ExecOUTImm();			// opcodes: {E6, E7} (OUT; port space)
 	else if ((m_IR & 0xFE) == 0xEC)												 ExecINDX();			// opcodes: {EC, ED} (IN DX: port space)
 	else if ((m_IR & 0xFE) == 0xEE)												 ExecOUTDX();			// opcodes: {EE, EF} (OUT DX: port space)
+	else if ((m_IR & 0xFE) == 0xF6)												 ExecGRP3();
 	else if ((m_IR & 0xFE) == 0xFC)												 ExecClearStoreFlags(); // opcodes: F8 -> FD (CLC, STC, CLI, STI, CLD, STD)
 	else if ((m_IR & 0xFE) == 0xFE)												 ExecGRP4_GRP5();		// opcodes: FE, FF (GRP4 & GRP5)
 	else switch (m_IR)
@@ -632,6 +633,12 @@ void CPU::ExecGRP2()
 	WriteRM(rm, r.value, word, true);
 	m_statusRegister.UpdateFrom(r);
 
+	++m_IP;
+}
+
+void CPU::ExecGRP3()
+{
+	std::cout << "in grp3";
 	++m_IP;
 }
 
