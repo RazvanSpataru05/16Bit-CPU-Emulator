@@ -142,7 +142,6 @@ void Parser::ResetStatement()
 	m_currentStatement.length = 0u;
 	m_currentStatement.operandCount = 0u;
 	m_currentStatement.address = 0x00000;
-	m_currentStatement.operands.fill(Operand());
 	m_currentStatement.ISAEntry = nullptr;
 }
 
@@ -202,10 +201,10 @@ void Parser::HandleMnemonicToken_Emit()
 	switch (entry->operatorKind)
 	{
 	case OperandKind::NONE: { Next(); break; }
-	case OperandKind::IMM_8: {		m_currentStatement.operands = ConsumeImm8();		break; }
-	case OperandKind::MEM: {		m_currentStatement.operands = ConsumeAddr16();		break; }
-	case OperandKind::REG_16: {		m_currentStatement.operands = ConsumeReg();			break; }
-	case OperandKind::REG_REG: {	m_currentStatement.operands = ConsumeRegReg();		break; }
+	case OperandKind::IMM_8: {		m_currentStatement;		break; }
+	case OperandKind::MEM: {		m_currentStatement;		break; }
+	case OperandKind::REG_16: {		m_currentStatement;		break; }
+	case OperandKind::REG_REG: {	m_currentStatement;		break; }
 	default: break;
 	}
 
@@ -231,9 +230,9 @@ void Parser::HandleDWToken_Emit()
 		const uint16_t address = m_labels.at(label).address;
 
 		m_currentStatement.address = m_currentAddress;
-		m_currentStatement.operandCount = static_cast<uint8_t>(m_currentStatement.operands.size()); // the address of the word
-		m_currentStatement.operands[0] = Operand();   // hi
-		m_currentStatement.operands[1] = Operand(); // lo
+		//m_currentStatement.operandCount = static_cast<uint8_t>(m_currentStatement.operands.size()); // the address of the word
+		//m_currentStatement.operands[0] = Operand();   // hi
+		//m_currentStatement.operands[1] = Operand(); // lo
 		AddStatement();
 	}
 	else if (Peek().type == TokenType::NUMBER)
@@ -244,8 +243,8 @@ void Parser::HandleDWToken_Emit()
 			const uint16_t address = static_cast<uint16_t>(parsedNumber.value);
 
 			m_currentStatement.address = address;
-			m_currentStatement.operands[0] = Operand(); // hi byte
-			m_currentStatement.operands[1] = Operand(); // lo byte
+			//m_currentStatement.operands[0] = Operand(); // hi byte
+			//m_currentStatement.operands[1] = Operand(); // lo byte
 			AddStatement();
 		}
 	}
@@ -426,90 +425,90 @@ void Parser::HandleIdentifierToken_Scan()
 	}
 }
 
-std::array<Operand, 2> Parser::ConsumeImm8()
-{
-	std::array<Operand, 2> operand{};
-	Next(); // go to imm8 value
-
-	ParsedNumber parsedNumber = ConsumeNumber();
-	if (!CheckNumericLimit<uint16_t>(parsedNumber)) return {};
-
-	operand[0] = Operand();   //static_cast<uint16_t>(parsedNumber.value);
-	Next(); // go to newline or end of file
-
-	return operand;
-}
-
-std::array<Operand, 2> Parser::ConsumeAddr16()
-{
-	std::array<Operand, 2> operands{};
-	uint16_t address{};
-	const Token& token = Next(); // go to addr
-
-	if (token.type == TokenType::IDENTIFIER)
-	{
-		const std::string label = Utils::String::ToLower(Peek().value);
-		if (!m_labels.contains(label))
-		{
-			AddError(std::format("Error at line {}, {}: undefined label '{}'.",
-				Peek().line, Peek().column, Peek().value));
-			ConsumeLine();
-
-			return {};
-		}
-		else
-		{
-			address = m_labels.at(label).address;
-			m_labels.at(label).used = true;
-			Next(); // go to newline or end of file
-		}
-
-	}
-	else if (token.type == TokenType::NUMBER)
-	{
-		ParsedNumber parsedNumber = ConsumeNumber();
-		if (!CheckNumericLimit<uint16_t>(parsedNumber)) return {};
-
-		address = static_cast<uint16_t>(parsedNumber.value);
-		Next();
-	}
-	else
-	{
-		AddError(std::format("Error at line {}, column {}: expected 16-bit address or label, found {}.",
-			token.line, token.column, Utils::String::TokenTypeToString(token)));
-		ConsumeLine();
-
-		return {};
-	}
-
-	operands[0] = Operand(); //static_cast<uint16_t>(address >> 8); // hi part
-	operands[1] = Operand(); //static_cast<uint16_t>(address & 0xFF); // lo part
-
-	return operands;
-}
-
-std::array<Operand, 2> Parser::ConsumeReg()
-{
-	std::array<Operand, 2> operands{};
-	operands[0] = Operand(); //ConsumeSelector();
-
-	return operands;
-}
-
-std::array<Operand, 2> Parser::ConsumeRegReg()
-{
-	std::array<Operand, 2> operands{};
-
-	operands[0] = Operand(); //ConsumeSelector();
-	if (m_currentStatementHasError) return operands;
-
-	ExpectComma();
-	if (m_currentStatementHasError) return operands;
-
-	operands[1] = Operand(); //ConsumeSelector();
-
-	return operands;
-}
+//std::array<Operand, 2> Parser::ConsumeImm8()
+//{
+//	std::array<Operand, 2> operand{};
+//	Next(); // go to imm8 value
+//
+//	ParsedNumber parsedNumber = ConsumeNumber();
+//	if (!CheckNumericLimit<uint16_t>(parsedNumber)) return {};
+//
+//	operand[0] = Operand();   //static_cast<uint16_t>(parsedNumber.value);
+//	Next(); // go to newline or end of file
+//
+//	return operand;
+//}
+//
+//std::array<Operand, 2> Parser::ConsumeAddr16()
+//{
+//	std::array<Operand, 2> operands{};
+//	uint16_t address{};
+//	const Token& token = Next(); // go to addr
+//
+//	if (token.type == TokenType::IDENTIFIER)
+//	{
+//		const std::string label = Utils::String::ToLower(Peek().value);
+//		if (!m_labels.contains(label))
+//		{
+//			AddError(std::format("Error at line {}, {}: undefined label '{}'.",
+//				Peek().line, Peek().column, Peek().value));
+//			ConsumeLine();
+//
+//			return {};
+//		}
+//		else
+//		{
+//			address = m_labels.at(label).address;
+//			m_labels.at(label).used = true;
+//			Next(); // go to newline or end of file
+//		}
+//
+//	}
+//	else if (token.type == TokenType::NUMBER)
+//	{
+//		ParsedNumber parsedNumber = ConsumeNumber();
+//		if (!CheckNumericLimit<uint16_t>(parsedNumber)) return {};
+//
+//		address = static_cast<uint16_t>(parsedNumber.value);
+//		Next();
+//	}
+//	else
+//	{
+//		AddError(std::format("Error at line {}, column {}: expected 16-bit address or label, found {}.",
+//			token.line, token.column, Utils::String::TokenTypeToString(token)));
+//		ConsumeLine();
+//
+//		return {};
+//	}
+//
+//	operands[0] = Operand(); //static_cast<uint16_t>(address >> 8); // hi part
+//	operands[1] = Operand(); //static_cast<uint16_t>(address & 0xFF); // lo part
+//
+//	return operands;
+//}
+//
+//std::array<Operand, 2> Parser::ConsumeReg()
+//{
+//	std::array<Operand, 2> operands{};
+//	operands[0] = Operand(); //ConsumeSelector();
+//
+//	return operands;
+//}
+//
+//std::array<Operand, 2> Parser::ConsumeRegReg()
+//{
+//	std::array<Operand, 2> operands{};
+//
+//	operands[0] = Operand(); //ConsumeSelector();
+//	if (m_currentStatementHasError) return operands;
+//
+//	ExpectComma();
+//	if (m_currentStatementHasError) return operands;
+//
+//	operands[1] = Operand(); //ConsumeSelector();
+//
+//	return operands;
+//}
 
 void Parser::ExpectEndOfStatement()
 {

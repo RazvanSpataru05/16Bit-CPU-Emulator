@@ -1,8 +1,9 @@
 #pragma once
 
+#include "Debugger/InstructionDef.h"
+
 #include "Assembler/AssemblerError.h"
 #include "Assembler/AssemblerWarning.h"
-#include "Assembler/InstructionDef.h"
 #include "Assembler/LabelInfo.h"
 #include "Assembler/Statement.h"
 
@@ -65,10 +66,10 @@ private:
 	void HandleOrgDirective();
 	void HandleStartDirective();
 
-	std::array<Operand, 2> ConsumeImm8();
-	std::array<Operand, 2> ConsumeAddr16();
-	std::array<Operand, 2> ConsumeReg();
-	std::array<Operand, 2> ConsumeRegReg();
+	//std::array<Operand, 2> ConsumeImm8();
+	//std::array<Operand, 2> ConsumeAddr16();
+	//std::array<Operand, 2> ConsumeReg();
+	//std::array<Operand, 2> ConsumeRegReg();
 
 	void AddStatement();
 	void AddError(std::string_view message);

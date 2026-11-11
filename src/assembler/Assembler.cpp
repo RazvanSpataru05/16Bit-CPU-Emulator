@@ -82,25 +82,25 @@ std::vector<uint8_t> Assembler::Encode(const Statement& statement)
 	uint8_t mod = 0b11, reg = 0, rm = 0;
 	std::vector<uint8_t> imm;
 
-	for (size_t index = 0; index < statement.operandCount; ++index)
-	{
-		const Operand& operand = statement.operands[index];
-		switch (entry->slots[index])
-		{
-		case Slot::IN_OPCODE:	opcode |= operand.reg;	break;
-		case Slot::MOD_RM_REG:	reg = operand.reg;		break;
-		case Slot::MOD_RM_RM:	rm = operand.reg;		break;
-		case Slot::IMM:
-		{
-			imm.push_back(operand.value & 0xFF);
-			if (operand.kind == OperandKind::IMM_16)
-			{
-				imm.push_back(operand.value >> 8);
-			}
-			break;
-		}
-		}
-	}
+	//for (size_t index = 0; index < statement.operandCount; ++index)
+	//{
+	//	const Operand& operand = statement.operands[index];
+	//	switch (entry->slots[index])
+	//	{
+	//	case Slot::IN_OPCODE:	opcode |= operand.reg;	break;
+	//	case Slot::MOD_RM_REG:	reg = operand.reg;		break;
+	//	case Slot::MOD_RM_RM:	rm = operand.reg;		break;
+	//	case Slot::IMM:
+	//	{
+	//		imm.push_back(operand.value & 0xFF);
+	//		if (operand.kind == OperandKind::IMM_16)
+	//		{
+	//			imm.push_back(operand.value >> 8);
+	//		}
+	//		break;
+	//	}
+	//	}
+	//}
 
 	std::vector<uint8_t> values{ opcode };
 	if (entry->hasModRM)

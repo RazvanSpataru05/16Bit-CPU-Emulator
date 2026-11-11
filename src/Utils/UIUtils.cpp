@@ -121,47 +121,6 @@ namespace Utils
 			return tab == SelectedTab::CONSOLE;
 		}
 
-		void DisplayInstruction(const InstructionDef& instruction, MemoryUnit& memoryUnit, uint16_t index, std::optional<uint16_t> opcode)
-		{
-			if (!opcode.has_value())
-			{
-				ImGui::Text("--");
-				return;
-			}
-
-			const MemoryCellType cellType = memoryUnit.GetMemoryCellType(index);
-			if (cellType == MemoryCellType::UNKNOWN || cellType == MemoryCellType::DATA)
-			{
-				return;
-			}
-
-			switch (instruction.size)
-			{
-			case 1u:
-			{
-				ImGui::Text(std::format("{:#04x}: {}", opcode.value(), instruction.mnemonic).c_str());
-				break;
-			}
-			case 2u:
-			{
-				uint16_t secondByte = memoryUnit[index + 1].value();
-				ImGui::Text(std::format("{:#04x}: {} {}", opcode.value(), instruction.mnemonic, secondByte).c_str());
-				break;
-			}
-			case 3u:
-			{
-				uint16_t secondByte = memoryUnit[index + 1].value();
-				uint16_t thirdByte = memoryUnit[index + 2].value();
-				uint16_t address = (secondByte << 8) | thirdByte;
-				ImGui::Text(std::format("{:#04x}: {} {:#06X}", opcode.value(), instruction.mnemonic, address).c_str());
-				break;
-			}
-			default:
-				ImGui::Text(std::format("{:#06x}: ???", index).c_str());
-				break;
-			}
-		}
-
 		void DisplayGlossaryPage()
 		{
 			const char* title = "Glossary";

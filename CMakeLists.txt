@@ -52,9 +52,7 @@ set(HEADERS
     inc/Assembler/AssemblerError.h
     inc/Assembler/AssemblerWarning.h
     inc/Assembler/Assembler.h
-    inc/Assembler/InstructionDef.h
     inc/Assembler/ISAEntry.h
-    inc/Assembler/Operand.h
     inc/Assembler/OperandKind.h
     inc/Assembler/Lexer.h
     inc/Assembler/ParsedNumber.h
@@ -89,6 +87,10 @@ set(HEADERS
     inc/Core/uint20_t.h
 
     inc/Debugger/Dissasembler.h
+    inc/Debugger/InstructionDef.h
+    inc/Debugger/Group.h
+    inc/Debugger/Operand.h
+    inc/Debugger/DecodedInstruction.h
 
     inc/IO/DataLoader.h
     inc/IO/AddressValue.h

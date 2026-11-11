@@ -38,12 +38,12 @@ uint16_t CPU::Fetch16()
 void CPU::Step()
 {
 	if (m_haltFlag
-	||  m_memoryUnit.IsMemoryEmpty()
-	|| !m_memoryUnit[PhysAddr(m_registerFile.CS(), m_IP)].has_value()) return;
+		|| m_memoryUnit.IsMemoryEmpty()
+		|| !m_memoryUnit[PhysAddr(m_registerFile.CS(), m_IP)].has_value()) return;
 
 	DecodeSegmentOverride();
 	DecodeRepeatPrefix();
-	
+
 	if (m_repeatState.canGoBack) // is prefix
 	{
 		std::cout << "repeated IP: " << std::hex << static_cast<uint16_t>(m_repeatState.IP) << '\n';
@@ -195,7 +195,8 @@ void CPU::Step()
 	}
 	case 0x8F:			// POP Ev
 	{
-		const ModRM modRM  = DecodeModRM();
+
+		const ModRM modRM = DecodeModRM();
 		const RMOperand rm = ResolveRM(modRM);
 		++m_IP;
 
@@ -211,7 +212,8 @@ void CPU::Step()
 	}
 	case 0x9A:			// CALL Ap (Address pointer)
 	{
-		const uint16_t offset =  Fetch16();
+
+		const uint16_t offset = Fetch16();
 		const uint16_t segment = Fetch16();
 		++m_IP;
 
@@ -243,6 +245,7 @@ void CPU::Step()
 	}
 	case 0xCF:		// IRET (Interrupt Return)
 	{
+
 		m_IP = Pop16();
 		m_registerFile.CS() = Pop16();
 		m_statusRegister.SetFlags(Pop16());
@@ -268,15 +271,15 @@ void CPU::Step()
 		break;
 	}
 	case 0xD6:			// SALC (1by)
-	{
+	
 		if (m_statusRegister.Carry()) m_registerFile.Set8(Reg8::AL, 0xFF);
 		else						  m_registerFile.Set8(Reg8::AL, 0x00);
 
 		++m_IP;
 		break;
-	}
 	case 0xD7:			// XLAT (1by)
 	{
+
 		const uint16_t offset = static_cast<uint16_t>(m_registerFile.BX(), m_registerFile.AL());
 		if (const auto result = m_memoryUnit[PhysAddr(m_registerFile.DS(), offset)]; result.has_value())
 		{
@@ -287,6 +290,7 @@ void CPU::Step()
 	}
 	case 0xE8:			// CALL Jv (Near Call)
 	{
+
 		const int16_t disp = static_cast<int16_t>(Fetch16());
 		++m_IP;
 		Push16(m_IP, true);
@@ -296,6 +300,7 @@ void CPU::Step()
 	}
 	case 0xE9:			// JMP Jv (Near jump)
 	{
+
 		const int16_t offset = static_cast<int16_t>(Fetch16());
 		++m_IP;
 		m_IP = static_cast<uint16_t>(m_IP + offset);
@@ -303,6 +308,7 @@ void CPU::Step()
 	}
 	case 0xEA:			// JMP Ap (Far jump)
 	{
+
 		const uint16_t offset = Fetch16();
 		const uint16_t segment = Fetch16();
 		m_registerFile.Set16(SegmentReg::CS, segment);
@@ -311,28 +317,32 @@ void CPU::Step()
 	}
 	case 0xEB:			// JMP Jb (Short jump)
 	{
+
 		const int8_t offset = static_cast<int8_t>(Fetch8());
 		++m_IP;
 		m_IP = static_cast<uint16_t>(m_IP + offset);
 		break;
 	}
-
 	case 0xF4: // HLT 1by
 	{
+
 		m_haltFlag = true;
 		break;
 	}
 	case 0xF5: // CMC 1by (Complement Carry Flag)
 	{
+
 		m_statusRegister.Carry() ? m_statusRegister.SetFlagOff(Utils::Constants::CF_MASK)
 			: m_statusRegister.SetFlagOn(Utils::Constants::CF_MASK);
 		++m_IP;
 		break;
 	}
 	default:
+	{
 		Logger::AddInfoMessage(std::format("Unimplemented opcode: {:02X}", m_IR));
 		++m_IP;
 		break;
+	}
 	}
 
 	UpdateIR();
@@ -348,14 +358,14 @@ void CPU::ExecALU()
 		const ModRM modRM = DecodeModRM();
 		const RMOperand rm = ResolveRM(modRM);
 
-		const bool word  = (form & 1)		!= 0;		// 0th bit: 16-bits, else 8-bits
-		const bool toReg = (form & 0b10)	!= 0;		// if bit 1 is true, destination is reg
+		const bool word = (form & 1) != 0;			// 0th bit: 16-bits, else 8-bits
+		const bool toReg = (form & 0b10) != 0;		// if bit 1 is true, destination is reg
 
 		const uint16_t regValue = ReadReg(modRM.Reg(), word);
-		const uint16_t rmValue  = ReadRM(rm, word);
+		const uint16_t rmValue = ReadRM(rm, word);
 
 		const uint16_t destination = toReg ? regValue : rmValue;
-		const uint16_t source      = toReg ? rmValue : regValue;
+		const uint16_t source = toReg ? rmValue : regValue;
 
 		const Result r = ALU::Execute(operation, destination, source, word, m_statusRegister.Carry());
 		m_statusRegister.UpdateFrom(r);
@@ -428,7 +438,7 @@ void CPU::ExecMOVImm()
 
 	if (word) m_registerFile.Set16(static_cast<Reg16>(selector), Fetch16());
 	else      m_registerFile.Set8(static_cast<Reg8>(selector), Fetch8());
-	
+
 	++m_IP;
 }
 
@@ -473,7 +483,7 @@ void CPU::ExecMOVAccumulator()
 	if (copyFromMem)
 	{
 		word ? m_registerFile.Set16(Reg16::AX, offset)
-			 : m_registerFile.Set8(Reg8::AL, static_cast<uint8_t>(offset));
+			: m_registerFile.Set8(Reg8::AL, static_cast<uint8_t>(offset));
 	}
 	else
 	{
@@ -488,12 +498,12 @@ void CPU::ExecMOVAccumulator()
 
 void CPU::ExecMOVModRM()
 {
-	const ModRM modRM  = DecodeModRM();
+	const ModRM modRM = DecodeModRM();
 	const RMOperand rm = ResolveRM(modRM);
 
 	const bool generalReg = true;
-	const bool word  = (m_IR & 1)    != 0; // bit 0 is 1, then operate on 16-bits, else 8-bits
-	const bool toReg = (m_IR & 0b10) != 0; 
+	const bool word = (m_IR & 1) != 0; // bit 0 is 1, then operate on 16-bits, else 8-bits
+	const bool toReg = (m_IR & 0b10) != 0;
 
 	const uint16_t value = toReg ? ReadRM(rm, word) : ReadReg(modRM.Reg(), word);
 
@@ -573,19 +583,19 @@ void CPU::ExecClearStoreFlags()
 	case 0b00: // Carry Flag
 	{
 		clear ? m_statusRegister.SetFlagOff(Utils::Constants::CF_MASK)
-			  : m_statusRegister.SetFlagOn(Utils::Constants::CF_MASK);
+			: m_statusRegister.SetFlagOn(Utils::Constants::CF_MASK);
 		break;
 	}
 	case 0b01: // Interrupt Flag
 	{
 		clear ? m_statusRegister.SetFlagOff(Utils::Constants::IF_MASK)
-			  : m_statusRegister.SetFlagOn(Utils::Constants::IF_MASK);
+			: m_statusRegister.SetFlagOn(Utils::Constants::IF_MASK);
 		break;
 	}
 	case 0b10: // Directional Flag
 	{
 		clear ? m_statusRegister.SetFlagOff(Utils::Constants::DF_MASK)
-			  : m_statusRegister.SetFlagOn(Utils::Constants::DF_MASK);
+			: m_statusRegister.SetFlagOn(Utils::Constants::DF_MASK);
 		break;
 	}
 	default:
@@ -599,9 +609,9 @@ void CPU::ExecClearStoreFlags()
 
 void CPU::ExecGRP1()
 {
-	const bool word  = (m_IR & 1) != 0;
+	const bool word = (m_IR & 1) != 0;
 	const bool signExtend = (m_IR & 0b10) != 0 && word;
-	const ModRM modRM  = DecodeModRM();
+	const ModRM modRM = DecodeModRM();
 	const RMOperand rm = ResolveRM(modRM);
 
 	const uint16_t firstOperand = ReadRM(rm, word);
@@ -638,7 +648,6 @@ void CPU::ExecGRP2()
 
 void CPU::ExecGRP3()
 {
-	std::cout << "in grp3";
 	++m_IP;
 }
 
@@ -705,7 +714,7 @@ void CPU::ExecGRP4_GRP5()
 			return;
 		}
 
-		const uint16_t offset  = ReadMem16(rm.segment, rm.offset);
+		const uint16_t offset = ReadMem16(rm.segment, rm.offset);
 		const uint16_t segment = ReadMem16(rm.segment, static_cast<uint16_t>(rm.offset + 2));
 
 		m_IP = offset;
@@ -791,10 +800,10 @@ void CPU::ExecCMPS()
 	const bool word = (m_IR & 1) != 0;
 	const uint8_t inc = word ? 2u : 1u;
 	const uint16_t source = word ? ReadMem16(m_registerFile.DS(), m_registerFile.SI())
-								 : ReadMem8(m_registerFile.DS(), m_registerFile.SI());
+		: ReadMem8(m_registerFile.DS(), m_registerFile.SI());
 
 	const uint16_t dest = word ? ReadMem16(m_registerFile.ES(), m_registerFile.DI())
-								: ReadMem8(m_registerFile.ES(), m_registerFile.DI());
+		: ReadMem8(m_registerFile.ES(), m_registerFile.DI());
 
 	const Result r = ALU::SUB(source, dest, false, word);
 	m_statusRegister.UpdateFrom(r);
@@ -820,7 +829,7 @@ void CPU::ExecSTOS()
 	const bool word = (m_IR & 1) != 0;
 	const uint8_t inc = word ? 2u : 1u;
 	const uint16_t value = word ? m_registerFile.AX()
-								: m_registerFile.AL();
+		: m_registerFile.AL();
 
 	if (word) WriteMem16(m_registerFile.ES(), m_registerFile.DI(), value);
 	else      WriteMem8(m_registerFile.ES(), m_registerFile.DI(), static_cast<uint8_t>(value));
@@ -847,7 +856,7 @@ void CPU::ExecLODS()
 	const bool word = (m_IR & 1) != 0;
 	const uint8_t inc = word ? 2u : 1u;
 	const uint16_t value = word ? ReadMem16(m_registerFile.DS(), m_registerFile.SI())
-								: ReadMem8(m_registerFile.DS(), m_registerFile.SI());
+		: ReadMem8(m_registerFile.DS(), m_registerFile.SI());
 
 	if (word) m_registerFile.AX() = value;
 	else
@@ -877,10 +886,10 @@ void CPU::ExecSCAS()
 	const bool word = (m_IR & 1) != 0;
 	const uint8_t inc = word ? 2u : 1u;
 	const uint16_t reg = word ? m_registerFile.AX()
-							  : m_registerFile.AL();
+		: m_registerFile.AL();
 
 	const uint16_t operand = word ? ReadMem16(m_registerFile.ES(), m_registerFile.DI())
-								  : ReadMem8(m_registerFile.ES(), m_registerFile.DI());
+		: ReadMem8(m_registerFile.ES(), m_registerFile.DI());
 	const Result r = ALU::SUB(reg, operand, false, word);
 	m_statusRegister.UpdateFrom(r);
 
@@ -942,9 +951,9 @@ void CPU::ExecInterrupt(uint8_t interrupt)
 	Push16(m_registerFile.CS(), true);
 	Push16(m_IP, true);
 
-	m_statusRegister.SetFlagOff(Utils::Constants::IF_MASK); 
+	m_statusRegister.SetFlagOff(Utils::Constants::IF_MASK);
 	m_statusRegister.SetFlagOff(Utils::Constants::TF_MASK);
-	/* 
+	/*
 		TODO: Transfer control to interrupt procedure(will be implemented when IVT will be made).
 		m_IP = IVT[interrupt * 4];
 		m_registerFile.CS() = IVT[interrupt * 4 + 2];
@@ -985,7 +994,7 @@ void CPU::ExecOUTImm()
 void CPU::ExecINDX()
 {
 	const bool word = (m_IR & 1) != 0;
-	
+
 	if (word) m_registerFile.Set16(Reg16::AX, m_portSpace.ReadPort16(m_registerFile.DX()));
 	else      m_registerFile.Set8(Reg8::AL, m_portSpace.ReadPort8(m_registerFile.DX()));
 
@@ -1192,7 +1201,7 @@ uint16_t CPU::DecodeEffectiveAddress(uint8_t rm, uint8_t mod)
 {
 	uint16_t effectiveAddress{};
 
-	switch (rm) 
+	switch (rm)
 	{
 	case 0b000:		effectiveAddress = static_cast<uint16_t>(m_registerFile.BX() + m_registerFile.SI());	break;
 	case 0b001:		effectiveAddress = static_cast<uint16_t>(m_registerFile.BX() + m_registerFile.DI());	break;
@@ -1209,7 +1218,7 @@ uint16_t CPU::DecodeEffectiveAddress(uint8_t rm, uint8_t mod)
 			return directAddr;
 		}
 		effectiveAddress = m_registerFile.BP();
-																											break;
+		break;
 	}
 	case 0b111:		effectiveAddress = m_registerFile.BX();													break;
 	}
@@ -1236,8 +1245,8 @@ RMOperand CPU::ResolveRM(ModRM modRM)
 	}
 
 	const uint16_t offset = DecodeEffectiveAddress(modRM.RM(), modRM.Mod());
-	const bool usesBP = modRM.RM()  == 0b010 || modRM.RM()  == 0b011 ||
-						(modRM.RM() == 0b110 && modRM.Mod() != 0b00);
+	const bool usesBP = modRM.RM() == 0b010 || modRM.RM() == 0b011 ||
+		(modRM.RM() == 0b110 && modRM.Mod() != 0b00);
 
 	uint16_t segment = usesBP ? m_registerFile.SS() : m_registerFile.DS();
 
@@ -1308,7 +1317,7 @@ void CPU::SetInstructionRegister()
 		m_haltFlag = true;
 		return;
 	}
-	
+
 	if (IsOverridePrefix(m_memoryUnit[PhysAddr(GetSegment(), m_IP)].value_or(0x00)))
 	{
 		DecodeSegmentOverride();
@@ -1384,8 +1393,8 @@ void CPU::WriteReg(uint8_t selector, uint16_t value, bool word, bool generalReg)
 {
 	if (word)
 	{
-		generalReg  ? m_registerFile.Set16(static_cast<Reg16>(selector), value)
-					: m_registerFile.Set16(static_cast<SegmentReg>(selector), value);
+		generalReg ? m_registerFile.Set16(static_cast<Reg16>(selector), value)
+			: m_registerFile.Set16(static_cast<SegmentReg>(selector), value);
 		return;
 	}
 	m_registerFile.Set8(static_cast<Reg8>(selector), static_cast<uint8_t>(value));
@@ -1496,7 +1505,7 @@ bool CPU::IsStringInstruction(uint16_t address) const noexcept
 
 void CPU::DecodeSegmentOverride() noexcept
 {
-	switch (m_IR) 
+	switch (m_IR)
 	{
 	case 0x26: m_segmentOverride = SegmentOverride::ES; break;
 	case 0x2E: m_segmentOverride = SegmentOverride::CS; break;

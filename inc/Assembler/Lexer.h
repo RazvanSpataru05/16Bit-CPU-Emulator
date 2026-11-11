@@ -1,6 +1,7 @@
 #pragma once
 
-#include "Assembler/InstructionDef.h"
+#include "Debugger/InstructionDef.h"
+
 #include "Assembler/AssemblerError.h"
 #include "Assembler/AssemblerWarning.h"
 

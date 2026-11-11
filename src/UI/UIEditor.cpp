@@ -237,30 +237,25 @@ namespace UIEditor
 			ImGui::End();
 			return;
 		}
-		//for (size_t index = 0; index < Utils::Constants::MEMORY_SIZE; ++index)
-		//{
-		//	std::optional<uint16_t> opcode = memoryUnit.Peek(static_cast<uint16_t>(index));
-		//	if (!opcode.has_value())
-		//	{
-		//		continue;
-		//	}
 
-		//	const InstructionDef& instruction = dissasembler.GetInstructionDef(opcode.value());
+		const uint16_t segment = cpu.GetRegisterFile().CS();
+		const auto readByte = [&](uint16_t offset) -> uint8_t
+			{
+				return memoryUnit[cpu.PhysAddr(segment, offset)].value_or(0x00);
+			};
+		uint16_t offset = cpu.GetIP();
+		for (int line = 0; line < 32; ++line)
+		{
+			const DecodedInstruction ins = dissasembler.Decode(offset, readByte);
 
-		//	if (index == cpu.GetIP())
-		//	{
-		//		ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(0, 255, 0, 255));
-		//	}
-		//	else
-		//	{
-		//		ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 255, 255, 255));
-		//	}
+			ImGui::PushStyleColor(ImGuiCol_Text, offset == cpu.GetIP() ? IM_COL32(0, 255, 0, 255)
+				: IM_COL32(255, 255, 255, 255));
+			ImGui::Text("%04X  %s", offset, ins.text.c_str());
+			ImGui::PopStyleColor();
 
-		//	Utils::UI::DisplayInstruction(instruction, memoryUnit, static_cast<uint16_t>(index), opcode);
+			offset = static_cast<uint16_t>(offset + ins.length);
+		}
 
-		//	index += static_cast<size_t>(instruction.size - 1);
-		//	ImGui::PopStyleColor();
-		//}
 		ImGui::End();
 	}
 

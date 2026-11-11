@@ -1,13 +1,17 @@
 #pragma once
 
+#include "Debugger/Operand.h"
+#include "Debugger/Group.h"
+
 #include <string>
 #include <unordered_map>
 
 struct InstructionDef
 {
-	std::string mnemonic = "";
-	uint16_t size{};
-
+	std::string_view mnemonic{};
+	Operand op1 = Operand::None;
+	Operand op2 = Operand::None;
+	Group group = Group::None;
 };
 
 const inline std::unordered_map<uint16_t, std::string> selectorToName{
