@@ -209,7 +209,7 @@ Token Lexer::BuildToken(std::string_view word)
 	const std::string upperWord = Utils::String::ToUpper(word);
 	const uint32_t wordColumnStart = static_cast<uint32_t>(m_columnNumber - word.size());
 
-	if (nameToSelector.contains(upperWord)) return { TokenType::REGISTER, word, m_lineNumber, wordColumnStart };
+	if (reg16ToSelector.contains(upperWord)) return { TokenType::REGISTER, word, m_lineNumber, wordColumnStart };
 	if (ISA::IsMnemonic(upperWord)) return { TokenType::MNEMONIC, word, m_lineNumber, wordColumnStart };
 	if (upperWord == "DW") return { TokenType::DW, word, m_lineNumber, wordColumnStart };
 

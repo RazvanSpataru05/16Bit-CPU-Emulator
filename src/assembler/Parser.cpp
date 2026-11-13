@@ -604,7 +604,7 @@ uint16_t Parser::ConsumeSelector()
 	if (token.type == TokenType::REGISTER)
 	{
 		const std::string upper = Utils::String::ToUpper(token.value);
-		if (!nameToSelector.contains(upper))
+		if (!reg16ToSelector.contains(upper))
 		{
 			m_currentStatementHasError = true;
 
@@ -614,14 +614,14 @@ uint16_t Parser::ConsumeSelector()
 		}
 
 		Next();
-		return nameToSelector.at(upper);
+		return reg16ToSelector.at(upper);
 	}
 	else if (token.type == TokenType::NUMBER)
 	{
 		ParsedNumber parsedNumber = ConsumeNumber();
 		if (!CheckNumericLimit<uint16_t>(parsedNumber)) return 0u;
 
-		if (!selectorToName.contains(static_cast<uint16_t>(parsedNumber.value)))
+		if (!selectorToReg16.contains(static_cast<uint16_t>(parsedNumber.value)))
 		{
 			m_currentStatementHasError = true;
 

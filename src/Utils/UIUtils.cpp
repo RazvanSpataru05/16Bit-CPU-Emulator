@@ -34,7 +34,7 @@ namespace Utils
 		{
 			const float cellWidth = ImGui::GetColumnWidth();
 			const float textWidth = ImGui::CalcTextSize(text.data()).x;
-			const float offset = (cellWidth - textWidth) * 0.5f;
+			const float offset	  = (cellWidth - textWidth) * 0.5f;
 
 			if (offset > 0.0f)
 			{
@@ -223,6 +223,7 @@ namespace Utils
 		ImVec2 CalcMemoryViewPos()
 		{
 			const ImVec2 menuSize = CalcMenuWindowSize();
+
 			return ImVec2(0.0f, menuSize.y);
 		}
 
@@ -240,6 +241,7 @@ namespace Utils
 		{
 			const ImVec2 memorySize = CalcMemoryViewSize();
 			const ImVec2 memoryPos = CalcMemoryViewPos();
+
 			return ImVec2(0.0f, memoryPos.y + memorySize.y);
 		}
 
@@ -292,6 +294,7 @@ namespace Utils
 		{
 			const ImVec2 codePanelSize = CalcCodePanelSize();
 			const ImVec2 dissasemblyPanelSize = CalcDissasemblyPanelSize();
+
 			return ImVec2(codePanelSize.x, dissasemblyPanelSize.y);
 		}
 
